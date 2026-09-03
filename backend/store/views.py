@@ -383,18 +383,18 @@ Your MyStore Team
         # SEND EMAIL
         # =================================================
 
-        send_mail(
-            subject=(
-                f"🎉 Order Confirmation - "
-                f"Order #{order.id}"
-            ),
-            message=email_body,
-            from_email=None,
-            recipient_list=[user.email],
-            fail_silently=True,
-        )
+        # send_mail(
+        #     subject=(
+        #         f"🎉 Order Confirmation - "
+        #         f"Order #{order.id}"
+        #     ),
+        #     message=email_body,
+        #     from_email=None,
+        #     recipient_list=[user.email],
+        #     fail_silently=True,
+        # )
 
-        # =================================================
+        # # =================================================
         # SUCCESS RESPONSE
         # =================================================
 
