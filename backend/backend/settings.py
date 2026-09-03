@@ -80,14 +80,13 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
+        "NAME": os.environ.get("DB_NAME", "ecommerce"),
+        "USER": os.environ.get("DB_USER", "root"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "8688811272@VaM"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", "3306"),
     }
 }
@@ -140,13 +139,17 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-CCORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://YOUR-VERCEL-URL.vercel.app",
+    "https://e-commerce-82xkve1dy-kumarvamshi1832-7668s-projects.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://e-commerce-82xkve1dy-kumarvamshi1832-7668s-projects.vercel.app",
+]
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
