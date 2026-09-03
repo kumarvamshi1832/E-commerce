@@ -142,15 +142,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://e-commerce-82xkve1dy-kumarvamshi1832-7668s-projects.vercel.app",
+    "https://e-commerce-f999jw7al-kumarvamshi1832-7668s-projects.vercel.app",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://e-commerce-82xkve1dy-kumarvamshi1832-7668s-projects.vercel.app",
+    "https://e-commerce-f999jw7al-kumarvamshi1832-7668s-projects.vercel.app",
 ]
-
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
