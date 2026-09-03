@@ -1,0 +1,258 @@
+/* ================================
+   PRODUCTS PAGE
+================================ */
+
+.products-section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 50px 40px 80px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+/* ================================
+   HEADER
+================================ */
+
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 35px;
+  border-bottom: 1px solid #eeeeee;
+  padding-bottom: 22px;
+}
+
+.section-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #777777;
+  text-transform: uppercase;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 700;
+  color: #171717;
+  letter-spacing: -1px;
+}
+
+.product-count {
+  margin: 0;
+  color: #777777;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ================================
+   PRODUCTS GRID
+================================ */
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+}
+
+/* ================================
+   PRODUCT CARD
+================================ */
+
+.product-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 16px;
+  overflow: hidden;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  border-color: #e1e1e1;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.09);
+}
+
+/* ================================
+   PRODUCT IMAGE
+================================ */
+
+.product-image {
+  width: 100%;
+  height: 270px;
+  overflow: hidden;
+  background: #f7f7f7;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.45s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.06);
+}
+
+/* If your ProductCard uses another image class,
+   these are useful alternatives */
+
+.product-card img {
+  max-width: 100%;
+}
+
+/* ================================
+   PRODUCT INFO
+================================ */
+
+.product-info {
+  padding: 20px;
+}
+
+.product-category {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #999999;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.product-info h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #181818;
+}
+
+.product-price {
+  display: block;
+  margin-bottom: 17px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111111;
+}
+
+/* ================================
+   ADD TO CART BUTTON
+================================ */
+
+.product-info button {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.25s ease,
+    transform 0.2s ease;
+}
+
+.product-info button:hover {
+  background: #333333;
+}
+
+.product-info button:active {
+  transform: scale(0.98);
+}
+
+.product-info button:disabled {
+  background: #dddddd;
+  color: #888888;
+  cursor: not-allowed;
+}
+
+/* ================================
+   RESPONSIVE - LAPTOP
+================================ */
+
+@media (max-width: 1100px) {
+  .products-section {
+    padding: 40px 30px 70px;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .product-image {
+    height: 240px;
+  }
+}
+
+/* ================================
+   RESPONSIVE - TABLET
+================================ */
+
+@media (max-width: 800px) {
+  .products-section {
+    padding: 35px 20px 60px;
+  }
+
+  .section-header h2 {
+    font-size: 30px;
+  }
+
+  .products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .product-image {
+    height: 230px;
+  }
+}
+
+/* ================================
+   RESPONSIVE - MOBILE
+================================ */
+
+@media (max-width: 520px) {
+  .products-section {
+    padding: 25px 14px 50px;
+  }
+
+  .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  .section-header h2 {
+    font-size: 27px;
+  }
+
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .product-image {
+    height: 280px;
+  }
+
+  .product-info {
+    padding: 17px;
+  }
+
+  .product-info h3 {
+    font-size: 17px;
+  }
+}

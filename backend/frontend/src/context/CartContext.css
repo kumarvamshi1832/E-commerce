@@ -1,0 +1,79 @@
+/* ==========================================================================
+   MyStore — Cart Toast
+   Same system: ink #14151A · parchment #F3EFE6 · brass #C9A227 · burgundy #7A2333
+   ========================================================================== */
+
+:root {
+  --ink: #14151a;
+  --parchment: #f3efe6;
+  --brass: #c9a227;
+  --burgundy: #7a2333;
+
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+.cart-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  z-index: 1000;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 40px);
+
+  padding: 13px 22px;
+
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--parchment);
+  white-space: nowrap;
+
+  background: var(--ink);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 18px 40px -14px rgba(0, 0, 0, 0.5);
+
+  transform: translate(-50%, 0);
+  animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* thin brass tick on the left, like a stamped receipt marker */
+.cart-toast::before {
+  content: "";
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--brass);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-toast {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .cart-toast {
+    bottom: 20px;
+    padding: 11px 18px;
+    font-size: 0.84rem;
+    white-space: normal;
+    text-align: center;
+  }
+}

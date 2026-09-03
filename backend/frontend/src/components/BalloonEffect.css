@@ -1,0 +1,91 @@
+/* ==========================================================================
+   MyStore — Balloon Effect
+   Celebratory overlay — deliberately breaks from the ink/brass palette
+   (this is the one moment on the site that's meant to feel like confetti,
+   not the boutique), the JSX already supplies the bright per-balloon colors.
+   ========================================================================== */
+
+.balloon-container {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.balloon {
+  position: absolute;
+  bottom: -140px;
+  width: 46px;
+  height: 58px;
+
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  box-shadow: inset -8px -10px 14px rgba(0, 0, 0, 0.14),
+    inset 6px 8px 10px rgba(255, 255, 255, 0.35);
+
+  opacity: 0;
+  animation: balloon-rise 5.5s ease-in forwards;
+}
+
+.balloon::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid currentColor;
+  color: inherit;
+}
+
+.balloon-string {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 60px;
+  background: rgba(20, 21, 26, 0.28);
+  transform-origin: top center;
+  animation: string-sway 2.2s ease-in-out infinite;
+}
+
+@keyframes balloon-rise {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  25% {
+    transform: translate(24px, -28vh) rotate(6deg);
+  }
+  50% {
+    transform: translate(-26px, -56vh) rotate(-6deg);
+  }
+  75% {
+    transform: translate(22px, -84vh) rotate(5deg);
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-18px, -112vh) rotate(-4deg);
+    opacity: 0;
+  }
+}
+
+@keyframes string-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .balloon-container {
+    display: none;
+  }
+}
