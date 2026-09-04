@@ -385,13 +385,13 @@ Your MyStore Team
 """
 
         # =================================================
-        # SEND EMAIL USING RESEND
+        # SEND EMAIL USING BREVO SMTP
         # =================================================
 
         try:
 
             print(
-                "STARTING RESEND EMAIL",
+                "STARTING BREVO EMAIL",
                 flush=True
             )
 
@@ -407,33 +407,26 @@ Your MyStore Team
                 flush=True
             )
 
-            response = resend.Emails.send(
-                {
-                    "from": "MyStore <onboarding@resend.dev>",
-                    "to": [user.email],
-                    "subject": (
-                        f"🎉 Order Confirmation - "
-                        f"Order #{order.id}"
-                    ),
-                    "text": email_body,
-                }
+            send_mail(
+                subject=(
+                    f"🎉 Order Confirmation - "
+                    f"Order #{order.id}"
+                ),
+                message=email_body,
+                from_email=EMAIL_HOST_USER,
+                recipient_list=[user.email],
+                fail_silently=False,
             )
 
             print(
-                "RESEND RESPONSE:",
-                response,
-                flush=True
-            )
-
-            print(
-                "EMAIL SENT SUCCESSFULLY",
+                "BREVO EMAIL SENT SUCCESSFULLY",
                 flush=True
             )
 
         except Exception as email_error:
 
             print(
-                "RESEND EMAIL ERROR:",
+                "BREVO EMAIL ERROR:",
                 repr(email_error),
                 flush=True
             )
@@ -519,8 +512,6 @@ Your MyStore Team
             },
             status=400
         )
-
-
 # =========================================================
 # MY ORDERS
 # =========================================================
