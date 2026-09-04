@@ -365,16 +365,17 @@ by applying coupon code {coupon_code}.
         # FINAL PRICE
         # =================================================
 
-        original_total = total_amount + delivery
+        original_total = total_amount
 
         email_body += f"""
 ========================================
              PAYMENT SUMMARY
 ========================================
 
-Original Total : ₹{original_total:.2f}
-Discount       : ₹{discount_amount:.2f}
-Delivery       : ₹{delivery:.2f}
+Subtotal       : ₹{total_amount:.2f}
+Discount       : -₹{discount_amount:.2f}
+After Discount : ₹{total_amount - discount_amount:.2f}
+Delivery       : +₹{delivery:.2f}
 
 ----------------------------------------
 FINAL TOTAL    : ₹{final_total:.2f}
