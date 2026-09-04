@@ -390,7 +390,24 @@ Your MyStore Team
 
         try:
 
-            resend.Emails.send(
+            print(
+                "STARTING RESEND EMAIL",
+                flush=True
+            )
+
+            print(
+                "Recipient:",
+                user.email,
+                flush=True
+            )
+
+            print(
+                "Order ID:",
+                order.id,
+                flush=True
+            )
+
+            response = resend.Emails.send(
                 {
                     "from": "MyStore <onboarding@resend.dev>",
                     "to": [user.email],
@@ -402,11 +419,23 @@ Your MyStore Team
                 }
             )
 
+            print(
+                "RESEND RESPONSE:",
+                response,
+                flush=True
+            )
+
+            print(
+                "EMAIL SENT SUCCESSFULLY",
+                flush=True
+            )
+
         except Exception as email_error:
 
             print(
-                "Email sending failed:",
-                email_error
+                "RESEND EMAIL ERROR:",
+                repr(email_error),
+                flush=True
             )
 
         # =================================================
@@ -491,6 +520,7 @@ Your MyStore Team
             status=400
         )
 
+
 # =========================================================
 # MY ORDERS
 # =========================================================
@@ -504,11 +534,18 @@ def my_orders(request):
             status=401
         )
 
-    orders = Order.objects.filter(
-        user=request.user
-    ).prefetch_related(
-        "items__product"
-    ).order_by("-created_at")
+    orders = (
+        Order.objects
+        .filter(
+            user=request.user
+        )
+        .prefetch_related(
+            "items__product"
+        )
+        .order_by(
+            "-created_at"
+        )
+    )
 
     data = []
 
@@ -518,43 +555,50 @@ def my_orders(request):
 
         for item in order.items.all():
 
-            items.append({
-                "id": item.id,
-                "product_id": item.product.id,
-                "name": item.product.name,
-                "quantity": item.quantity,
-                "price": float(item.price),
+            items.append(
+                {
+                    "id": item.id,
 
-                "image": (
-                    request.build_absolute_uri(
-                        item.product.image.url
-                    )
-                    if item.product.image
-                    else None
+                    "product_id": item.product.id,
+
+                    "name": item.product.name,
+
+                    "quantity": item.quantity,
+
+                    "price": float(
+                        item.price
+                    ),
+
+                    "image": (
+                        request.build_absolute_uri(
+                            item.product.image.url
+                        )
+                        if item.product.image
+                        else None
+                    ),
+                }
+            )
+
+        data.append(
+            {
+                "id": order.id,
+
+                "total_amount": float(
+                    order.total_amount
                 ),
-            })
 
-        data.append({
+                "status": order.status,
 
-            "id": order.id,
+                "created_at": order.created_at,
 
-            "total_amount": float(
-                order.total_amount
-            ),
-
-            "status": order.status,
-
-            "created_at": order.created_at,
-
-            "items": items,
-
-        })
+                "items": items,
+            }
+        )
 
     return JsonResponse(
         data,
         safe=False
     )
-
 
 # =========================================================
 # CURRENT USER
