@@ -7,6 +7,7 @@ import json
 from .models import Product, Order, OrderItem, Coupon, EmailOTP,Wishlist
 import random
 import os
+import requests
 import resend
 from django.conf import settings
 from django.core.mail import send_mail
@@ -393,7 +394,7 @@ Your MyStore Team
         try:
 
             print(
-                "STARTING BREVO EMAIL",
+                "STARTING BREVO API EMAIL",
                 flush=True
             )
 
@@ -409,26 +410,59 @@ Your MyStore Team
                 flush=True
             )
 
-            send_mail(
-                subject=(
-                    f"🎉 Order Confirmation - "
-                    f"Order #{order.id}"
-                ),
-                message=email_body,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
-                fail_silently=False,
+            brevo_api_key = os.environ.get(
+                "BREVO_API_KEY"
+            )
+
+            response = requests.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={
+                    "accept": "application/json",
+                    "api-key": brevo_api_key,
+                    "content-type": "application/json",
+                },
+                json={
+                    "sender": {
+                        "name": "MyStore",
+                        "email": settings.EMAIL_HOST_USER,
+                    },
+                    "to": [
+                        {
+                            "email": user.email,
+                        }
+                    ],
+                    "subject": (
+                        f"🎉 Order Confirmation - "
+                        f"Order #{order.id}"
+                    ),
+                    "textContent": email_body,
+                },
+                timeout=10,
             )
 
             print(
-                "BREVO EMAIL SENT SUCCESSFULLY",
+                "BREVO API STATUS:",
+                response.status_code,
+                flush=True
+            )
+
+            print(
+                "BREVO API RESPONSE:",
+                response.text,
+                flush=True
+            )
+
+            response.raise_for_status()
+
+            print(
+                "BREVO API EMAIL SENT SUCCESSFULLY",
                 flush=True
             )
 
         except Exception as email_error:
 
             print(
-                "BREVO EMAIL ERROR:",
+                "BREVO API EMAIL ERROR:",
                 repr(email_error),
                 flush=True
             )
@@ -514,6 +548,7 @@ Your MyStore Team
             },
             status=400
         )
+
 # =========================================================
 # MY ORDERS
 # =========================================================
