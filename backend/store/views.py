@@ -8,6 +8,7 @@ from .models import Product, Order, OrderItem, Coupon, EmailOTP,Wishlist
 import random
 import os
 import resend
+from django.conf import settings
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
@@ -413,7 +414,7 @@ Your MyStore Team
                     f"Order #{order.id}"
                 ),
                 message=email_body,
-                from_email=EMAIL_HOST_USER,
+                from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[user.email],
                 fail_silently=False,
             )
