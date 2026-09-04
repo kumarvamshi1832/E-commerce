@@ -6,6 +6,10 @@ import json
 
 from .models import Product, Order, OrderItem, Coupon, EmailOTP,Wishlist
 import random
+import os
+import resend
+
+resend.api_key = os.environ.get("RESEND_API_KEY")
 
 
 # =========================================================
@@ -90,7 +94,6 @@ def create_order(request):
         # =================================================
 
         data = json.loads(request.body)
-
         user = request.user
 
         # =================================================
@@ -148,7 +151,6 @@ def create_order(request):
         # =================================================
 
         total_amount = 0
-
         order_items_data = []
 
         for item in items:
@@ -214,7 +216,10 @@ def create_order(request):
         # DELIVERY
         # =================================================
 
-        pincode = data.get("pincode", "").strip()
+        pincode = data.get(
+            "pincode",
+            ""
+        ).strip()
 
         if len(pincode) != 6 or not pincode.isdigit():
             return JsonResponse(
@@ -380,21 +385,31 @@ Your MyStore Team
 """
 
         # =================================================
-        # SEND EMAIL
+        # SEND EMAIL USING RESEND
         # =================================================
 
-        # send_mail(
-        #     subject=(
-        #         f"🎉 Order Confirmation - "
-        #         f"Order #{order.id}"
-        #     ),
-        #     message=email_body,
-        #     from_email=None,
-        #     recipient_list=[user.email],
-        #     fail_silently=True,
-        # )
+        try:
 
-        # # =================================================
+            resend.Emails.send(
+                {
+                    "from": "MyStore <onboarding@resend.dev>",
+                    "to": [user.email],
+                    "subject": (
+                        f"🎉 Order Confirmation - "
+                        f"Order #{order.id}"
+                    ),
+                    "text": email_body,
+                }
+            )
+
+        except Exception as email_error:
+
+            print(
+                "Email sending failed:",
+                email_error
+            )
+
+        # =================================================
         # SUCCESS RESPONSE
         # =================================================
 
