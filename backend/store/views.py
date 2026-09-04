@@ -424,7 +424,7 @@ Your MyStore Team
                 json={
                     "sender": {
                         "name": "MyStore",
-                        "email": settings.EMAIL_HOST_USER,
+                        "email": "kumarvamshi1832@gmail.com",
                     },
                     "to": [
                         {
