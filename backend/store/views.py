@@ -9,6 +9,7 @@ import random
 import os
 import resend
 from django.conf import settings
+from django.core.mail import send_mail
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
