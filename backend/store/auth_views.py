@@ -7,6 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password, check_password
 import json
 import random
+import os
+import requests
 
 
 OTP_EXPIRY = 5 * 60  # 5 minutes
@@ -15,9 +17,9 @@ OTP_EXPIRY = 5 * 60  # 5 minutes
 def generate_otp():
     return str(random.randint(100000, 999999))
 
-
 @csrf_exempt
 def register_user(request):
+
     if request.method != "POST":
         return JsonResponse(
             {"error": "Only POST requests are allowed."},
@@ -25,14 +27,35 @@ def register_user(request):
         )
 
     try:
+
         data = json.loads(request.body)
 
-        username = data.get("username", "").strip()
-        email = data.get("email", "").strip().lower()
-        password = data.get("password", "")
-        confirm_password = data.get("confirm_password", "")
+        username = data.get(
+            "username",
+            ""
+        ).strip()
 
-        if not username or not email or not password or not confirm_password:
+        email = data.get(
+            "email",
+            ""
+        ).strip().lower()
+
+        password = data.get(
+            "password",
+            ""
+        )
+
+        confirm_password = data.get(
+            "confirm_password",
+            ""
+        )
+
+        if (
+            not username
+            or not email
+            or not password
+            or not confirm_password
+        ):
             return JsonResponse(
                 {"error": "All fields are required."},
                 status=400
@@ -45,14 +68,19 @@ def register_user(request):
             )
 
         # Check username
+
         existing_username = User.objects.filter(
             username__iexact=username
         ).first()
 
         if existing_username:
-            # Allow retry if previous registration was never verified
+
+            # Allow retry if previous registration
+            # was never verified
+
             if not existing_username.is_active:
                 existing_username.delete()
+
             else:
                 return JsonResponse(
                     {"error": "Username already exists."},
@@ -60,20 +88,29 @@ def register_user(request):
                 )
 
         # Check email
+
         existing_email = User.objects.filter(
             email__iexact=email
         ).first()
 
         if existing_email:
+
             if not existing_email.is_active:
                 existing_email.delete()
+
             else:
                 return JsonResponse(
-                    {"error": "User already exists with this email."},
+                    {
+                        "error": (
+                            "User already exists "
+                            "with this email."
+                        )
+                    },
                     status=400
                 )
 
         # Create inactive user
+
         user = User.objects.create_user(
             username=username,
             email=email,
@@ -81,51 +118,155 @@ def register_user(request):
         )
 
         # User cannot login until OTP is verified
+
         user.is_active = False
         user.save()
 
         # Generate OTP
+
         otp = generate_otp()
 
         # Store hashed OTP in cache
+
         cache.set(
             f"registration_otp_{user.id}",
             make_password(otp),
             OTP_EXPIRY
         )
 
-        # Send OTP email
-        send_mail(
-            subject="Your MyStore Verification OTP",
-            message=(
-                f"Hello {username},\n\n"
-                f"Your OTP for account verification is: {otp}\n\n"
-                f"This OTP is valid for 5 minutes.\n\n"
-                f"If you did not create this account, please ignore this email."
-            ),
-            from_email=None,
-            recipient_list=[email],
-            fail_silently=False,
-        )
+        # =================================================
+        # SEND REGISTRATION OTP USING BREVO API
+        # =================================================
+
+        try:
+
+            print(
+                "STARTING BREVO REGISTRATION OTP",
+                flush=True
+            )
+
+            print(
+                "OTP Recipient:",
+                email,
+                flush=True
+            )
+
+            brevo_api_key = os.environ.get(
+                "BREVO_API_KEY"
+            )
+
+            otp_message = f"""
+Hello {username},
+
+Your MyStore verification OTP is:
+
+{otp}
+
+This OTP is valid for 5 minutes.
+
+If you did not create an account, please ignore this email.
+
+MyStore Team
+"""
+
+            response = requests.post(
+                "https://api.brevo.com/v3/smtp/email",
+
+                headers={
+                    "accept": "application/json",
+                    "api-key": brevo_api_key,
+                    "content-type": "application/json",
+                },
+
+                json={
+                    "sender": {
+                        "name": "MyStore",
+                        "email": "kumarvamshi1832@gmail.com",
+                    },
+
+                    "to": [
+                        {
+                            "email": email,
+                        }
+                    ],
+
+                    "subject": (
+                        "Your MyStore Verification OTP"
+                    ),
+
+                    "textContent": otp_message,
+                },
+
+                timeout=10,
+            )
+
+            print(
+                "BREVO REGISTRATION OTP STATUS:",
+                response.status_code,
+                flush=True
+            )
+
+            print(
+                "BREVO REGISTRATION OTP RESPONSE:",
+                response.text,
+                flush=True
+            )
+
+            response.raise_for_status()
+
+            print(
+                "BREVO REGISTRATION OTP SENT SUCCESSFULLY",
+                flush=True
+            )
+
+        except Exception as email_error:
+
+            print(
+                "BREVO REGISTRATION OTP ERROR:",
+                repr(email_error),
+                flush=True
+            )
+
+            return JsonResponse(
+                {
+                    "error": (
+                        "Unable to send OTP email. "
+                        "Please try again."
+                    )
+                },
+                status=500
+            )
 
         return JsonResponse(
             {
-                "message": "OTP sent successfully to your email.",
+                "message": (
+                    "OTP sent successfully "
+                    "to your email."
+                ),
+
                 "user_id": user.id,
+
                 "email": email,
             },
+
             status=201
         )
 
     except json.JSONDecodeError:
+
         return JsonResponse(
-            {"error": "Invalid JSON data."},
+            {
+                "error": "Invalid JSON data."
+            },
             status=400
         )
 
     except Exception as e:
+
         return JsonResponse(
-            {"error": str(e)},
+            {
+                "error": str(e)
+            },
             status=500
         )
 
