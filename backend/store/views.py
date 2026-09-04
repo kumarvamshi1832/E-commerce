@@ -882,7 +882,6 @@ def apply_coupon(request):
             {"error": str(e)},
             status=400
         )
-
 @csrf_exempt
 def send_otp(request):
 
@@ -894,31 +893,61 @@ def send_otp(request):
 
     data = json.loads(request.body)
 
-    username = data.get("username", "").strip()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "")
+    username = data.get(
+        "username",
+        ""
+    ).strip()
+
+    email = data.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    password = data.get(
+        "password",
+        ""
+    )
 
     # Check email format
+
     if not email.endswith("@gmail.com"):
         return JsonResponse(
-            {"error": "Please use a valid Gmail address"},
+            {
+                "error": "Please use a valid Gmail address"
+            },
             status=400
         )
 
     # Check existing email
-    if User.objects.filter(email=email).exists():
+
+    if User.objects.filter(
+        email=email
+    ).exists():
+
         return JsonResponse(
-            {"error": "Email already registered"},
+            {
+                "error": "Email already registered"
+            },
             status=400
         )
 
     # Generate OTP
-    otp = str(random.randint(100000, 999999))
+
+    otp = str(
+        random.randint(
+            100000,
+            999999
+        )
+    )
 
     # Remove old OTP for this email
-    EmailOTP.objects.filter(email=email).delete()
+
+    EmailOTP.objects.filter(
+        email=email
+    ).delete()
 
     # Save pending registration
+
     EmailOTP.objects.create(
         email=email,
         username=username,
@@ -926,10 +955,28 @@ def send_otp(request):
         otp=otp
     )
 
-    # Send OTP
-    send_mail(
-        subject="MyStore Email Verification OTP",
-        message=f"""
+    # =================================================
+    # SEND OTP USING BREVO API
+    # =================================================
+
+    try:
+
+        print(
+            "STARTING BREVO OTP EMAIL",
+            flush=True
+        )
+
+        print(
+            "OTP Recipient:",
+            email,
+            flush=True
+        )
+
+        brevo_api_key = os.environ.get(
+            "BREVO_API_KEY"
+        )
+
+        otp_message = f"""
 Hello {username},
 
 Your MyStore verification OTP is:
@@ -941,16 +988,75 @@ This OTP is valid for 5 minutes.
 If you did not create an account, please ignore this email.
 
 MyStore Team
-""",
-        from_email=None,
-        recipient_list=[email],
-        fail_silently=False,
-    )
+"""
 
-    return JsonResponse({
-        "message": "OTP sent successfully"
-    })
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
 
+            headers={
+                "accept": "application/json",
+                "api-key": brevo_api_key,
+                "content-type": "application/json",
+            },
+
+            json={
+                "sender": {
+                    "name": "MyStore",
+                    "email": "kumarvamshi1832@gmail.com",
+                },
+
+                "to": [
+                    {
+                        "email": email,
+                    }
+                ],
+
+                "subject": (
+                    "MyStore Email Verification OTP"
+                ),
+
+                "textContent": otp_message,
+            },
+
+            timeout=10,
+        )
+
+        print(
+            "BREVO OTP API STATUS:",
+            response.status_code,
+            flush=True
+        )
+
+        print(
+            "BREVO OTP API RESPONSE:",
+            response.text,
+            flush=True
+        )
+
+        response.raise_for_status()
+
+        print(
+            "BREVO OTP EMAIL SENT SUCCESSFULLY",
+            flush=True
+        )
+
+    except Exception as email_error:
+
+        print(
+            "BREVO OTP EMAIL ERROR:",
+            repr(email_error),
+            flush=True
+        )
+
+        return JsonResponse(
+            {
+                "error": (
+                    "Unable to send OTP email. "
+                    "Please try again."
+                )
+            },
+            status=500
+        )
 @csrf_exempt
 def add_to_wishlist(request, product_id):
     if not request.user.is_authenticated:
