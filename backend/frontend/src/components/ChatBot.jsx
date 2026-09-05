@@ -500,7 +500,7 @@ if (
         onClick={() => setIsOpen((previous) => !previous)}
         aria-label="Open customer support"
       >
-        💬
+        🤖
       </button>
 
       
