@@ -13,6 +13,8 @@ import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import Wishlist from "./pages/Wishlist";
 
+import ChatBot from "./components/ChatBot";
+
 import { CartProvider } from "./context/CartContext";
 
 function App() {
@@ -67,7 +69,9 @@ function App() {
   path="/wishlist"
   element={<Wishlist />}
 />
+
         </Routes>
+        <ChatBot />
 
       </BrowserRouter>
     </CartProvider>
