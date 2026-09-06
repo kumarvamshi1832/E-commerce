@@ -9,6 +9,7 @@ import json
 import random
 import os
 import requests
+from rest_framework.authtoken.models import Token
 
 
 OTP_EXPIRY = 5 * 60  # 5 minutes
@@ -583,18 +584,20 @@ def login_user(request):
                 status=401
             )
 
-        login(request, authenticated_user)
-
+        token, created = Token.objects.get_or_create(
+    user=authenticated_user
+)
         return JsonResponse(
-            {
-                "message": "Login successful!",
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                }
-            }
-        )
+    {
+        "message": "Login successful!",
+        "token": token.key,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+        }
+    }
+)
 
     except json.JSONDecodeError:
         return JsonResponse(

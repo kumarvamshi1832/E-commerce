@@ -48,9 +48,14 @@ function Login() {
 
       // Save the logged-in user for now.
       localStorage.setItem(
-        "user",
-        JSON.stringify(response.data.user)
-      );
+  "user",
+  JSON.stringify(response.data.user)
+);
+
+localStorage.setItem(
+  "token",
+  response.data.token
+);
 
       setTimeout(() => {
         navigate("/");
