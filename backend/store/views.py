@@ -14,6 +14,37 @@ from django.core.mail import send_mail
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
+from functools import wraps
+from rest_framework.authtoken.models import Token
+
+def token_auth_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+
+        # Check Authorization header
+        auth_header = request.headers.get("Authorization", "")
+
+        if auth_header.startswith("Token "):
+
+            token_key = auth_header.split(" ", 1)[1].strip()
+
+            if token_key:
+
+                try:
+                    token = Token.objects.select_related("user").get(
+                        key=token_key
+                    )
+
+                    # Replace anonymous/session user with token user
+                    request.user = token.user
+
+                except Token.DoesNotExist:
+                    pass
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
 
 # =========================================================
 # PRODUCT LIST
@@ -82,6 +113,7 @@ def product_detail(request, product_id):
 # CREATE ORDER
 # =========================================================
 @csrf_exempt
+@token_auth_required
 def create_order(request):
 
     if request.method != "POST":
@@ -554,6 +586,7 @@ Your MyStore Team
 # MY ORDERS
 # =========================================================
 
+@token_auth_required
 def my_orders(request):
 
     if not request.user.is_authenticated:
@@ -633,6 +666,7 @@ def my_orders(request):
 # CURRENT USER
 # =========================================================
 
+@token_auth_required
 def current_user(request):
 
     if not request.user.is_authenticated:
@@ -653,6 +687,7 @@ def current_user(request):
 # ORDER DETAIL
 # =========================================================
 
+@token_auth_required
 def order_detail(request, order_id):
 
     if not request.user.is_authenticated:
@@ -743,8 +778,8 @@ def order_detail(request, order_id):
 # =========================================================
 # CANCEL ORDER
 # =========================================================
-
 @csrf_exempt
+@token_auth_required
 def cancel_order(request, order_id):
 
     if request.method != "POST":
@@ -1059,7 +1094,9 @@ MyStore Team
             status=500
         )
 @csrf_exempt
+@token_auth_required
 def add_to_wishlist(request, product_id):
+    
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Please login to add items to wishlist"},
@@ -1094,6 +1131,8 @@ def add_to_wishlist(request, product_id):
         "wishlisted": True
     })
 
+
+@token_auth_required
 def get_wishlist(request):
     if not request.user.is_authenticated:
         return JsonResponse(
@@ -1127,8 +1166,11 @@ def get_wishlist(request):
 
     return JsonResponse(data, safe=False)
 
+
 @csrf_exempt
+@token_auth_required
 def remove_from_wishlist(request, product_id):
+    
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Please login"},
