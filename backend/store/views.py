@@ -1095,11 +1095,11 @@ def create_support_ticket(request):
     # VALIDATE SUBJECT
     # =========================
 
-    if not subject:
-        return JsonResponse(
-            {"error": "Subject is required."},
-            status=400
-        )
+    # if not subject:
+    #     return JsonResponse(
+    #         {"error": "Subject is required."},
+    #         status=400
+    #     )
 
     if len(subject) > 200:
         return JsonResponse(

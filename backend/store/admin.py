@@ -197,7 +197,7 @@ class SupportTicketAdmin(admin.ModelAdmin):
         "id",
         "user",
         "category",
-        "subject",
+        # "subject",
         "order",
         "status",
         "created_at",
@@ -213,7 +213,7 @@ class SupportTicketAdmin(admin.ModelAdmin):
     search_fields = (
         "user__username",
         "user__email",
-        "subject",
+        # "subject",
         "description",
     )
 
@@ -221,7 +221,7 @@ class SupportTicketAdmin(admin.ModelAdmin):
         "user",
         "order",
         "category",
-        "subject",
+        # "subject",
         "description",
         "status",
         "admin_reply",
@@ -234,7 +234,7 @@ class SupportTicketAdmin(admin.ModelAdmin):
         "user",
         "order",
         "category",
-        "subject",
+        # "subject",
         "description",
         "created_at",
         "updated_at",
@@ -312,7 +312,7 @@ class SupportMessageAdmin(admin.ModelAdmin):
 
     search_fields = (
         "message",
-        "ticket__subject",
+        # "ticket__subject",
         "ticket__user__username",
         "ticket__user__email",
     )

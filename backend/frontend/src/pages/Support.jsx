@@ -10,7 +10,7 @@ function Support() {
   const [formData, setFormData] = useState({
     category: "",
     order_id: "",
-    subject: "",
+    // subject: "",
     description: "",
   });
 
@@ -92,10 +92,10 @@ function Support() {
       return;
     }
 
-    if (!formData.subject.trim()) {
-      setError("Please enter a subject.");
-      return;
-    }
+    // if (!formData.subject.trim()) {
+    //   setError("Please enter a subject.");
+    //   return;
+    // }
 
     if (!formData.description.trim()) {
       setError("Please describe your issue.");
@@ -112,7 +112,7 @@ function Support() {
         {
           category: formData.category,
           order_id: formData.order_id || null,
-          subject: formData.subject.trim(),
+        //   subject: formData.subject.trim(),
           description: formData.description.trim(),
         }
       );
@@ -125,7 +125,7 @@ function Support() {
       setFormData({
         category: "",
         order_id: "",
-        subject: "",
+        // subject: "",
         description: "",
       });
 
@@ -218,7 +218,7 @@ function Support() {
             </select>
           </div>
 
-          <div className="support-form-group">
+          {/* <div className="support-form-group">
             <label htmlFor="subject">
               Subject
             </label>
@@ -232,7 +232,7 @@ function Support() {
               placeholder="Example: Payment deducted but order not created"
               maxLength={200}
             />
-          </div>
+          </div> */}
 
           <div className="support-form-group">
             <label htmlFor="description">
