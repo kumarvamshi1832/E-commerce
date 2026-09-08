@@ -72,6 +72,155 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
 
+class ProductFeedback(models.Model):
+
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Replied', 'Replied'),
+        ('Closed', 'Closed'),
+    ]
+
+    order_item = models.ForeignKey(
+    OrderItem,
+    on_delete=models.CASCADE,
+    related_name='feedbacks'
+)
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='product_feedbacks'
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='feedbacks'
+    )
+
+    feedback = models.TextField()
+
+    admin_reply = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    replied_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return f"Feedback - {self.product.name} - {self.user.username}"
+
+class SupportTicket(models.Model):
+
+    STATUS_CHOICES = [
+        ("Open", "Open"),
+        ("In Progress", "In Progress"),
+        ("Resolved", "Resolved"),
+        ("Closed", "Closed"),
+    ]
+
+    CATEGORY_CHOICES = [
+        ("Order", "Order"),
+        ("Payment", "Payment"),
+        ("Delivery", "Delivery"),
+        ("Product", "Product"),
+        ("Refund", "Refund"),
+        ("Account", "Account"),
+        ("Other", "Other"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="support_tickets"
+    )
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="support_tickets"
+    )
+
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES
+    )
+
+    subject = models.CharField(
+        max_length=200
+    )
+
+    description = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Open"
+    )
+
+    admin_reply = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    resolved_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.subject}"
+
+class SupportMessage(models.Model):
+
+    SENDER_CHOICES = [
+        ("Customer", "Customer"),
+        ("Admin", "Admin"),
+    ]
+
+    ticket = models.ForeignKey(
+        SupportTicket,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+
+    sender = models.CharField(
+        max_length=20,
+        choices=SENDER_CHOICES
+    )
+
+    message = models.TextField()
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"Ticket #{self.ticket.id} - {self.sender}"
+
 
 class Coupon(models.Model):
 

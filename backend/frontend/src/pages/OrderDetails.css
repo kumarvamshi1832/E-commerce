@@ -425,3 +425,152 @@
     animation: none;
   }
 }
+
+/* =========================
+   PRODUCT FEEDBACK
+========================= */
+
+.order-item-feedback {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.feedback-button {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #111827;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.feedback-button:hover {
+  background: #374151;
+}
+
+.feedback-history {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.no-feedback {
+  margin: 0 0 14px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.feedback-card {
+  padding: 14px;
+  margin-bottom: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.feedback-card:last-child {
+  margin-bottom: 18px;
+}
+
+.feedback-label,
+.admin-reply-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.feedback-text {
+  margin: 0 0 10px;
+  color: #111827;
+  line-height: 1.5;
+}
+
+.feedback-status {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.admin-reply {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.admin-reply p:last-of-type {
+  margin: 0 0 6px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.admin-reply small {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.no-admin-reply {
+  margin: 12px 0 0;
+  color: #9ca3af;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* =========================
+   NEW FEEDBACK
+========================= */
+
+.new-feedback {
+  margin-top: 14px;
+}
+
+.new-feedback textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 12px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.new-feedback textarea:focus {
+  border-color: #111827;
+}
+
+.new-feedback button {
+  margin-top: 10px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #111827;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.new-feedback button:hover {
+  background: #374151;
+}
+
+.new-feedback button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.new-feedback > p {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #374151;
+}

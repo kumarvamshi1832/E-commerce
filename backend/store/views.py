@@ -1,10 +1,12 @@
-from django.http import JsonResponse
-from django.core.mail import send_mail
-from django.views.decorators.csrf import csrf_exempt
-
 import json
 
-from .models import Product, Order, OrderItem, Coupon, EmailOTP,Wishlist
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+from .models import (Product, Order, OrderItem, Coupon,
+                     EmailOTP,Wishlist,ProductFeedback,
+                     SupportTicket,SupportMessage,)
 import random
 import os
 import requests
@@ -665,23 +667,118 @@ def my_orders(request):
 # =========================================================
 # CURRENT USER
 # =========================================================
-
+@csrf_exempt
 @token_auth_required
 def current_user(request):
 
     if not request.user.is_authenticated:
-
         return JsonResponse(
             {"error": "Not logged in"},
             status=401
         )
 
-    return JsonResponse({
-        "id": request.user.id,
-        "username": request.user.username,
-        "email": request.user.email,
-    })
+    # =========================
+    # GET PROFILE
+    # =========================
 
+    if request.method == "GET":
+
+        return JsonResponse({
+            "id": request.user.id,
+            "username": request.user.username,
+            "email": request.user.email,
+        })
+
+    # =========================
+    # UPDATE PROFILE
+    # =========================
+
+    if request.method == "PUT":
+
+        try:
+            data = json.loads(request.body)
+
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"error": "Invalid JSON data"},
+                status=400
+            )
+
+        username = data.get("username", "").strip()
+        email = data.get("email", "").strip()
+        password = data.get("password", "").strip()
+
+        # Username validation
+        if not username:
+            return JsonResponse(
+                {"error": "Username is required."},
+                status=400
+            )
+
+        # Email validation
+        if not email:
+            return JsonResponse(
+                {"error": "Email is required."},
+                status=400
+            )
+
+        # Check username already exists
+        if User.objects.filter(
+            username=username
+        ).exclude(
+            id=request.user.id
+        ).exists():
+
+            return JsonResponse(
+                {"error": "Username already exists."},
+                status=400
+            )
+
+        # Check email already exists
+        if User.objects.filter(
+            email=email
+        ).exclude(
+            id=request.user.id
+        ).exists():
+
+            return JsonResponse(
+                {"error": "Email already exists."},
+                status=400
+            )
+
+        # Update username and email
+        request.user.username = username
+        request.user.email = email
+
+        # Update password only if entered
+        if password:
+
+            if len(password) < 8:
+                return JsonResponse(
+                    {
+                        "error":
+                        "Password must be at least 8 characters."
+                    },
+                    status=400
+                )
+
+            request.user.set_password(password)
+
+        request.user.save()
+
+        return JsonResponse({
+            "message": "Profile updated successfully.",
+            "user": {
+                "id": request.user.id,
+                "username": request.user.username,
+                "email": request.user.email,
+            }
+        })
+
+    return JsonResponse(
+        {"error": "Method not allowed"},
+        status=405
+    )
 
 # =========================================================
 # ORDER DETAIL
@@ -774,6 +871,498 @@ def order_detail(request, order_id):
         "items": order_items,
     })
 
+# =========================================================
+# PRODUCT FEEDBACK
+# =========================================================
+
+@csrf_exempt
+@token_auth_required
+def submit_feedback(request, order_item_id):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed"},
+            status=405
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "User must be logged in"},
+            status=401
+        )
+
+    try:
+        # -------------------------------------------------
+        # GET ORDER ITEM
+        # -------------------------------------------------
+
+        order_item = OrderItem.objects.select_related(
+            "order",
+            "product"
+        ).get(
+            id=order_item_id,
+            order__user=request.user
+        )
+
+    except OrderItem.DoesNotExist:
+        return JsonResponse(
+            {"error": "Order item not found"},
+            status=404
+        )
+
+    # -------------------------------------------------
+    # ONLY DELIVERED ORDERS CAN GIVE FEEDBACK
+    # -------------------------------------------------
+
+    if order_item.order.status != "Delivered":
+        return JsonResponse(
+            {
+                "error": (
+                    "You can give feedback only after "
+                    "your order has been delivered."
+                )
+            },
+            status=400
+        )
+
+    # -------------------------------------------------
+    # READ REQUEST DATA
+    # -------------------------------------------------
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data"},
+            status=400
+        )
+
+    feedback_text = data.get(
+        "feedback",
+        ""
+    ).strip()
+
+    # -------------------------------------------------
+    # VALIDATE FEEDBACK
+    # -------------------------------------------------
+
+    if not feedback_text:
+        return JsonResponse(
+            {"error": "Please enter your feedback."},
+            status=400
+        )
+
+    if len(feedback_text) > 2000:
+        return JsonResponse(
+            {"error": "Feedback cannot exceed 2000 characters."},
+            status=400
+        )
+
+    # -------------------------------------------------
+    # CREATE FEEDBACK
+    # -------------------------------------------------
+
+    feedback = ProductFeedback.objects.create(
+        order_item=order_item,
+        user=request.user,
+        product=order_item.product,
+        feedback=feedback_text,
+        status="Pending"
+    )
+
+    # -------------------------------------------------
+    # SUCCESS RESPONSE
+    # -------------------------------------------------
+
+    return JsonResponse(
+        {
+            "message": "Feedback submitted successfully.",
+            "feedback": {
+                "id": feedback.id,
+                "product_id": feedback.product.id,
+                "product_name": feedback.product.name,
+                "feedback": feedback.feedback,
+                "admin_reply": feedback.admin_reply,
+                "status": feedback.status,
+                "created_at": feedback.created_at,
+            }
+        },
+        status=201
+    )
+
+@token_auth_required
+def get_feedback(request, order_item_id):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed"},
+            status=405
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "User must be logged in"},
+            status=401
+        )
+
+    try:
+        order_item = OrderItem.objects.select_related(
+            "order",
+            "product"
+        ).get(
+            id=order_item_id,
+            order__user=request.user
+        )
+
+    except OrderItem.DoesNotExist:
+        return JsonResponse(
+            {"error": "Order item not found"},
+            status=404
+        )
+
+    feedbacks = ProductFeedback.objects.filter(
+        order_item=order_item
+    ).order_by("-created_at")
+
+    return JsonResponse({
+        "order_item_id": order_item.id,
+        "product_id": order_item.product.id,
+        "product_name": order_item.product.name,
+
+        "feedbacks": [
+            {
+                "id": feedback.id,
+                "feedback": feedback.feedback,
+                "admin_reply": feedback.admin_reply,
+                "status": feedback.status,
+                "created_at": feedback.created_at,
+                "replied_at": feedback.replied_at,
+            }
+            for feedback in feedbacks
+        ]
+    })
+@csrf_exempt
+@token_auth_required
+def create_support_ticket(request):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed"},
+            status=405
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "User must be logged in"},
+            status=401
+        )
+
+    try:
+        data = json.loads(request.body)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data"},
+            status=400
+        )
+
+    category = data.get("category", "").strip()
+    subject = data.get("subject", "").strip()
+    description = data.get("description", "").strip()
+    order_id = data.get("order_id")
+
+    # =========================
+    # VALID CATEGORIES
+    # =========================
+
+    valid_categories = [
+        "Order",
+        "Payment",
+        "Delivery",
+        "Product",
+        "Refund",
+        "Account",
+        "Other",
+    ]
+
+    if category not in valid_categories:
+        return JsonResponse(
+            {"error": "Please select a valid category."},
+            status=400
+        )
+
+    # =========================
+    # VALIDATE SUBJECT
+    # =========================
+
+    if not subject:
+        return JsonResponse(
+            {"error": "Subject is required."},
+            status=400
+        )
+
+    if len(subject) > 200:
+        return JsonResponse(
+            {"error": "Subject cannot exceed 200 characters."},
+            status=400
+        )
+
+    # =========================
+    # VALIDATE DESCRIPTION
+    # =========================
+
+    if not description:
+        return JsonResponse(
+            {"error": "Description is required."},
+            status=400
+        )
+
+    if len(description) > 5000:
+        return JsonResponse(
+            {"error": "Description cannot exceed 5000 characters."},
+            status=400
+        )
+
+    # =========================
+    # OPTIONAL ORDER
+    # =========================
+
+    order = None
+
+    if order_id:
+
+        try:
+            order = Order.objects.get(
+                id=order_id,
+                user=request.user
+            )
+
+        except Order.DoesNotExist:
+            return JsonResponse(
+                {"error": "Order not found."},
+                status=404
+            )
+
+    # =========================
+    # CREATE TICKET
+    # =========================
+
+    ticket = SupportTicket.objects.create(
+        user=request.user,
+        order=order,
+        category=category,
+        subject=subject,
+        description=description,
+        status="Open"
+    )
+
+    # =========================
+    # CREATE FIRST MESSAGE
+    # =========================
+
+    SupportMessage.objects.create(
+        ticket=ticket,
+        sender="Customer",
+        message=description
+    )
+
+    # =========================
+    # RESPONSE
+    # =========================
+
+    return JsonResponse(
+        {
+            "message": "Support ticket created successfully.",
+
+            "ticket": {
+                "id": ticket.id,
+                "category": ticket.category,
+                "subject": ticket.subject,
+                "description": ticket.description,
+                "status": ticket.status,
+                "order_id": ticket.order.id if ticket.order else None,
+                "created_at": ticket.created_at,
+            }
+        },
+        status=201
+    )
+
+
+@token_auth_required
+def my_support_tickets(request):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed"},
+            status=405
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "User must be logged in"},
+            status=401
+        )
+
+    tickets = SupportTicket.objects.filter(
+        user=request.user
+    ).select_related("order").order_by("-created_at")
+
+    return JsonResponse({
+        "tickets": [
+            {
+                "id": ticket.id,
+                "category": ticket.category,
+                "subject": ticket.subject,
+                "description": ticket.description,
+                "status": ticket.status,
+                "admin_reply": ticket.admin_reply,
+                "order_id": ticket.order.id if ticket.order else None,
+                "created_at": ticket.created_at,
+                "updated_at": ticket.updated_at,
+                "resolved_at": ticket.resolved_at,
+            }
+            for ticket in tickets
+        ]
+    })
+
+@token_auth_required
+def support_ticket_detail(request, ticket_id):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed"},
+            status=405
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "User must be logged in"},
+            status=401
+        )
+
+    try:
+        ticket = SupportTicket.objects.select_related(
+            "order"
+        ).prefetch_related(
+            "messages"
+        ).get(
+            id=ticket_id,
+            user=request.user
+        )
+
+    except SupportTicket.DoesNotExist:
+        return JsonResponse(
+            {"error": "Support ticket not found."},
+            status=404
+        )
+
+    return JsonResponse({
+        "ticket": {
+            "id": ticket.id,
+            "category": ticket.category,
+            "subject": ticket.subject,
+            "description": ticket.description,
+            "status": ticket.status,
+            "order_id": ticket.order.id if ticket.order else None,
+            "created_at": ticket.created_at,
+            "updated_at": ticket.updated_at,
+            "resolved_at": ticket.resolved_at,
+
+            "messages": [
+                {
+                    "id": message.id,
+                    "sender": message.sender,
+                    "message": message.message,
+                    "created_at": message.created_at,
+                }
+                for message in ticket.messages.all().order_by("created_at")
+            ],
+        }
+    })
+
+
+@csrf_exempt
+@token_auth_required
+def send_support_message(request, ticket_id):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed"},
+            status=405
+        )
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "User must be logged in"},
+            status=401
+        )
+
+    try:
+        ticket = SupportTicket.objects.get(
+            id=ticket_id,
+            user=request.user
+        )
+
+    except SupportTicket.DoesNotExist:
+        return JsonResponse(
+            {"error": "Support ticket not found."},
+            status=404
+        )
+
+    # Customer cannot reply to a closed ticket
+    if ticket.status == "Closed":
+        return JsonResponse(
+            {"error": "This support ticket is closed."},
+            status=400
+        )
+
+    try:
+        data = json.loads(request.body)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data"},
+            status=400
+        )
+
+    message_text = data.get("message", "").strip()
+
+    if not message_text:
+        return JsonResponse(
+            {"error": "Please enter a message."},
+            status=400
+        )
+
+    if len(message_text) > 5000:
+        return JsonResponse(
+            {"error": "Message cannot exceed 5000 characters."},
+            status=400
+        )
+
+    message = SupportMessage.objects.create(
+        ticket=ticket,
+        sender="Customer",
+        message=message_text
+    )
+
+    # If the ticket was resolved and customer replies,
+    # reopen it so support can continue the conversation.
+    if ticket.status == "Resolved":
+        ticket.status = "Open"
+        ticket.save(update_fields=["status", "updated_at"])
+
+    return JsonResponse(
+        {
+            "message": "Message sent successfully.",
+            "support_message": {
+                "id": message.id,
+                "sender": message.sender,
+                "message": message.message,
+                "created_at": message.created_at,
+            }
+        },
+        status=201
+    )
 
 # =========================================================
 # CANCEL ORDER

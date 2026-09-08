@@ -302,3 +302,109 @@
 .navbar .nav-links > a.active::after {
   width: 100%;
 }
+
+/* =========================
+   USER MENU
+========================= */
+
+.user-menu {
+  position: relative;
+}
+
+.welcome-user {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  padding: 8px 10px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: inherit;
+}
+
+.welcome-user:hover {
+  opacity: 0.75;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+}
+
+
+/* =========================
+   DROPDOWN
+========================= */
+
+.user-dropdown {
+  position: absolute;
+
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 190px;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+
+  padding: 7px;
+
+  z-index: 1000;
+}
+
+
+/* Dropdown buttons */
+
+.user-dropdown button {
+  width: 100%;
+
+  border: none;
+  background: transparent;
+
+  padding: 11px 12px;
+
+  border-radius: 7px;
+
+  text-align: left;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  color: #1f2937;
+}
+
+.user-dropdown button:hover {
+  background: #f3f4f6;
+}
+
+
+/* Divider */
+
+.dropdown-divider {
+  height: 1px;
+
+  background: #e5e7eb;
+
+  margin: 5px 0;
+}
+
+
+/* Logout */
+
+.user-dropdown .dropdown-logout {
+  color: #dc2626;
+}
+
+.user-dropdown .dropdown-logout:hover {
+  background: #fef2f2;
+}

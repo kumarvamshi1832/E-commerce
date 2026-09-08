@@ -1,10 +1,13 @@
-import { Link, useNavigate, } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import "./Navbar.css";
 
 function Navbar() {
   const { cartCount } = useCart();
   const navigate = useNavigate();
+
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -33,8 +36,6 @@ function Navbar() {
           Products
         </Link>
 
-        
-
         <Link to="/cart" className="cart-button">
           🛒
           <span>Cart</span>
@@ -48,25 +49,65 @@ function Navbar() {
 
         {user ? (
           <>
+            <Link to="/wishlist">
+              ❤️ Wishlist
+            </Link>
 
-          <Link to="/wishlist">
-      ❤️ Wishlist
-    </Link>
-            {/* My Orders - only logged-in users */}
             <Link to="/my-orders">
               My Orders
             </Link>
 
-            <span className="welcome-user">
-              Hi, {user.username}
-            </span>
+            {/* USER MENU */}
+            <div className="user-menu">
 
-            <button
-              className="logout-button"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
+              <button
+                type="button"
+                className="welcome-user"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                Hi, {user.username}
+                <span className="dropdown-arrow">
+                  {showUserMenu ? "▲" : "▼"}
+                </span>
+              </button>
+
+              {showUserMenu && (
+                <div className="user-dropdown">
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      navigate("/profile");
+                    }}
+                  >
+                    👤 My Profile
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      navigate("/support");
+                    }}
+                  >
+                    💬 Help & Support
+                  </button>
+
+                  <div className="dropdown-divider"></div>
+
+                  <button
+                    type="button"
+                    className="dropdown-logout"
+                    onClick={handleLogout}
+                  >
+                    🚪 Logout
+                  </button>
+
+                </div>
+              )}
+
+            </div>
           </>
         ) : (
           <>

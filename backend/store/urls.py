@@ -1,7 +1,23 @@
 from django.urls import path
 
 from .auth_views import register_user, login_user,verify_registration_otp,resend_registration_otp
-from .views import product_list, product_detail, create_order,current_user,my_orders, order_detail,cancel_order, apply_coupon
+from .views import (
+    product_list,
+    product_detail,
+    create_order,
+    current_user,
+    my_orders,
+    order_detail,
+    cancel_order,
+    apply_coupon,
+    submit_feedback,
+    get_feedback,
+    create_support_ticket,
+    my_support_tickets,
+    support_ticket_detail,
+    send_support_message,
+    )
+
 from .views import (
     get_wishlist,
     add_to_wishlist,
@@ -35,11 +51,14 @@ urlpatterns = [
     create_order,
     name="create-order"
 ),
+
 path(
     "my-orders/",
     my_orders,
     name="my-orders"
 ),
+
+
 
  path(
     "me/",
@@ -51,6 +70,42 @@ path(
     "orders/<int:order_id>/",
     order_detail,
     name="order-detail"
+),
+
+path(
+    "order-items/<int:order_item_id>/feedback/",
+    submit_feedback,
+    name="submit-feedback"
+),
+
+path(
+    "support/tickets/",
+    create_support_ticket,
+    name="create-support-ticket"
+),
+
+path(
+    "support/my-tickets/",
+    my_support_tickets,
+    name="my-support-tickets"
+),
+
+path(
+    "order-items/<int:order_item_id>/feedback/list/",
+    get_feedback,
+    name="get-feedback"
+),
+
+path(
+    "support/tickets/<int:ticket_id>/",
+    support_ticket_detail,
+    name="support-ticket-detail"
+),
+
+path(
+    "support/tickets/<int:ticket_id>/messages/",
+    send_support_message,
+    name="send-support-message"
 ),
 
 path(

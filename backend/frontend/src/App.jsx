@@ -15,6 +15,10 @@ import Wishlist from "./pages/Wishlist";
 
 import ChatBot from "./components/ChatBot";
 
+import Profile from "./pages/Profile";
+import Support from "./pages/Support";
+import SupportTicketDetails from "./pages/SupportTicketDetails";
+
 import { CartProvider } from "./context/CartContext";
 
 function App() {
@@ -69,6 +73,10 @@ function App() {
   path="/wishlist"
   element={<Wishlist />}
 />
+
+<Route path="/profile" element={<Profile />} />
+<Route path="/support" element={<Support />} />
+<Route path="/support/tickets/:ticketId" element={<SupportTicketDetails />}/>
 
         </Routes>
         <ChatBot />

@@ -10,6 +10,12 @@ function OrderDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [feedbacks, setFeedbacks] = useState({});
+const [feedbackText, setFeedbackText] = useState({});
+const [feedbackLoading, setFeedbackLoading] = useState({});
+const [feedbackSubmitting, setFeedbackSubmitting] = useState({});
+const [feedbackMessage, setFeedbackMessage] = useState({});
+
   useEffect(() => {
     fetchOrder();
   }, [id]);
@@ -32,6 +38,95 @@ function OrderDetails() {
       setLoading(false);
     }
   };
+
+  const fetchFeedback = async (orderItemId) => {
+  try {
+    setFeedbackLoading((prev) => ({
+      ...prev,
+      [orderItemId]: true,
+    }));
+
+    const response = await api.get(
+      `order-items/${orderItemId}/feedback/list/`
+    );
+
+    console.log("FEEDBACK RESPONSE:", response.data);
+
+    setFeedbacks((prev) => ({
+      ...prev,
+      [orderItemId]: response.data.feedbacks || [],
+    }));
+
+  } catch (error) {
+    console.log("FULL FEEDBACK ERROR:", error.response);
+    console.log("FEEDBACK ERROR DATA:", error.response?.data);
+    console.log("FEEDBACK ERROR STATUS:", error.response?.status);
+
+  } finally {
+    setFeedbackLoading((prev) => ({
+      ...prev,
+      [orderItemId]: false,
+    }));
+  }
+};
+
+const handleSubmitFeedback = async (orderItemId) => {
+  const text = feedbackText[orderItemId]?.trim();
+
+  if (!text) {
+    setFeedbackMessage((prev) => ({
+      ...prev,
+      [orderItemId]: "Please enter your feedback.",
+    }));
+    return;
+  }
+
+  try {
+    setFeedbackSubmitting((prev) => ({
+      ...prev,
+      [orderItemId]: true,
+    }));
+
+    setFeedbackMessage((prev) => ({
+      ...prev,
+      [orderItemId]: "",
+    }));
+
+    const response = await api.post(
+      `order-items/${orderItemId}/feedback/`,
+      {
+        feedback: text,
+      }
+    );
+
+    setFeedbackText((prev) => ({
+      ...prev,
+      [orderItemId]: "",
+    }));
+
+    setFeedbackMessage((prev) => ({
+      ...prev,
+      [orderItemId]: response.data.message,
+    }));
+
+    // Refresh feedback history
+    await fetchFeedback(orderItemId);
+
+  } catch (error) {
+    setFeedbackMessage((prev) => ({
+      ...prev,
+      [orderItemId]:
+        error.response?.data?.error ||
+        "Unable to submit feedback.",
+    }));
+
+  } finally {
+    setFeedbackSubmitting((prev) => ({
+      ...prev,
+      [orderItemId]: false,
+    }));
+  }
+};
 
   if (loading) {
     return (
@@ -154,6 +249,136 @@ function OrderDetails() {
                   </p>
 
                 </div>
+
+                {/* FEEDBACK */}
+
+{order.status === "Delivered" && (
+
+  <div className="order-item-feedback">
+
+    <button
+      type="button"
+      className="feedback-button"
+      onClick={() => fetchFeedback(item.id)}
+    >
+      💬 Feedback
+    </button>
+
+    {feedbackLoading[item.id] && (
+      <p>Loading feedback...</p>
+    )}
+
+    {feedbacks[item.id] && (
+
+      <div className="feedback-history">
+
+        {feedbacks[item.id].length === 0 ? (
+
+          <p className="no-feedback">
+            No feedback submitted yet.
+          </p>
+
+        ) : (
+
+          feedbacks[item.id].map((feedback) => (
+
+            <div
+              className="feedback-card"
+              key={feedback.id}
+            >
+
+              <p className="feedback-label">
+                Your Feedback
+              </p>
+
+              <p className="feedback-text">
+                {feedback.feedback}
+              </p>
+
+              <p className="feedback-status">
+                Status: {feedback.status}
+              </p>
+
+              {feedback.admin_reply ? (
+
+                <div className="admin-reply">
+
+                  <p className="admin-reply-label">
+                    Admin Reply
+                  </p>
+
+                  <p>
+                    {feedback.admin_reply}
+                  </p>
+
+                  {feedback.replied_at && (
+                    <small>
+                      Replied on{" "}
+                      {new Date(
+                        feedback.replied_at
+                      ).toLocaleDateString()}
+                    </small>
+                  )}
+
+                </div>
+
+              ) : (
+
+                <p className="no-admin-reply">
+                  No reply yet.
+                </p>
+
+              )}
+
+            </div>
+
+          ))
+
+        )}
+
+        {/* NEW FEEDBACK */}
+
+        <div className="new-feedback">
+
+          <textarea
+            value={feedbackText[item.id] || ""}
+            onChange={(e) =>
+              setFeedbackText((prev) => ({
+                ...prev,
+                [item.id]: e.target.value,
+              }))
+            }
+            placeholder="Write your feedback..."
+            maxLength={2000}
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              handleSubmitFeedback(item.id)
+            }
+            disabled={feedbackSubmitting[item.id]}
+          >
+            {feedbackSubmitting[item.id]
+              ? "Submitting..."
+              : "Submit Feedback"}
+          </button>
+
+          {feedbackMessage[item.id] && (
+            <p>
+              {feedbackMessage[item.id]}
+            </p>
+          )}
+
+        </div>
+
+      </div>
+
+    )}
+
+  </div>
+
+)}  
 
                 {/* ITEM TOTAL */}
 
