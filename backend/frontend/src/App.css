@@ -1,66 +1,82 @@
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
+/* =========================================================
+   APP SHELL
+   ========================================================= */
 
 body {
-  margin: 0;
-
-  font-family:
-    Inter,
-    Arial,
-    sans-serif;
-
-  background: #f5f5f5;
-  color: #222;
+  background: var(--bg);
+  color: var(--text);
 }
 
-button,
-input {
-  font-family: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-img {
-  max-width: 100%;
+main {
+  flex: 1;
+  width: 100%;
 }
 
 a {
   text-decoration: none;
 }
 
+/* generic small helpers reused by several pages */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   CART TOAST
+   ========================================================= */
+
 .cart-toast {
   position: fixed;
-  top: 25px;
-  right: 25px;
+  top: 24px;
+  right: 24px;
   z-index: 9999;
 
-  background: #111827;
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: var(--ink);
+  color: var(--parchment);
 
   padding: 14px 20px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
   font-weight: 600;
 
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
+  animation: toastSlideIn 0.35s var(--ease);
+}
 
-  animation: toastSlideIn 0.3s ease;
+.cart-toast::before {
+  content: "✓";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sage);
+  color: var(--paper);
+  font-size: 0.7rem;
+  flex-shrink: 0;
 }
 
 @keyframes toastSlideIn {
   from {
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateX(24px);
   }
-
   to {
     opacity: 1;
     transform: translateX(0);

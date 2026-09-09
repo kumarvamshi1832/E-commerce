@@ -1,447 +1,253 @@
-/* =========================
-   SUPPORT PAGE
-========================= */
+/* =========================================================
+   SUPPORT
+   ========================================================= */
 
 .support-page {
-  width: 100%;
-  max-width: 1100px;
+  min-height: 70vh;
+  padding: 44px clamp(20px, 5vw, 56px) 90px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 40px 20px 60px;
-  box-sizing: border-box;
 }
 
-
-/* =========================
-   PAGE HEADER
-========================= */
-
 .support-header {
-  text-align: center;
-  margin-bottom: 35px;
+  margin-bottom: 32px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
 }
 
 .support-header h1 {
-  margin: 0 0 10px;
-  font-size: 32px;
-  color: #111827;
+  font-size: clamp(1.7rem, 1.4rem + 1vw, 2.3rem);
 }
 
-.support-header p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 15px;
+.support-header > p {
+  margin-top: 8px;
+  color: var(--text-faint);
 }
-
-
-/* =========================
-   CREATE TICKET CARD
-========================= */
 
 .support-create-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 28px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
-  margin-bottom: 45px;
+  margin-bottom: 36px;
+  box-shadow: var(--shadow-sm);
 }
 
-.support-create-card h2,
-.support-tickets-section h2 {
-  margin: 0 0 22px;
-  font-size: 21px;
-  color: #111827;
-}
-
-
-/* =========================
-   FORM
-========================= */
-
-.support-form-group {
+.support-create-card h2 {
+  font-size: 1.1rem;
   margin-bottom: 18px;
 }
 
-.support-form-group label {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
+.support-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
 }
 
-.support-form-group label span {
-  font-weight: 400;
-  color: #9ca3af;
+.support-form-group label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .support-form-group input,
 .support-form-group select,
 .support-form-group textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #d1d5db;
-  border-radius: 9px;
-  padding: 11px 13px;
-  font-family: inherit;
-  font-size: 14px;
-  color: #111827;
-  background: #ffffff;
-  outline: none;
-  transition: 0.2s ease;
-}
-
-.support-form-group input,
-.support-form-group select {
-  height: 44px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--parchment);
+  transition: border-color 0.2s var(--ease);
 }
 
 .support-form-group textarea {
-  min-height: 130px;
+  min-height: 110px;
   resize: vertical;
-  line-height: 1.5;
 }
 
 .support-form-group input:focus,
 .support-form-group select:focus,
 .support-form-group textarea:focus {
-  border-color: #111827;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  border-color: var(--brass);
+  outline: none;
 }
-
-.support-form-group input::placeholder,
-.support-form-group textarea::placeholder {
-  color: #9ca3af;
-}
-
-
-/* =========================
-   MESSAGES
-========================= */
 
 .support-error {
-  margin: 10px 0 15px;
-  padding: 11px 13px;
-  border-radius: 8px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  font-size: 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-light);
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
 }
 
 .support-success {
-  margin: 10px 0 15px;
-  padding: 11px 13px;
-  border-radius: 8px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
-  font-size: 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--sage-light);
+  color: var(--sage-dark);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
 }
-
-
-/* =========================
-   SUBMIT BUTTON
-========================= */
 
 .support-submit-button {
-  margin-top: 5px;
-  padding: 11px 20px;
-  border: none;
-  border-radius: 9px;
-  background: #111827;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
+  padding: 13px 26px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--parchment);
+  font-weight: 700;
+  font-size: 0.92rem;
+  transition: background 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
-.support-submit-button:hover {
-  background: #374151;
-  transform: translateY(-1px);
+.support-submit-button:hover:not(:disabled) {
+  background: var(--burgundy);
+  transform: translateY(-2px);
 }
 
 .support-submit-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+  background: var(--border);
+  color: var(--text-faint);
 }
 
+/* ---------- tickets list ---------- */
 
-/* =========================
-   MY TICKETS
-========================= */
-
-.support-tickets-section {
-  width: 100%;
+.support-tickets-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 18px;
 }
 
 .support-loading {
-  text-align: center;
-  padding: 30px;
-  color: #6b7280;
+  color: var(--text-faint);
+  padding: 20px 0;
 }
-
-
-/* =========================
-   NO TICKETS
-========================= */
 
 .no-tickets {
   text-align: center;
-  padding: 45px 20px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
+  padding: 50px 20px;
+  color: var(--text-faint);
 }
 
 .no-tickets-icon {
-  font-size: 42px;
-  margin-bottom: 12px;
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+  opacity: 0.7;
 }
-
-.no-tickets h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  color: #374151;
-}
-
-.no-tickets p {
-  margin: 0;
-  color: #9ca3af;
-  font-size: 14px;
-}
-
-
-/* =========================
-   TICKET LIST
-========================= */
 
 .support-ticket-list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
-
-
-/* =========================
-   TICKET CARD
-========================= */
 
 .support-ticket-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: box-shadow 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 
-
-/* =========================
-   TICKET TOP
-========================= */
+.support-ticket-card:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--border-soft);
+}
 
 .ticket-top {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 20px;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .ticket-id {
   display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  margin-bottom: 4px;
 }
 
 .ticket-top h3 {
-  margin: 0;
-  font-size: 17px;
-  color: #111827;
+  font-size: 1rem;
 }
 
-
-/* =========================
-   STATUS
-========================= */
-
 .ticket-status {
-  display: inline-block;
-  padding: 6px 11px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
+  display: inline-flex;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
   white-space: nowrap;
+  background: var(--parchment-deep);
+  color: var(--text-soft);
 }
 
 .status-open {
-  background: #eff6ff;
-  color: #2563eb;
+  background: #e5eefc;
+  color: #2a5ba8;
 }
 
 .status-in-progress {
-  background: #fff7ed;
-  color: #c2410c;
+  background: var(--brass-light);
+  color: var(--brass-dark);
 }
 
-.status-resolved {
-  background: #f0fdf4;
-  color: #15803d;
-}
-
+.status-resolved,
 .status-closed {
-  background: #f3f4f6;
-  color: #4b5563;
+  background: var(--sage-light);
+  color: var(--sage-dark);
 }
-
-
-/* =========================
-   TICKET INFORMATION
-========================= */
 
 .ticket-info {
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 15px;
-  padding-top: 14px;
-  border-top: 1px solid #f3f4f6;
-  font-size: 13px;
-  color: #6b7280;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  margin-bottom: 10px;
 }
-
-
-/* =========================
-   DESCRIPTION
-========================= */
 
 .ticket-description {
-  margin-top: 18px;
-  padding: 15px;
-  background: #f9fafb;
-  border-radius: 10px;
-}
-
-.ticket-description strong,
-.ticket-reply strong {
-  display: block;
-  margin-bottom: 7px;
-  font-size: 13px;
-  color: #374151;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
 }
 
 .ticket-description p {
-  margin: 0;
-  color: #4b5563;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
+  font-size: 0.88rem;
+  color: var(--text-soft);
 }
 
-
-/* =========================
-   ADMIN REPLY
-========================= */
-
 .ticket-reply {
-  margin-top: 14px;
-  padding: 15px;
-  border-radius: 10px;
-  background: #f3f4f6;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--parchment-deep);
 }
 
 .ticket-reply p {
-  margin: 0;
-  color: #374151;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
+  font-size: 0.86rem;
 }
 
 .waiting-reply {
-  color: #9ca3af !important;
+  color: var(--text-faint);
   font-style: italic;
 }
 
-
-/* =========================
-   MOBILE RESPONSIVE
-========================= */
-
-@media (max-width: 700px) {
-
-  .support-page {
-    padding: 25px 15px 45px;
-  }
-
-  .support-header h1 {
-    font-size: 27px;
-  }
-
-  .support-create-card {
-    padding: 20px;
-    border-radius: 12px;
-  }
-
-  .ticket-top {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .ticket-status {
-    align-self: flex-start;
-  }
-
-  .ticket-info {
-    flex-direction: column;
-    gap: 7px;
-  }
-
-  .support-ticket-card {
-    padding: 18px;
-  }
-}
-
-
-/* =========================
-   SMALL MOBILE
-========================= */
-
-@media (max-width: 420px) {
-
-  .support-page {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .support-header h1 {
-    font-size: 24px;
-  }
-
-  .support-create-card {
-    padding: 16px;
-  }
-
-  .support-create-card h2,
-  .support-tickets-section h2 {
-    font-size: 19px;
-  }
-
-  .support-submit-button {
-    width: 100%;
-  }
-}
-
 .view-ticket-button {
-  margin-top: 15px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+  display: inline-block;
+  margin-top: 14px;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--parchment);
   font-weight: 600;
+  font-size: 0.82rem;
+  transition: background 0.2s var(--ease);
+}
+
+.view-ticket-button:hover {
+  background: var(--burgundy);
 }

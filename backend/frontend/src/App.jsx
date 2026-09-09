@@ -13,13 +13,14 @@ import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
 import Wishlist from "./pages/Wishlist";
 
-import ChatBot from "./components/ChatBot";
+// import ChatBot from "./components/ChatBot";
 
 import Profile from "./pages/Profile";
 import Support from "./pages/Support";
 import SupportTicketDetails from "./pages/SupportTicketDetails";
 
 import { CartProvider } from "./context/CartContext";
+import ChatBot from "./components/Chatbot";
 
 function App() {
   return (
@@ -79,7 +80,7 @@ function App() {
 <Route path="/support/tickets/:ticketId" element={<SupportTicketDetails />}/>
 
         </Routes>
-        <ChatBot />
+        <ChatBot/>
 
       </BrowserRouter>
     </CartProvider>

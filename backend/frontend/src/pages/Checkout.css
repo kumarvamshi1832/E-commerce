@@ -1,1097 +1,470 @@
 /* =========================================================
-   PREMIUM CHECKOUT
-========================================================= */
-
-* {
-  box-sizing: border-box;
-}
+   CHECKOUT
+   ========================================================= */
 
 .checkout-page {
-  min-height: 100vh;
-  background: #f5f5f2;
-  color: #171717;
-  padding: 48px 24px 80px;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  min-height: 70vh;
+  padding: 44px clamp(20px, 5vw, 56px) 90px;
 }
 
 .checkout-container {
-  width: 100%;
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-
-/* =========================================================
-   HEADER
-========================================================= */
-
 .checkout-header {
-  margin-bottom: 36px;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--border);
 }
 
 .checkout-eyebrow {
-  margin: 0 0 9px;
-
-  color: #8a8a84;
-
-  font-size: 11px;
-  font-weight: 700;
-
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--sage-dark);
+  margin-bottom: 6px;
 }
 
 .checkout-header h1 {
-  margin: 0;
-
-  color: #141414;
-
-  font-size: clamp(34px, 4vw, 48px);
-  font-weight: 700;
-
-  letter-spacing: -1.8px;
-  line-height: 1.05;
+  font-size: clamp(1.7rem, 1.4rem + 1vw, 2.3rem);
 }
-
-.checkout-header > p:last-child {
-  margin: 12px 0 0;
-
-  color: #777;
-
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   ERROR
-========================================================= */
 
 .checkout-error {
-  display: flex;
-  align-items: center;
-
-  margin-bottom: 22px;
-  padding: 14px 17px;
-
-  background: #fff7f7;
-
-  border: 1px solid #f1d1d1;
-  border-radius: 10px;
-
-  color: #bd3333;
-
-  font-size: 13px;
-  font-weight: 600;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--danger-light);
+  color: var(--danger);
+  font-size: 0.88rem;
+  font-weight: 500;
 }
 
-
-/* =========================================================
-   MAIN GRID
-========================================================= */
-
-.checkout-layout {
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1.35fr)
-    minmax(270px, 0.8fr)
-    350px;
-
-  gap: 20px;
-
-  align-items: start;
-}
-
-
-/* =========================================================
-   COMMON CARD
-========================================================= */
-
-.checkout-items,
-.coupon-section,
-.checkout-summary {
-  background: #ffffff;
-
-  border: 1px solid #e8e8e3;
-  border-radius: 18px;
-
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.02),
-    0 12px 35px rgba(0, 0, 0, 0.035);
-}
-
-
-/* =========================================================
-   PRODUCTS CARD
-========================================================= */
-
-.checkout-items {
-  padding: 25px;
-}
-
-.checkout-items > h2 {
-  margin: 0 0 23px;
-
-  color: #161616;
-
-  font-size: 18px;
-  font-weight: 700;
-
-  letter-spacing: -0.3px;
-}
-
-
-/* =========================================================
-   CHECKOUT PRODUCT
-========================================================= */
-
-.checkout-item {
-  display: grid;
-
-  grid-template-columns: 86px minmax(0, 1fr) auto;
-
-  gap: 17px;
-
-  align-items: center;
-
-  padding: 17px 0;
-
-  border-bottom: 1px solid #eeeeeb;
-}
-
-.checkout-item:first-of-type {
-  padding-top: 0;
-}
-
-.checkout-item:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-
-/* =========================================================
-   PRODUCT IMAGE
-========================================================= */
-
-.checkout-item-image {
-  width: 86px;
-  height: 86px;
-
+.checkout-empty {
+  min-height: 40vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+}
 
+/* ---------- Layout: items+coupon on the left, sticky summary on the right ---------- */
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  grid-template-rows: auto auto;
+  gap: 24px 32px;
+}
+
+.checkout-items {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkout-items h2 {
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.checkout-item {
+  display: grid;
+  grid-template-columns: 68px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.checkout-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.checkout-item-image {
+  width: 68px;
+  height: 68px;
+  border-radius: var(--radius-sm);
+  background: var(--parchment-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
-
-  background: #f4f4f1;
-
-  border-radius: 13px;
+  flex-shrink: 0;
 }
 
 .checkout-item-image img {
   width: 100%;
   height: 100%;
-
   object-fit: cover;
-
-  display: block;
-
-  transition: transform 0.35s ease;
-}
-
-.checkout-item:hover .checkout-item-image img {
-  transform: scale(1.04);
-}
-
-.checkout-item-image span {
-  font-size: 28px;
-  opacity: 0.4;
-}
-
-
-/* =========================================================
-   PRODUCT INFO
-========================================================= */
-
-.checkout-item-info {
-  min-width: 0;
 }
 
 .checkout-item-info h3 {
-  margin: 0 0 7px;
-
-  color: #181818;
-
-  font-size: 15px;
-  font-weight: 650;
-
-  line-height: 1.35;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 2px;
 }
 
-.checkout-item-info p {
-  margin: 0 0 12px;
-
-  color: #777;
-
-  font-size: 13px;
+.checkout-item-info > p {
+  font-size: 0.84rem;
+  color: var(--text-faint);
+  margin-bottom: 8px;
 }
-
-
-/* =========================================================
-   QUANTITY
-========================================================= */
 
 .checkout-quantity {
   display: inline-flex;
   align-items: center;
-
-  height: 34px;
-
-  overflow: hidden;
-
-  background: #fafaf8;
-
-  border: 1px solid #deded9;
-  border-radius: 8px;
+  gap: 10px;
+  background: var(--parchment-deep);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  width: fit-content;
 }
 
 .checkout-quantity button {
-  width: 34px;
-  height: 34px;
-
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  border: none;
-
-  background: transparent;
-
-  color: #222;
-
-  font-size: 18px;
-  font-weight: 400;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.checkout-quantity button:hover {
-  background: #ededeb;
 }
 
 .checkout-quantity span {
-  width: 34px;
-
-  color: #222;
-
+  min-width: 12px;
   text-align: center;
-
-  font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
+  font-size: 0.85rem;
 }
 
-
-/* =========================================================
-   ITEM TOTAL
-========================================================= */
-
 .checkout-item > strong {
-  align-self: center;
-
-  color: #151515;
-
-  font-size: 15px;
-  font-weight: 700;
-
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--ink);
   white-space: nowrap;
 }
 
-
-/* =========================================================
-   COUPON CARD
-========================================================= */
+/* ---------- Coupon + pincode ---------- */
 
 .coupon-section {
-  padding: 25px;
+  grid-column: 1;
+  grid-row: 2;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.coupon-section > h3 {
-  margin: 0 0 17px;
-
-  color: #171717;
-
-  font-size: 17px;
-  font-weight: 700;
+.coupon-section h3 {
+  font-size: 1rem;
 }
-
-
-/* =========================================================
-   COUPON INPUT
-========================================================= */
 
 .coupon-input-row {
   display: flex;
-
-  height: 44px;
-
-  overflow: hidden;
-
-  background: #fff;
-
-  border: 1px solid #dcdcd7;
-  border-radius: 9px;
-
-  transition: border-color 0.2s ease;
-}
-
-.coupon-input-row:focus-within {
-  border-color: #555;
+  gap: 10px;
 }
 
 .coupon-input-row input {
   flex: 1;
-
-  min-width: 0;
-
-  padding: 0 13px;
-
-  border: none;
-  outline: none;
-
-  background: transparent;
-
-  color: #222;
-
-  font-size: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--parchment);
+  color: var(--ink);
+  transition: border-color 0.2s var(--ease);
 }
 
-.coupon-input-row input::placeholder {
-  color: #aaa;
+.coupon-input-row input:focus {
+  border-color: var(--brass);
+  outline: none;
 }
 
 .coupon-input-row button {
-  padding: 0 17px;
-
-  border: none;
-
-  background: #171717;
-
-  color: #fff;
-
-  font-size: 12px;
-  font-weight: 650;
-
-  cursor: pointer;
-
-  transition: background 0.2s ease;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--parchment);
+  font-weight: 600;
+  font-size: 0.86rem;
+  white-space: nowrap;
+  transition: background 0.2s var(--ease);
 }
 
 .coupon-input-row button:hover {
-  background: #333;
+  background: var(--burgundy);
 }
-
-
-/* =========================================================
-   COUPON OPTIONS
-========================================================= */
 
 .coupon-buttons {
   display: flex;
   flex-wrap: wrap;
-
-  gap: 7px;
-
-  margin-top: 11px;
+  gap: 8px;
 }
 
 .coupon-buttons button {
-  padding: 6px 9px;
-
-  border: 1px dashed #d2d2cd;
-  border-radius: 6px;
-
-  background: #fafaf8;
-
-  color: #666;
-
-  font-size: 10px;
-  font-weight: 700;
-
-  letter-spacing: 0.3px;
-
-  cursor: pointer;
-
-  transition: all 0.2s ease;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px dashed var(--brass);
+  background: var(--brass-light);
+  color: var(--brass-dark);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  transition: background 0.2s var(--ease);
 }
 
 .coupon-buttons button:hover {
-  border-color: #222;
-
-  background: #222;
-
-  color: #fff;
+  background: var(--brass);
+  color: var(--paper);
 }
-
-
-/* =========================================================
-   COUPON MESSAGE
-========================================================= */
 
 .coupon-message {
-  margin: 11px 0 0;
-
-  color: #21854a;
-
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--danger);
 }
 
-
-/* =========================================================
-   PINCODE
-========================================================= */
+.coupon-success {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sage-dark);
+}
 
 .pincode {
-  margin-top: 28px;
-  padding-top: 24px;
-
-  border-top: 1px solid #eeeeeb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border);
 }
 
-.pincode > strong {
-  display: block;
-
-  margin-bottom: 9px;
-
-  color: #242424;
-
-  font-size: 12px;
-  font-weight: 650;
+.pincode label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 
-.pincode > input {
-  width: 100%;
-  height: 43px;
+.pincode input {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--parchment);
+  max-width: 220px;
+  transition: border-color 0.2s var(--ease);
+}
 
-  padding: 0 12px;
-
-  border: 1px solid #dcdcd7;
-  border-radius: 9px;
-
+.pincode input:focus {
+  border-color: var(--brass);
   outline: none;
-
-  background: #fff;
-
-  color: #222;
-
-  font-size: 13px;
-
-  transition: border-color 0.2s ease;
 }
-
-.pincode > input:focus {
-  border-color: #555;
-}
-
-.pincode > p {
-  margin: 8px 0 0;
-
-  color: #888;
-
-  font-size: 10px;
-}
-
-
-/* =========================================================
-   LOCATION CARD
-========================================================= */
 
 .pincode-location {
-  margin-top: 12px;
-  padding: 13px 14px;
-
-  background: #f4faf6;
-
-  border: 1px solid #d8ebdc;
-  border-radius: 9px;
-}
-
-.pincode-location p {
-  margin: 4px 0;
-
-  color: #54705b;
-
-  font-size: 10px;
-  line-height: 1.45;
-}
-
-.pincode-location strong {
-  color: #36583e;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--sage-dark);
 }
 
 .pincode-error {
-  color: #c43838 !important;
-  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--danger);
 }
 
-
-/* =========================================================
-   SUMMARY
-========================================================= */
+/* ---------- Order summary ---------- */
 
 .checkout-summary {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
   position: sticky;
-  top: 24px;
-
-  padding: 27px;
+  top: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 26px;
+  box-shadow: var(--shadow-sm);
 }
 
 .checkout-summary h2 {
-  margin: 0 0 24px;
-
-  color: #151515;
-
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 1.15rem;
+  margin-bottom: 18px;
 }
-
-
-/* =========================================================
-   SUMMARY ROW
-========================================================= */
 
 .checkout-row {
   display: flex;
-
-  justify-content: space-between;
   align-items: center;
-
-  gap: 15px;
-
-  margin-bottom: 14px;
-
-  color: #777;
-
-  font-size: 12px;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  color: var(--text-soft);
 }
 
-.checkout-row strong {
-  color: #292929;
-
-  font-size: 13px;
-  font-weight: 650;
-
-  white-space: nowrap;
+.checkout-row span:last-child {
+  font-weight: 600;
+  color: var(--ink);
 }
 
-
-/* =========================================================
-   DISCOUNT
-========================================================= */
-
-.discount-row,
-.discount-row strong,
-.saved-row,
-.saved-row strong {
-  color: #23834a !important;
+.discount-row span:last-child {
+  color: var(--sage-dark);
 }
 
-.original-total-row,
-.original-total-row strong {
-  color: #999 !important;
-}
-
-.original-total-row strong {
+.original-total-row span:last-child {
   text-decoration: line-through;
+  color: var(--text-faint);
+  font-weight: 400;
 }
 
-
-/* =========================================================
-   SAVINGS MESSAGE
-========================================================= */
-
-.coupon-success {
-  margin: 15px 0;
-  padding: 12px;
-
-  background: #f3faf5;
-
-  border: 1px solid #d9ecde;
-  border-radius: 8px;
-
-  color: #34734a;
-
-  font-size: 10px;
-  line-height: 1.5;
+.saved-row {
+  font-weight: 600;
 }
 
-
-/* =========================================================
-   DIVIDER
-========================================================= */
+.saved-row span:last-child {
+  color: var(--sage-dark);
+}
 
 .checkout-divider {
   height: 1px;
-
-  margin: 19px 0;
-
-  background: #e9e9e5;
+  background: var(--border);
+  margin: 12px 0;
 }
-
-
-/* =========================================================
-   TOTAL
-========================================================= */
 
 .checkout-total {
   display: flex;
-
   align-items: center;
   justify-content: space-between;
-
-  gap: 15px;
+  margin-bottom: 4px;
 }
 
-.checkout-total span {
-  color: #252525;
-
-  font-size: 14px;
-  font-weight: 650;
+.checkout-total span:first-child {
+  font-weight: 600;
+  color: var(--ink);
 }
 
-.checkout-total strong {
-  color: #111;
-
-  font-size: 22px;
-  font-weight: 750;
-
-  letter-spacing: -0.4px;
-
-  white-space: nowrap;
+.checkout-total span:last-child {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--burgundy);
 }
-
-
-/* =========================================================
-   PLACE ORDER
-========================================================= */
 
 .place-order-button {
   width: 100%;
-  height: 52px;
-
-  margin-top: 23px;
-
-  border: none;
-  border-radius: 10px;
-
-  background: #151515;
-  color: #fff;
-
-  font-size: 13px;
+  margin-top: 18px;
+  padding: 15px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--parchment);
   font-weight: 700;
-
-  letter-spacing: 0.1px;
-
-  cursor: pointer;
-
-  transition:
-    background 0.25s ease,
-    transform 0.2s ease,
-    box-shadow 0.25s ease;
+  font-size: 0.98rem;
+  box-shadow: var(--shadow-md);
+  transition: background 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .place-order-button:hover:not(:disabled) {
-  background: #292929;
-
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 7px 18px rgba(0, 0, 0, 0.16);
-}
-
-.place-order-button:active:not(:disabled) {
-  transform: translateY(0);
+  background: var(--burgundy);
+  transform: translateY(-2px);
 }
 
 .place-order-button:disabled {
-  background: #aaa;
-
+  background: var(--border);
+  color: var(--text-faint);
   cursor: not-allowed;
 }
 
-
-/* =========================================================
-   BACK TO CART
-========================================================= */
-
 .back-to-cart {
   display: block;
-
-  margin-top: 15px;
-
-  color: #777;
-
-  font-size: 11px;
-  font-weight: 600;
-
   text-align: center;
-  text-decoration: none;
-
-  transition: color 0.2s ease;
+  margin-top: 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-soft);
 }
 
 .back-to-cart:hover {
-  color: #151515;
+  color: var(--burgundy);
 }
 
-
-/* =========================================================
-   EMPTY CHECKOUT
-========================================================= */
-
-.checkout-empty {
-  width: min(100%, 520px);
-
-  margin: 100px auto;
-
-  padding: 55px 35px;
-
-  background: #fff;
-
-  border: 1px solid #e7e7e3;
-  border-radius: 20px;
-
-  text-align: center;
-
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.05);
-}
-
-.checkout-empty h1 {
-  margin: 0 0 10px;
-
-  color: #171717;
-
-  font-size: 28px;
-  letter-spacing: -0.8px;
-}
-
-.checkout-empty p {
-  margin: 0 0 25px;
-
-  color: #777;
-
-  font-size: 13px;
-}
-
-.checkout-empty a {
-  display: inline-flex;
-
-  align-items: center;
-  justify-content: center;
-
-  min-height: 44px;
-
-  padding: 0 22px;
-
-  border-radius: 9px;
-
-  background: #151515;
-  color: #fff;
-
-  text-decoration: none;
-
-  font-size: 12px;
-  font-weight: 650;
-
-  transition: background 0.2s ease;
-}
-
-.checkout-empty a:hover {
-  background: #333;
-}
-
-
-/* =========================================================
-   SUCCESS SCREEN
-========================================================= */
+/* ---------- Order success ---------- */
 
 .order-success {
-  min-height: calc(100vh - 100px);
-
+  min-height: 60vh;
   display: flex;
-
   align-items: center;
   justify-content: center;
-
-  padding: 30px;
+  text-align: center;
 }
 
 .order-success-content {
-  position: relative;
-  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 420px;
+  padding: 48px 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: successPop 0.5s var(--ease);
+}
 
-  width: min(100%, 500px);
-
-  padding: 55px 35px;
-
-  background: rgba(255, 255, 255, 0.97);
-
-  border: 1px solid #e6e6e2;
-  border-radius: 24px;
-
-  text-align: center;
-
-  box-shadow:
-    0 25px 70px rgba(0, 0, 0, 0.12);
-
-  animation: successIn 0.55s ease both;
+@keyframes successPop {
+  from { opacity: 0; transform: scale(0.9) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .success-icon {
-  width: 82px;
-  height: 82px;
-
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--sage-light);
+  color: var(--sage-dark);
+  font-size: 2.2rem;
   display: flex;
-
   align-items: center;
   justify-content: center;
-
-  margin: 0 auto 22px;
-
-  background: #f3f8f4;
-
-  border: 1px solid #dceade;
-  border-radius: 50%;
-
-  font-size: 38px;
-
-  animation: successIcon 0.7s ease both;
+  margin-bottom: 10px;
 }
 
-.order-success h1 {
-  margin: 0 0 11px;
-
-  color: #151515;
-
-  font-size: 34px;
-  letter-spacing: -1px;
+.order-success-content p {
+  color: var(--text-faint);
 }
 
-.order-success p {
-  margin: 6px 0;
+/* ---------- Responsive ---------- */
 
-  color: #777;
-
-  font-size: 13px;
-}
-
-
-/* =========================================================
-   ANIMATIONS
-========================================================= */
-
-@keyframes successIn {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes successIcon {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-
-  70% {
-    transform: scale(1.08);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-
-/* =========================================================
-   LARGE TABLET
-========================================================= */
-
-@media (max-width: 1150px) {
+@media (max-width: 1000px) {
   .checkout-layout {
-    grid-template-columns:
-      minmax(0, 1fr)
-      330px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
   }
-
-  .coupon-section {
-    grid-column: 1;
-  }
-
-  .checkout-summary {
-    grid-column: 2;
-
-    grid-row: 1 / span 2;
-  }
-}
-
-
-/* =========================================================
-   TABLET
-========================================================= */
-
-@media (max-width: 800px) {
-  .checkout-page {
-    padding: 35px 16px 60px;
-  }
-
-  .checkout-layout {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 18px;
-  }
-
   .checkout-items,
   .coupon-section,
   .checkout-summary {
-    width: 100%;
+    grid-column: 1;
+    grid-row: auto;
   }
-
   .checkout-summary {
     position: static;
   }
-
-  .checkout-items {
-    order: 1;
-  }
-
-  .coupon-section {
-    order: 2;
-  }
-
-  .checkout-summary {
-    order: 3;
-  }
 }
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
 
 @media (max-width: 520px) {
-  .checkout-page {
-    padding: 25px 10px 50px;
-  }
-
-  .checkout-header {
-    margin-bottom: 25px;
-  }
-
-  .checkout-header h1 {
-    font-size: 32px;
-  }
-
-  .checkout-items,
-  .coupon-section,
-  .checkout-summary {
-    padding: 19px;
-
-    border-radius: 15px;
-  }
-
   .checkout-item {
-    grid-template-columns: 70px minmax(0, 1fr);
-
-    gap: 12px;
+    grid-template-columns: 56px 1fr;
   }
-
-  .checkout-item-image {
-    width: 70px;
-    height: 70px;
-  }
-
-  .checkout-item-info h3 {
-    font-size: 13px;
-  }
-
-  .checkout-item-info p {
-    font-size: 12px;
-  }
-
   .checkout-item > strong {
-    grid-column: 2;
-
-    justify-self: end;
-
-    margin-top: -4px;
-  }
-
-  .checkout-total strong {
-    font-size: 21px;
-  }
-
-  .order-success {
-    min-height: 80vh;
-
-    padding: 15px;
-  }
-
-  .order-success-content {
-    padding: 42px 22px;
-  }
-
-  .order-success h1 {
-    font-size: 29px;
-  }
-}
-
-
-/* =========================================================
-   VERY SMALL DEVICES
-========================================================= */
-
-@media (max-width: 360px) {
-  .checkout-page {
-    padding-left: 7px;
-    padding-right: 7px;
-  }
-
-  .checkout-item {
-    grid-template-columns: 60px minmax(0, 1fr);
-  }
-
-  .checkout-item-image {
-    width: 60px;
-    height: 60px;
-  }
-
-  .checkout-items,
-  .coupon-section,
-  .checkout-summary {
-    padding: 15px;
+    grid-column: 1 / -1;
+    text-align: right;
   }
 }
