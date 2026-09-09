@@ -20,7 +20,7 @@ import Support from "./pages/Support";
 import SupportTicketDetails from "./pages/SupportTicketDetails";
 
 import { CartProvider } from "./context/CartContext";
-import ChatBot from "./components/Chatbot";
+import ChatBot from "./components/ChatBot";
 
 function App() {
   return (
@@ -81,6 +81,7 @@ function App() {
 
         </Routes>
         <ChatBot/>
+      
 
       </BrowserRouter>
     </CartProvider>
