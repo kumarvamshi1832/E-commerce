@@ -8,6 +8,7 @@ from .models import (
     ProductFeedback,
     SupportTicket,
     SupportMessage,
+    Notification,
 )
 
 
@@ -108,6 +109,10 @@ class CouponAdmin(admin.ModelAdmin):
     )
 
 
+# ============================================================
+# PRODUCT FEEDBACK
+# ============================================================
+
 @admin.register(ProductFeedback)
 class ProductFeedbackAdmin(admin.ModelAdmin):
 
@@ -154,28 +159,70 @@ class ProductFeedbackAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
 
-        if obj.admin_reply and obj.admin_reply.strip():
+        old_reply = ""
+
+        # Get the previous reply before saving
+        if change:
+            try:
+                old_feedback = ProductFeedback.objects.get(
+                    pk=obj.pk
+                )
+
+                old_reply = old_feedback.admin_reply or ""
+
+            except ProductFeedback.DoesNotExist:
+                pass
+
+        new_reply = (obj.admin_reply or "").strip()
+
+        # Handle feedback status
+        if new_reply:
 
             obj.status = "Replied"
 
             if not obj.replied_at:
                 from django.utils import timezone
+
                 obj.replied_at = timezone.now()
 
         else:
+
             obj.status = "Pending"
             obj.replied_at = None
 
+        # Save feedback
         super().save_model(
             request,
             obj,
             form,
             change
         )
+
+        # Create notification only for a NEW reply
+        if new_reply and new_reply != old_reply.strip():
+
+            Notification.objects.create(
+                user=obj.user,
+                message=(
+                    f'You got a reply from support for your '
+                    f'Order #{obj.order_item.order.id}: "{new_reply}"'
+                ),
+                notification_type="feedback_reply"
+            )
+
+
+# ============================================================
+# SUPPORT MESSAGE
+# ============================================================
+
 class SupportMessageInline(admin.TabularInline):
+
     model = SupportMessage
+
     extra = 0
+
     can_delete = False
+
     max_num = 0
 
     fields = (
@@ -190,9 +237,12 @@ class SupportMessageInline(admin.TabularInline):
         "created_at",
     )
 
+
+# ============================================================
+# SUPPORT TICKET
+# ============================================================
 @admin.register(SupportTicket)
 class SupportTicketAdmin(admin.ModelAdmin):
-
     list_display = (
         "id",
         "user",
@@ -242,33 +292,46 @@ class SupportTicketAdmin(admin.ModelAdmin):
     )
 
     inlines = (
-    SupportMessageInline,
-)
+        SupportMessageInline,
+    )
 
     def save_model(self, request, obj, form, change):
-
         old_reply = ""
 
+        # Get the previous reply before saving
         if change:
             try:
-                old_ticket = SupportTicket.objects.get(
-                    pk=obj.pk
-                )
-
+                old_ticket = SupportTicket.objects.get(pk=obj.pk)
                 old_reply = old_ticket.admin_reply or ""
-
             except SupportTicket.DoesNotExist:
                 pass
 
         new_reply = (obj.admin_reply or "").strip()
 
-        # Create a SupportMessage when admin sends a new reply
+        # Create SupportMessage and notification
+        # only when admin sends a NEW reply
         if new_reply and new_reply != old_reply.strip():
-
             SupportMessage.objects.create(
                 ticket=obj,
                 sender="Admin",
-                message=new_reply
+                message=new_reply,
+            )
+
+            if obj.order:
+                notification_message = (
+                    f'You got a reply from support for '
+                    f'Order #{obj.order.id}: "{new_reply}"'
+                )
+            else:
+                notification_message = (
+                    f'You got a reply from support: '
+                    f'{obj.category} concern: "{new_reply}"'
+                )
+
+            Notification.objects.create(
+                user=obj.user,
+                message=notification_message,
+                notification_type="support_reply",
             )
 
         # Automatically move Open ticket to In Progress
@@ -277,22 +340,23 @@ class SupportTicketAdmin(admin.ModelAdmin):
 
         # Handle resolved timestamp
         if obj.status == "Resolved":
-
             if not obj.resolved_at:
                 from django.utils import timezone
-
                 obj.resolved_at = timezone.now()
-
         else:
             obj.resolved_at = None
 
+        # Save ticket
         super().save_model(
             request,
             obj,
             form,
-            change
+            change,
         )
 
+# ============================================================
+# SUPPORT MESSAGE ADMIN
+# ============================================================
 
 @admin.register(SupportMessage)
 class SupportMessageAdmin(admin.ModelAdmin):

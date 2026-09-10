@@ -9,6 +9,11 @@ function MyOrders() {
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(null);
 
+  const [reviewItem, setReviewItem] = useState(null);
+const [rating, setRating] = useState(0);
+const [reviewText, setReviewText] = useState("");
+const [submittingReview, setSubmittingReview] = useState(false);
+
   // Stores which orders are expanded
   const [expandedOrders, setExpandedOrders] = useState({});
 
@@ -82,6 +87,54 @@ function MyOrders() {
       setCancelling(null);
     }
   };
+
+  // =========================
+// SUBMIT PRODUCT REVIEW
+// =========================
+
+const handleSubmitReview = async () => {
+
+  if (rating === 0) {
+    alert("Please select a rating.");
+    return;
+  }
+
+  if (!reviewText.trim()) {
+    alert("Please write a review.");
+    return;
+  }
+
+  try {
+
+    setSubmittingReview(true);
+
+    const response = await api.post(
+      `products/${reviewItem.product_id}/reviews/${reviewItem.id}/`,
+      {
+        rating: rating,
+        review: reviewText.trim(),
+      }
+    );
+
+    alert(response.data.message);
+
+    setReviewItem(null);
+    setRating(0);
+    setReviewText("");
+
+  } catch (error) {
+
+    alert(
+      error.response?.data?.error ||
+      "Unable to submit review."
+    );
+
+  } finally {
+
+    setSubmittingReview(false);
+
+  }
+};
 
   // =========================
   // LOADING
@@ -348,6 +401,34 @@ function MyOrders() {
                       View Order →
                     </Link>
 
+
+                    {/* RATE & REVIEW */}
+
+{order.status === "Delivered" && items.length > 0 && (
+
+  <div className="order-review-buttons">
+
+    {items.map((item) => (
+
+      <button
+        key={item.id}
+        type="button"
+        className="rate-review-button"
+        onClick={() => {
+          setReviewItem(item);
+          setRating(0);
+          setReviewText("");
+        }}
+      >
+        ⭐ Rate {item.name}
+      </button>
+
+    ))}
+
+  </div>
+
+)}
+
                     {/* CANCEL */}
 
                     {order.status === "Pending" && (
@@ -381,7 +462,84 @@ function MyOrders() {
         )}
 
       </div>
+{/* =========================
+    REVIEW MODAL
+========================= */}
 
+{reviewItem && (
+
+  <div className="review-modal-overlay">
+
+    <div className="review-modal">
+
+      <button
+        type="button"
+        className="review-modal-close"
+        onClick={() => {
+          setReviewItem(null);
+          setRating(0);
+          setReviewText("");
+        }}
+      >
+        ×
+      </button>
+
+      <h2>
+        Rate {reviewItem.name}
+      </h2>
+
+      <p>
+        How was this product?
+      </p>
+
+      {/* STARS */}
+
+      <div className="review-stars">
+
+        {[1, 2, 3, 4, 5].map((star) => (
+
+          <button
+            key={star}
+            type="button"
+            className={
+              star <= rating
+                ? "review-star active"
+                : "review-star"
+            }
+            onClick={() => setRating(star)}
+          >
+            ★
+          </button>
+
+        ))}
+
+      </div>
+
+      <textarea
+        value={reviewText}
+        onChange={(e) =>
+          setReviewText(e.target.value)
+        }
+        placeholder="Write your review..."
+        rows="5"
+      />
+
+      <button
+        type="button"
+        className="submit-review-button"
+        onClick={handleSubmitReview}
+        disabled={submittingReview}
+      >
+        {submittingReview
+          ? "Submitting..."
+          : "Submit Review"}
+      </button>
+
+    </div>
+
+  </div>
+
+)}
     </main>
   );
 }

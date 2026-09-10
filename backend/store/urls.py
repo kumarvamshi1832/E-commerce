@@ -1,5 +1,4 @@
 from django.urls import path
-
 from .auth_views import register_user, login_user,verify_registration_otp,resend_registration_otp
 from .views import (
     product_list,
@@ -16,12 +15,16 @@ from .views import (
     my_support_tickets,
     support_ticket_detail,
     send_support_message,
+    add_product_review,
+    get_product_reviews,
     )
 
 from .views import (
     get_wishlist,
     add_to_wishlist,
     remove_from_wishlist,
+    get_notifications,
+    mark_notification_read,
 )
 
 
@@ -144,6 +147,23 @@ path(
     "wishlist/remove/<int:product_id>/",
     remove_from_wishlist,
     name="remove_from_wishlist"
+),
+
+path("notifications/", get_notifications),
+
+path(
+    "notifications/<int:notification_id>/read/",
+    mark_notification_read
+),
+
+path(
+    "products/<int:product_id>/reviews/<int:order_item_id>/",
+    add_product_review
+),
+
+path(
+    "products/<int:product_id>/reviews/",
+    get_product_reviews
 ),
 
 

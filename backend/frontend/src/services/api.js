@@ -27,4 +27,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const getNotifications = () => {
+  return api.get("notifications/");
+};
+
+export const markNotificationRead = (notificationId) => {
+  return api.patch(`notifications/${notificationId}/read/`);
+};
+
 export default api;

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import "./ProductCard.css";
 
-function ProductCard({ product }) {
+function ProductCard({ product, onReviewsClick }) {
   const {
     cart,
     addToCart,
@@ -20,7 +20,10 @@ function ProductCard({ product }) {
 
   const quantity = cartItem ? cartItem.quantity : 0;
 
-  // Check wishlist
+  // =========================
+  // CHECK WISHLIST
+  // =========================
+
   useEffect(() => {
     const checkWishlist = async () => {
       const user = localStorage.getItem("user");
@@ -39,19 +42,27 @@ function ProductCard({ product }) {
 
         setIsWishlisted(exists);
       } catch (error) {
-        console.error("Wishlist check error:", error);
+        console.error(
+          "Wishlist check error:",
+          error
+        );
       }
     };
 
     checkWishlist();
   }, [product.id]);
 
-  // Add to cart
+  // =========================
+  // ADD TO CART
+  // =========================
+
   const handleAddToCart = () => {
     const user = localStorage.getItem("user");
 
     if (!user) {
-      alert("Please login first to add items to cart.");
+      alert(
+        "Please login first to add items to cart."
+      );
       return;
     }
 
@@ -62,12 +73,17 @@ function ProductCard({ product }) {
     addToCart(product);
   };
 
-  // Add / Remove wishlist
+  // =========================
+  // ADD / REMOVE WISHLIST
+  // =========================
+
   const handleWishlist = async () => {
     const user = localStorage.getItem("user");
 
     if (!user) {
-      alert("Please login first to use wishlist.");
+      alert(
+        "Please login first to use wishlist."
+      );
       return;
     }
 
@@ -86,7 +102,10 @@ function ProductCard({ product }) {
         setIsWishlisted(true);
       }
     } catch (error) {
-      console.error("Wishlist error:", error);
+      console.error(
+        "Wishlist error:",
+        error
+      );
 
       if (error.response?.status === 401) {
         alert("Please login first.");
@@ -97,10 +116,15 @@ function ProductCard({ product }) {
   return (
     <article className="product-card">
 
-      {/* PRODUCT IMAGE */}
+      {/* =========================
+          PRODUCT IMAGE
+      ========================= */}
+
       <div className="product-image-wrapper">
 
-        <Link to={`/product/${product.id}`}>
+        <Link
+          to={`/product/${product.id}`}
+        >
           {product.image ? (
             <img
               src={product.image}
@@ -115,10 +139,13 @@ function ProductCard({ product }) {
         </Link>
 
         {/* WISHLIST HEART */}
+
         <button
           type="button"
           className={`product-wishlist ${
-            isWishlisted ? "wishlisted" : ""
+            isWishlisted
+              ? "wishlisted"
+              : ""
           }`}
           onClick={handleWishlist}
           aria-label={
@@ -132,12 +159,19 @@ function ProductCard({ product }) {
 
       </div>
 
-      {/* PRODUCT DETAILS */}
+      {/* =========================
+          PRODUCT DETAILS
+      ========================= */}
+
       <div className="product-details">
+
+        {/* CATEGORY */}
 
         <p className="product-category">
           {product.category}
         </p>
+
+        {/* PRODUCT NAME */}
 
         <Link
           to={`/product/${product.id}`}
@@ -146,15 +180,65 @@ function ProductCard({ product }) {
           <h3>{product.name}</h3>
         </Link>
 
+        {/* =========================
+            PRODUCT RATING
+        ========================= */}
+
+        <div className="product-rating">
+
+          {product.rating_count > 0 ? (
+            <>
+              <span className="rating-stars">
+                {"★".repeat(
+                  Math.round(
+                    product.average_rating
+                  )
+                )}
+              </span>
+
+              <span className="rating-count">
+                ({product.rating_count})
+              </span>
+            </>
+          ) : (
+            <span className="no-rating">
+              No ratings yet
+            </span>
+          )}
+
+          {/* REVIEWS */}
+
+          <button
+            type="button"
+            className="reviews-link"
+            onClick={() =>
+              onReviewsClick(product.id)
+            }
+          >
+            Reviews
+          </button>
+
+        </div>
+
+        {/* DESCRIPTION */}
+
         <p className="product-description">
           {product.description}
         </p>
 
+        {/* =========================
+            PRICE + STOCK + CART
+        ========================= */}
+
         <div className="product-bottom">
 
           <div>
+
             <strong className="price">
-              ₹{Number(product.price).toFixed(2)}
+              ₹
+              {Number(
+                product.price
+              ).toFixed(2)}
             </strong>
 
             <span className="price-unit">
@@ -172,47 +256,70 @@ function ProductCard({ product }) {
                 Out of Stock
               </span>
             )}
+
           </div>
 
-          {/* CART */}
+          {/* =========================
+              CART
+          ========================= */}
+
           {quantity === 0 ? (
+
             <button
               className="add-cart"
-              disabled={product.stock <= 0}
-              onClick={handleAddToCart}
+              disabled={
+                product.stock <= 0
+              }
+              onClick={
+                handleAddToCart
+              }
               aria-label="Add to cart"
             >
               🛒
             </button>
+
           ) : (
+
             <div className="quantity-control">
 
               <button
                 type="button"
                 onClick={() =>
-                  decreaseQuantity(product.id)
+                  decreaseQuantity(
+                    product.id
+                  )
                 }
               >
                 −
               </button>
 
-              <span>{quantity}</span>
+              <span>
+                {quantity}
+              </span>
 
               <button
                 type="button"
-                disabled={quantity >= product.stock}
+                disabled={
+                  quantity >=
+                  product.stock
+                }
                 onClick={() =>
-                  increaseQuantity(product.id)
+                  increaseQuantity(
+                    product.id
+                  )
                 }
               >
                 +
               </button>
 
             </div>
+
           )}
 
         </div>
+
       </div>
+
     </article>
   );
 }

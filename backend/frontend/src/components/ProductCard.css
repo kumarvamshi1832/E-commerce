@@ -226,3 +226,32 @@
   font-weight: 700;
   font-size: 0.9rem;
 }
+.product-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.rating-stars {
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.rating-count {
+  font-size: 14px;
+  color: #666;
+}
+
+.no-rating {
+  font-size: 13px;
+  color: #777;
+}
+
+.reviews-link {
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}

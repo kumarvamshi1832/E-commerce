@@ -1,12 +1,12 @@
 import json
-
+from django.db.models import Avg, Count
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import (Product, Order, OrderItem, Coupon,
                      EmailOTP,Wishlist,ProductFeedback,
-                     SupportTicket,SupportMessage,)
+                     SupportTicket,SupportMessage,Notification,ProductReview)
 import random
 import os
 import requests
@@ -60,6 +60,13 @@ def product_list(request):
 
     for product in products:
 
+        summary = ProductReview.objects.filter(
+            product=product
+        ).aggregate(
+            average_rating=Avg("rating"),
+            rating_count=Count("id")
+        )
+
         data.append({
             "id": product.id,
             "name": product.name,
@@ -72,15 +79,19 @@ def product_list(request):
             ),
             "category": product.category,
             "stock": product.stock,
+
+            "average_rating": round(
+                summary["average_rating"] or 0,
+                1
+            ),
+            "rating_count": summary["rating_count"],
         })
 
     return JsonResponse(data, safe=False)
 
-
 # =========================================================
 # PRODUCT DETAIL
 # =========================================================
-
 def product_detail(request, product_id):
 
     try:
@@ -94,6 +105,13 @@ def product_detail(request, product_id):
             status=404
         )
 
+    summary = ProductReview.objects.filter(
+        product=product
+    ).aggregate(
+        average_rating=Avg("rating"),
+        rating_count=Count("id")
+    )
+
     data = {
         "id": product.id,
         "name": product.name,
@@ -106,10 +124,15 @@ def product_detail(request, product_id):
         ),
         "category": product.category,
         "stock": product.stock,
+
+        "average_rating": round(
+            summary["average_rating"] or 0,
+            1
+        ),
+        "rating_count": summary["rating_count"],
     }
 
     return JsonResponse(data)
-
 
 # =========================================================
 # CREATE ORDER
@@ -297,6 +320,12 @@ def create_order(request):
             user=user,
             total_amount=final_total
         )
+
+        Notification.objects.create(
+            user=user,
+            message=f"🎉 Your order #{order.id} has been placed successfully.",
+            notification_type="order"
+)
 
         # =================================================
         # CREATE ORDER ITEMS
@@ -1786,4 +1815,236 @@ def remove_from_wishlist(request, product_id):
     return JsonResponse({
         "message": "Product removed from wishlist",
         "wishlisted": False
+    })
+
+# =========================
+# NOTIFICATIONS
+# =========================
+
+@token_auth_required
+def get_notifications(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    notifications = Notification.objects.filter(
+        user=request.user
+    ).order_by("-created_at")
+
+    data = []
+
+    for notification in notifications:
+
+        data.append({
+            "id": notification.id,
+            "message": notification.message,
+            "notification_type": notification.notification_type,
+            "is_read": notification.is_read,
+            "created_at": notification.created_at.isoformat(),
+        })
+
+    unread_count = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).count()
+
+    return JsonResponse({
+        "notifications": data,
+        "unread_count": unread_count
+    })
+
+@csrf_exempt
+@token_auth_required
+def mark_notification_read(request, notification_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH requests are allowed."},
+            status=405
+        )
+
+    try:
+
+        notification = Notification.objects.get(
+            id=notification_id,
+            user=request.user
+        )
+
+    except Notification.DoesNotExist:
+
+        return JsonResponse(
+            {"error": "Notification not found"},
+            status=404
+        )
+
+    notification.is_read = True
+    notification.save()
+
+    unread_count = Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).count()
+
+    return JsonResponse({
+        "message": "Notification marked as read",
+        "unread_count": unread_count
+    })
+
+@csrf_exempt
+@token_auth_required
+def add_product_review(request, product_id, order_item_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed"},
+            status=405
+        )
+
+    try:
+        order_item = OrderItem.objects.select_related(
+            "order",
+            "product"
+        ).get(
+            id=order_item_id,
+            product_id=product_id,
+            order__user=request.user
+        )
+
+    except OrderItem.DoesNotExist:
+        return JsonResponse(
+            {"error": "You did not purchase this product"},
+            status=403
+        )
+
+    # Only delivered orders can be reviewed
+    if order_item.order.status != "Delivered":
+        return JsonResponse(
+            {"error": "You can review the product only after delivery"},
+            status=400
+        )
+
+    # Prevent duplicate review for the same order item
+    # if ProductReview.objects.filter(
+    #     user=request.user,
+    #     order_item=order_item
+    # ).exists():
+
+    #     return JsonResponse(
+    #         {"error": "You have already reviewed this product for this order"},
+    #         status=400
+    #     )
+
+    data = json.loads(request.body)
+
+    rating = data.get("rating")
+    review = data.get("review", "").strip()
+
+    if not rating:
+        return JsonResponse(
+            {"error": "Rating is required"},
+            status=400
+        )
+
+    try:
+        rating = int(rating)
+    except (ValueError, TypeError):
+        return JsonResponse(
+            {"error": "Rating must be between 1 and 5"},
+            status=400
+        )
+
+    if rating < 1 or rating > 5:
+        return JsonResponse(
+            {"error": "Rating must be between 1 and 5"},
+            status=400
+        )
+
+    if not review:
+        return JsonResponse(
+            {"error": "Review cannot be empty"},
+            status=400
+        )
+
+    product_review = ProductReview.objects.create(
+        user=request.user,
+        product=order_item.product,
+        order_item=order_item,
+        rating=rating,
+        review=review
+    )
+
+    return JsonResponse({
+        "message": "Rating and review submitted successfully",
+        "review": {
+            "id": product_review.id,
+            "product_id": product_review.product.id,
+            "rating": product_review.rating,
+            "review": product_review.review,
+            "username": request.user.username,
+            "created_at": product_review.created_at.isoformat(),
+        }
+    }, status=201)
+
+def get_product_reviews(request, product_id):
+
+    try:
+        product = Product.objects.get(id=product_id)
+
+    except Product.DoesNotExist:
+        return JsonResponse(
+            {"error": "Product not found"},
+            status=404
+        )
+
+    summary = ProductReview.objects.filter(
+        product=product
+    ).aggregate(
+        average_rating=Avg("rating"),
+        rating_count=Count("id")
+    )
+
+    reviews = ProductReview.objects.filter(
+        product=product
+    ).select_related(
+        "user"
+    ).order_by(
+        "-created_at"
+    )
+
+    review_data = []
+
+    for item in reviews:
+
+        review_data.append({
+            "id": item.id,
+            "username": item.user.username,
+            "rating": item.rating,
+            "review": item.review,
+            "created_at": item.created_at.isoformat(),
+        })
+
+    return JsonResponse({
+        "product_id": product.id,
+        "product_name": product.name,
+        "average_rating": round(
+            summary["average_rating"] or 0,
+            1
+        ),
+        "rating_count": summary["rating_count"],
+        "reviews": review_data
     })
