@@ -9,6 +9,7 @@ from .models import (
     SupportTicket,
     SupportMessage,
     Notification,
+    DeliveryPincode,
 )
 
 
@@ -387,3 +388,10 @@ class SupportMessageAdmin(admin.ModelAdmin):
         "message",
         "created_at",
     )
+
+
+@admin.register(DeliveryPincode)
+class DeliveryPincodeAdmin(admin.ModelAdmin):
+    list_display = ("product", "pincode")
+    list_filter = ("product",)
+    search_fields = ("pincode", "product__name")

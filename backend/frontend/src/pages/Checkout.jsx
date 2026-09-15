@@ -31,6 +31,45 @@ function Checkout() {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinError, setPinError] = useState("");
 
+  // Delivery availability
+  const [deliveryStatus, setDeliveryStatus] = useState({});
+  const [checkingDelivery, setCheckingDelivery] = useState(false);
+
+  // =========================
+  // CHECK CART DELIVERY
+  // =========================
+
+  const checkCartDelivery = async (enteredPincode) => {
+    try {
+      setCheckingDelivery(true);
+
+      const response = await api.get(
+        `delivery/check/?pincode=${enteredPincode}`
+      );
+
+      const status = {};
+
+      response.data.products.forEach((item) => {
+        status[item.product_id] = item.deliverable;
+      });
+
+      setDeliveryStatus(status);
+
+      return status;
+    } catch (error) {
+      console.error(
+        "Delivery check error:",
+        error
+      );
+
+      setDeliveryStatus({});
+
+      return null;
+    } finally {
+      setCheckingDelivery(false);
+    }
+  };
+
   // =========================
   // PINCODE
   // =========================
@@ -43,10 +82,11 @@ function Checkout() {
 
     setPin(value);
 
-    // Reset old location/error
+    // Reset old location/error/delivery status
     setLocation(null);
     setPinError("");
     setError("");
+    setDeliveryStatus({});
 
     // Don't call API until 6 digits
     if (value.length !== 6) {
@@ -79,8 +119,11 @@ function Checkout() {
         state: firstOffice.State,
       });
 
+      // Check delivery availability for all cart products
+      await checkCartDelivery(value);
     } catch (error) {
       console.error("Pincode error:", error);
+
       setPinError(
         "Unable to check pincode. Please try again."
       );
@@ -125,6 +168,17 @@ function Checkout() {
     subtotal + delivery - discountAmount;
 
   // =========================
+  // UNDELIVERABLE PRODUCTS
+  // =========================
+
+  const unavailableItems = cart.filter(
+    (item) => deliveryStatus[item.id] === false
+  );
+
+  const hasUndeliverableItems =
+    unavailableItems.length > 0;
+
+  // =========================
   // APPLY COUPON
   // =========================
 
@@ -140,27 +194,21 @@ function Checkout() {
       setCouponMessage(
         "✓ 10% discount applied!"
       );
-    }
-
-    else if (coupon === "SAVE20") {
+    } else if (coupon === "SAVE20") {
       setCouponCode("SAVE20");
       setAppliedCoupon("SAVE20");
       setDiscountPercent(20);
       setCouponMessage(
         "✓ 20% discount applied!"
       );
-    }
-
-    else if (coupon === "SAVE30") {
+    } else if (coupon === "SAVE30") {
       setCouponCode("SAVE30");
       setAppliedCoupon("SAVE30");
       setDiscountPercent(30);
       setCouponMessage(
         "✓ 30% discount applied!"
       );
-    }
-
-    else {
+    } else {
       setAppliedCoupon("");
       setDiscountPercent(0);
       setCouponMessage(
@@ -174,7 +222,6 @@ function Checkout() {
   // =========================
 
   const handlePlaceOrder = async () => {
-
     // No pincode
     if (pin.length !== 6) {
       setError(
@@ -188,6 +235,37 @@ function Checkout() {
       setError(
         "Please enter a valid pincode before placing the order."
       );
+      return;
+    }
+
+    // Check delivery one more time before order
+    const status = await checkCartDelivery(pin);
+
+    if (!status) {
+      setError(
+        "Unable to check delivery availability. Please try again."
+      );
+      return;
+    }
+
+    // Find products that cannot be delivered
+    const unavailableProducts = cart.filter(
+      (item) => status[item.id] === false
+    );
+
+    if (unavailableProducts.length > 0) {
+      const productNames = unavailableProducts
+        .map((item) => item.name)
+        .join(", ");
+
+      setError(
+        `${productNames} ${
+          unavailableProducts.length === 1
+            ? "is"
+            : "are"
+        } not deliverable to ${pin}.`
+      );
+
       return;
     }
 
@@ -206,7 +284,7 @@ function Checkout() {
           items: orderItems,
           coupon_code: appliedCoupon,
           pincode: pin,
-        } 
+        }
       );
 
       console.log(
@@ -217,25 +295,47 @@ function Checkout() {
       // Empty cart
       clearCart();
 
-      // 🎈 SHOW BALLOONS
+      // Show balloons
       setShowBalloons(true);
 
       // Redirect after 4 seconds
       setTimeout(() => {
         navigate("/");
       }, 4000);
-
     } catch (error) {
       console.error(
         "Order error:",
         error
       );
 
-      setError(
-        error.response?.data?.error ||
-        "Failed to place order. Please try again."
-      );
+      // Backend delivery error
+      if (
+        error.response?.data
+          ?.non_deliverable_products
+      ) {
+        const products =
+          error.response.data
+            .non_deliverable_products;
 
+        const productNames = products
+          .map((item) => item.product_name)
+          .join(", ");
+
+        setError(
+          `${productNames} ${
+            products.length === 1
+              ? "is"
+              : "are"
+          } not deliverable to ${
+            error.response.data.pincode || pin
+          }.`
+        );
+      } else {
+        setError(
+          error.response?.data?.error ||
+          "Failed to place order. Please try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -251,9 +351,7 @@ function Checkout() {
   ) {
     return (
       <main className="checkout-page">
-
         <div className="checkout-empty">
-
           <h1>
             Your cart is empty
           </h1>
@@ -265,9 +363,7 @@ function Checkout() {
           <Link to="/products">
             Continue Shopping
           </Link>
-
         </div>
-
       </main>
     );
   }
@@ -279,7 +375,7 @@ function Checkout() {
   return (
     <main className="checkout-page">
 
-      {/* 🎈 BALLOON EFFECT */}
+      {/* BALLOON EFFECT */}
 
       {showBalloons && (
         <BalloonEffect />
@@ -428,31 +524,51 @@ function Checkout() {
                           ).toFixed(2)}
                         </p>
 
-                       <div className="checkout-quantity">
+                        {/* DELIVERY STATUS */}
 
-  <button
-    type="button"
-    onClick={() =>
-      decreaseQuantity(item.id)
-    }
-  >
-    −
-  </button>
+                        {pin.length === 6 &&
+                          deliveryStatus[item.id] !==
+                            undefined && (
 
-  <span>
-    {item.quantity}
-  </span>
+                            <p
+                              className={
+                                deliveryStatus[item.id]
+                                  ? "checkout-deliverable"
+                                  : "checkout-not-deliverable"
+                              }
+                            >
+                              {deliveryStatus[item.id]
+                                ? `✓ Deliverable to ${pin}`
+                                : `✕ Not deliverable to ${pin}`}
+                            </p>
 
-  <button
-    type="button"
-    onClick={() =>
-      increaseQuantity(item.id)
-    }
-  >
-    +
-  </button>
+                          )}
 
-</div>
+                        <div className="checkout-quantity">
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              decreaseQuantity(item.id)
+                            }
+                          >
+                            −
+                          </button>
+
+                          <span>
+                            {item.quantity}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              increaseQuantity(item.id)
+                            }
+                          >
+                            +
+                          </button>
+
+                        </div>
 
                       </div>
 
@@ -575,6 +691,12 @@ function Checkout() {
                     {pinLoading && (
                       <p>
                         Checking pincode...
+                      </p>
+                    )}
+
+                    {checkingDelivery && (
+                      <p>
+                        Checking product delivery...
                       </p>
                     )}
 
@@ -766,17 +888,35 @@ function Checkout() {
 
                   </div>
 
+                  {/* DELIVERY WARNING */}
+
+                  {hasUndeliverableItems && (
+                    <div className="checkout-delivery-warning">
+                      ⚠️ Some products cannot be delivered
+                      to {pin}. Please remove them or
+                      choose another pincode.
+                    </div>
+                  )}
+
                   {/* PLACE ORDER */}
 
                   <button
                     className="place-order-button"
                     onClick={handlePlaceOrder}
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      checkingDelivery ||
+                      hasUndeliverableItems
+                    }
                   >
 
                     {loading
                       ? "Placing Order..."
-                      : "Place Order"}
+                      : checkingDelivery
+                        ? "Checking Delivery..."
+                        : hasUndeliverableItems
+                          ? "Delivery Unavailable"
+                          : "Place Order"}
 
                   </button>
 

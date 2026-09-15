@@ -195,3 +195,120 @@
 .review-item-stars {
   color: #f5b301;
 }
+
+/* =========================================================
+   DELIVERY CHECK
+   ========================================================= */
+
+.delivery-check-section {
+  margin-bottom: 30px;
+  padding: 22px 24px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: #fafafa;
+}
+
+.delivery-check-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.delivery-check-label {
+  margin: 0 0 5px;
+
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+
+  color: var(--sage-dark);
+}
+
+.delivery-check-content h3 {
+  margin: 0;
+
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.delivery-checked-message {
+  margin: 6px 0 0;
+
+  font-size: 0.82rem;
+  color: #555;
+}
+
+.delivery-input-area {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.delivery-input-area input {
+  width: 190px;
+
+  padding: 11px 13px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+
+  font-size: 0.9rem;
+
+  outline: none;
+}
+
+.delivery-input-area input:focus {
+  border-color: #777;
+}
+
+.delivery-input-area button {
+  padding: 11px 18px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #111827;
+  color: white;
+
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.delivery-input-area button:hover {
+  opacity: 0.9;
+}
+
+.delivery-input-area button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delivery-error {
+  margin: 10px 0 0;
+
+  color: #dc2626;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 700px) {
+
+  .delivery-check-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .delivery-input-area {
+    width: 100%;
+  }
+
+  .delivery-input-area input {
+    flex: 1;
+    width: auto;
+  }
+
+}

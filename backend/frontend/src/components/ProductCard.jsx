@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import "./ProductCard.css";
 
-function ProductCard({ product, onReviewsClick }) {
+function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode, }) {
   const {
     cart,
     addToCart,
@@ -219,6 +219,32 @@ function ProductCard({ product, onReviewsClick }) {
           </button>
 
         </div>
+
+        {/* =========================
+    DELIVERY STATUS
+========================= */}
+
+{checkedPincode && (
+  <div
+    className={
+      deliveryStatus
+        ? "delivery-status deliverable"
+        : "delivery-status not-deliverable"
+    }
+  >
+    {deliveryStatus ? (
+      <>
+        <span>✓</span>
+        Deliverable to {checkedPincode}
+      </>
+    ) : (
+      <>
+        <span>✕</span>
+        Not deliverable to {checkedPincode}
+      </>
+    )}
+  </div>
+)}
 
         {/* DESCRIPTION */}
 

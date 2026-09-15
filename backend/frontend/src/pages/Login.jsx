@@ -57,9 +57,15 @@ localStorage.setItem(
   response.data.token
 );
 
-      setTimeout(() => {
+     setTimeout(() => {
+    if (response.data.user.role === "support") {
+        navigate("/support-dashboard");
+    } else if (response.data.user.role === "admin") {
+        navigate("/admin");
+    } else {
         navigate("/");
-      }, 1200);
+    }
+}, 1200);
 
     } catch (error) {
       setError(

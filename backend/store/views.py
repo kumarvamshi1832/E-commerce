@@ -6,13 +6,15 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import (Product, Order, OrderItem, Coupon,
                      EmailOTP,Wishlist,ProductFeedback,
-                     SupportTicket,SupportMessage,Notification,ProductReview)
+                     SupportTicket,SupportMessage,Notification,ProductReview,DeliveryPincode)
 import random
 import os
 import requests
 import resend
 from django.conf import settings
 from django.core.mail import send_mail
+
+from django.utils import timezone
 
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
@@ -143,7 +145,9 @@ def create_order(request):
 
     if request.method != "POST":
         return JsonResponse(
-            {"error": "Only POST method allowed"},
+            {
+                "error": "Only POST method allowed"
+            },
             status=405
         )
 
@@ -154,6 +158,7 @@ def create_order(request):
         # =================================================
 
         data = json.loads(request.body)
+
         user = request.user
 
         # =================================================
@@ -162,7 +167,9 @@ def create_order(request):
 
         if not user.is_authenticated:
             return JsonResponse(
-                {"error": "User must be logged in"},
+                {
+                    "error": "User must be logged in"
+                },
                 status=401
             )
 
@@ -174,7 +181,9 @@ def create_order(request):
 
         if not items:
             return JsonResponse(
-                {"error": "Cart is empty"},
+                {
+                    "error": "Cart is empty"
+                },
                 status=400
             )
 
@@ -211,6 +220,7 @@ def create_order(request):
         # =================================================
 
         total_amount = 0
+
         order_items_data = []
 
         for item in items:
@@ -219,7 +229,9 @@ def create_order(request):
                 id=item["product_id"]
             )
 
-            quantity = int(item["quantity"])
+            quantity = int(
+                item["quantity"]
+            )
 
             # =================================================
             # CHECK QUANTITY
@@ -273,7 +285,7 @@ def create_order(request):
             )
 
         # =================================================
-        # DELIVERY
+        # DELIVERY PINCODE
         # =================================================
 
         pincode = data.get(
@@ -289,6 +301,53 @@ def create_order(request):
                 status=400
             )
 
+        # =================================================
+        # CHECK PRODUCT DELIVERY AVAILABILITY
+        # =================================================
+
+        non_deliverable_products = []
+
+        for item in order_items_data:
+
+            product = item["product"]
+
+            deliverable = DeliveryPincode.objects.filter(
+                product=product,
+                pincode=pincode
+            ).exists()
+
+            if not deliverable:
+                non_deliverable_products.append(
+                    {
+                        "product_id": product.id,
+                        "product_name": product.name,
+                    }
+                )
+
+        # =================================================
+        # BLOCK ORDER IF PRODUCT NOT DELIVERABLE
+        # =================================================
+
+        if non_deliverable_products:
+
+            return JsonResponse(
+                {
+                    "error": (
+                        f"Some products are not "
+                        f"deliverable to {pincode}"
+                    ),
+                    "pincode": pincode,
+                    "non_deliverable_products": (
+                        non_deliverable_products
+                    ),
+                },
+                status=400
+            )
+
+        # =================================================
+        # DELIVERY CHARGE
+        # =================================================
+
         if pincode.startswith("500"):
             delivery = 40
         else:
@@ -299,7 +358,9 @@ def create_order(request):
         # =================================================
 
         discount_amount = (
-            total_amount * discount_percent / 100
+            total_amount *
+            discount_percent /
+            100
         )
 
         # =================================================
@@ -321,11 +382,18 @@ def create_order(request):
             total_amount=final_total
         )
 
+        # =================================================
+        # ORDER NOTIFICATION
+        # =================================================
+
         Notification.objects.create(
             user=user,
-            message=f"🎉 Your order #{order.id} has been placed successfully.",
+            message=(
+                f"🎉 Your order #{order.id} "
+                f"has been placed successfully."
+            ),
             notification_type="order"
-)
+        )
 
         # =================================================
         # CREATE ORDER ITEMS
@@ -335,6 +403,7 @@ def create_order(request):
         for item in order_items_data:
 
             product = item["product"]
+
             quantity = item["quantity"]
 
             OrderItem.objects.create(
@@ -345,6 +414,7 @@ def create_order(request):
             )
 
             product.stock -= quantity
+
             product.save()
 
         # =================================================
@@ -356,7 +426,9 @@ def create_order(request):
         for item in order_items_data:
 
             product = item["product"]
+
             quantity = item["quantity"]
+
             price = item["price"]
 
             item_total = price * quantity
@@ -452,7 +524,7 @@ Your MyStore Team
 """
 
         # =================================================
-        # SEND EMAIL USING BREVO SMTP
+        # SEND EMAIL USING BREVO API
         # =================================================
 
         try:
@@ -551,7 +623,9 @@ Your MyStore Team
                     else None
                 ),
 
-                "discount_percent": discount_percent,
+                "discount_percent": (
+                    discount_percent
+                ),
 
                 "discount_amount": float(
                     discount_amount
@@ -591,13 +665,13 @@ Your MyStore Team
     # INVALID DATA
     # =====================================================
 
-    except (ValueError, KeyError):
+    except (ValueError, KeyError) as e:
 
-        return JsonResponse(
-            {
-                "error": "Invalid order data."
-            },
-            status=400
+        return JsonResponse({
+            "error": "Invalid order data.",
+            "details": str(e)
+                
+            },status=400
         )
 
     # =====================================================
@@ -612,7 +686,6 @@ Your MyStore Team
             },
             status=400
         )
-
 # =========================================================
 # MY ORDERS
 # =========================================================
@@ -2047,4 +2120,375 @@ def get_product_reviews(request, product_id):
         ),
         "rating_count": summary["rating_count"],
         "reviews": review_data
+    })
+
+@token_auth_required
+def support_dashboard_summary(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Support access required"},
+            status=403
+        )
+
+    total_tickets = SupportTicket.objects.count()
+
+    open_tickets = SupportTicket.objects.filter(
+        status="Open"
+    ).count()
+
+    in_progress_tickets = SupportTicket.objects.filter(
+        status="In Progress"
+    ).count()
+
+    resolved_tickets = SupportTicket.objects.filter(
+        status="Resolved"
+    ).count()
+
+    closed_tickets = SupportTicket.objects.filter(
+        status="Closed"
+    ).count()
+
+    categories = {}
+
+    for category, label in SupportTicket.CATEGORY_CHOICES:
+        categories[category] = SupportTicket.objects.filter(
+            category=category
+        ).count()
+
+    return JsonResponse({
+        "total_tickets": total_tickets,
+        "open_tickets": open_tickets,
+        "in_progress_tickets": in_progress_tickets,
+        "resolved_tickets": resolved_tickets,
+        "closed_tickets": closed_tickets,
+        "categories": categories
+    })
+
+@token_auth_required
+def support_dashboard_tickets(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Support access required"},
+            status=403
+        )
+
+    category = request.GET.get("category")
+    status = request.GET.get("status")
+
+    tickets = SupportTicket.objects.select_related(
+        "user",
+        "order"
+    ).prefetch_related(
+        "messages"
+    ).order_by("-created_at")
+
+    if category:
+        tickets = tickets.filter(category=category)
+
+    if status:
+        tickets = tickets.filter(status=status)
+
+    ticket_data = []
+
+    for ticket in tickets:
+
+        ticket_data.append({
+            "id": ticket.id,
+            "customer_username": ticket.user.username,
+            "customer_email": ticket.user.email,
+            "category": ticket.category,
+            "subject": ticket.subject,
+            "description": ticket.description,
+            "status": ticket.status,
+            "admin_reply": ticket.admin_reply,
+            "order_id": ticket.order.id if ticket.order else None,
+            "created_at": ticket.created_at.isoformat(),
+            "updated_at": ticket.updated_at.isoformat(),
+            "resolved_at": (
+                ticket.resolved_at.isoformat()
+                if ticket.resolved_at
+                else None
+            ),
+        })
+
+    return JsonResponse({
+        "tickets": ticket_data
+    })
+
+# =========================
+# SUPPORT TICKET DETAIL
+# =========================
+
+@token_auth_required
+def support_dashboard_ticket_detail(request, ticket_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Support access required"},
+            status=403
+        )
+
+    try:
+        ticket = SupportTicket.objects.select_related(
+            "user",
+            "order"
+        ).prefetch_related(
+            "messages"
+        ).get(id=ticket_id)
+
+    except SupportTicket.DoesNotExist:
+        return JsonResponse(
+            {"error": "Ticket not found"},
+            status=404
+        )
+
+    messages = []
+
+    for message in ticket.messages.all():
+        messages.append({
+            "id": message.id,
+            "sender": message.sender,
+            "message": message.message,
+            "created_at": message.created_at.isoformat(),
+        })
+
+    return JsonResponse({
+        "ticket": {
+            "id": ticket.id,
+            "customer_username": ticket.user.username,
+            "customer_email": ticket.user.email,
+            "category": ticket.category,
+            "subject": ticket.subject,
+            "description": ticket.description,
+            "status": ticket.status,
+            "admin_reply": ticket.admin_reply,
+            "order_id": ticket.order.id if ticket.order else None,
+            "created_at": ticket.created_at.isoformat(),
+            "updated_at": ticket.updated_at.isoformat(),
+            "resolved_at": (
+                ticket.resolved_at.isoformat()
+                if ticket.resolved_at
+                else None
+            ),
+        },
+        "messages": messages
+    })
+
+# =========================
+# SUPPORT REPLY
+# =========================
+
+@csrf_exempt
+@token_auth_required
+def support_dashboard_reply(request, ticket_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Support access required"},
+            status=403
+        )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST method required"},
+            status=405
+        )
+
+    try:
+        ticket = SupportTicket.objects.get(
+            id=ticket_id
+        )
+
+    except SupportTicket.DoesNotExist:
+        return JsonResponse(
+            {"error": "Ticket not found"},
+            status=404
+        )
+
+    if ticket.status == "Closed":
+        return JsonResponse(
+            {"error": "Closed tickets cannot receive replies"},
+            status=400
+        )
+
+    data = json.loads(request.body)
+
+    message_text = data.get("message", "").strip()
+
+    if not message_text:
+        return JsonResponse(
+            {"error": "Reply message is required"},
+            status=400
+        )
+
+    SupportMessage.objects.create(
+        ticket=ticket,
+        sender="Admin",
+        message=message_text
+    )
+
+    ticket.admin_reply = message_text
+
+    if ticket.status == "Open":
+        ticket.status = "In Progress"
+
+    ticket.save()
+
+    Notification.objects.create(
+        user=ticket.user,
+        message=f"Support replied to your ticket #{ticket.id}.",
+        notification_type="support"
+    )
+
+    return JsonResponse({
+        "message": "Reply sent successfully",
+        "ticket_status": ticket.status
+    })
+
+# =========================
+# UPDATE SUPPORT TICKET STATUS
+# =========================
+
+@csrf_exempt
+@token_auth_required
+def support_dashboard_update_status(request, ticket_id):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if not request.user.is_staff:
+        return JsonResponse(
+            {"error": "Support access required"},
+            status=403
+        )
+
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "PATCH method required"},
+            status=405
+        )
+
+    try:
+        ticket = SupportTicket.objects.get(
+            id=ticket_id
+        )
+
+    except SupportTicket.DoesNotExist:
+        return JsonResponse(
+            {"error": "Ticket not found"},
+            status=404
+        )
+
+    data = json.loads(request.body)
+
+    new_status = data.get("status")
+
+    valid_statuses = [
+        "Open",
+        "In Progress",
+        "Resolved",
+        "Closed"
+    ]
+
+    if new_status not in valid_statuses:
+        return JsonResponse(
+            {"error": "Invalid status"},
+            status=400
+        )
+
+    ticket.status = new_status
+
+    if new_status == "Resolved":
+        ticket.resolved_at = timezone.now()
+
+    elif new_status != "Resolved":
+        ticket.resolved_at = None
+
+    ticket.save()
+
+    Notification.objects.create(
+        user=ticket.user,
+        message=f"Your support ticket #{ticket.id} status is now {new_status}.",
+        notification_type="support"
+    )
+
+    return JsonResponse({
+        "message": "Ticket status updated successfully",
+        "status": ticket.status,
+        "resolved_at": (
+            ticket.resolved_at.isoformat()
+            if ticket.resolved_at
+            else None
+        )
+    })
+
+
+@token_auth_required
+def check_delivery(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "GET method required"},
+            status=405
+        )
+
+    pincode = request.GET.get("pincode", "").strip()
+
+    if not pincode:
+        return JsonResponse(
+            {"error": "Pincode is required"},
+            status=400
+        )
+
+    if not pincode.isdigit() or len(pincode) != 6:
+        return JsonResponse(
+            {"error": "Enter a valid 6-digit pincode"},
+            status=400
+        )
+
+    products = Product.objects.all()
+
+    delivery_data = []
+
+    for product in products:
+        deliverable = product.delivery_pincodes.filter(
+            pincode=pincode
+        ).exists()
+
+        delivery_data.append({
+            "product_id": product.id,
+            "deliverable": deliverable
+        })
+
+    return JsonResponse({
+        "pincode": pincode,
+        "products": delivery_data
     })

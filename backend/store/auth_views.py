@@ -559,6 +559,7 @@ def login_user(request):
 
         try:
             user = User.objects.get(email__iexact=email)
+
         except User.DoesNotExist:
             return JsonResponse(
                 {"error": "Invalid email or password."},
@@ -568,7 +569,10 @@ def login_user(request):
         if not user.is_active:
             return JsonResponse(
                 {
-                    "error": "Please verify your email with OTP before logging in."
+                    "error": (
+                        "Please verify your email "
+                        "with OTP before logging in."
+                    )
                 },
                 status=403
             )
@@ -584,23 +588,43 @@ def login_user(request):
                 status=401
             )
 
+        # Create or get token
         token, created = Token.objects.get_or_create(
-    user=authenticated_user
-)
+            user=authenticated_user
+        )
+
+        # Determine user role
+        if authenticated_user.is_superuser:
+            role = "admin"
+
+        elif authenticated_user.is_staff:
+            role = "support"
+
+        else:
+            role = "customer"
+
+        # Send login response
         return JsonResponse(
-    {
-        "message": "Login successful!",
-        "token": token.key,
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-        }
-    }
-)
+            {
+                "message": "Login successful!",
+                "token": token.key,
+                "user": {
+                    "id": authenticated_user.id,
+                    "username": authenticated_user.username,
+                    "email": authenticated_user.email,
+                    "role": role,
+                }
+            }
+        )
 
     except json.JSONDecodeError:
         return JsonResponse(
             {"error": "Invalid JSON data."},
             status=400
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"error": str(e)},
+            status=500
         )

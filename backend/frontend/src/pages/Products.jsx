@@ -4,8 +4,63 @@ import ProductCard from "../components/ProductCard";
 import "./Products.css";
 
 function Products() {
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [pincode, setPincode] = useState("");
+  const [checkedPincode, setCheckedPincode] = useState("");
+  const [deliveryStatus, setDeliveryStatus] = useState({});
+  const [checkingDelivery, setCheckingDelivery] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
+
+  // =========================
+// CHECK DELIVERY
+// =========================
+
+const handleCheckDelivery = async () => {
+  const enteredPincode = pincode.trim();
+
+  if (!enteredPincode) {
+    setDeliveryError("Please enter a pincode");
+    return;
+  }
+
+  if (!/^\d{6}$/.test(enteredPincode)) {
+    setDeliveryError("Please enter a valid 6-digit pincode");
+    return;
+  }
+
+  setCheckingDelivery(true);
+  setDeliveryError("");
+
+  try {
+    const response = await api.get(
+      `delivery/check/?pincode=${enteredPincode}`
+    );
+
+    const status = {};
+
+    response.data.products.forEach((item) => {
+      status[item.product_id] = item.deliverable;
+    });
+
+    setDeliveryStatus(status);
+    setCheckedPincode(response.data.pincode);
+  } catch (error) {
+    console.error(
+      "Error checking delivery:",
+      error
+    );
+
+    setDeliveryError(
+      error.response?.data?.error ||
+      "Unable to check delivery"
+    );
+  } finally {
+    setCheckingDelivery(false);
+  }
+};
 
   // =========================
   // REVIEWS
@@ -117,6 +172,63 @@ function Products() {
       </div>
 
       {/* =========================
+    DELIVERY CHECK
+========================= */}
+
+<div className="delivery-check-section">
+
+  <div className="delivery-check-content">
+
+    <div>
+      <p className="delivery-check-label">
+        🚚 CHECK DELIVERY
+      </p>
+
+      <h3>
+        Check product delivery to your location
+      </h3>
+
+      {checkedPincode && !deliveryError && (
+        <p className="delivery-checked-message">
+          Delivery status for {checkedPincode}
+        </p>
+      )}
+    </div>
+
+    <div className="delivery-input-area">
+
+      <input
+        type="text"
+        value={pincode}
+        onChange={(e) => {
+          setPincode(e.target.value);
+          setDeliveryError("");
+        }}
+        placeholder="Enter 6-digit pincode"
+        maxLength="6"
+      />
+
+      <button
+        type="button"
+        onClick={handleCheckDelivery}
+        disabled={checkingDelivery}
+      >
+        {checkingDelivery ? "Checking..." : "CHECK"}
+      </button>
+
+    </div>
+
+  </div>
+
+  {deliveryError && (
+    <p className="delivery-error">
+      {deliveryError}
+    </p>
+  )}
+
+</div>
+
+      {/* =========================
           PRODUCTS
       ========================= */}
 
@@ -125,12 +237,16 @@ function Products() {
         {products.map((product) => (
 
           <ProductCard
-            key={product.id}
-            product={product}
-            onReviewsClick={
-              handleReviewsClick
-            }
-          />
+  key={product.id}
+  product={product}
+  onReviewsClick={handleReviewsClick}
+  deliveryStatus={
+    checkedPincode
+      ? deliveryStatus[product.id]
+      : null
+  }
+  checkedPincode={checkedPincode}
+/>
 
         ))}
 

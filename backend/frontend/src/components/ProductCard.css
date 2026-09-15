@@ -255,3 +255,36 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* =========================================================
+   DELIVERY STATUS
+   ========================================================= */
+
+.delivery-status {
+  margin-top: 10px;
+  padding: 7px 10px;
+
+  border-radius: 6px;
+
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delivery-status span {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.deliverable {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.not-deliverable {
+  background: #fef2f2;
+  color: #dc2626;
+}

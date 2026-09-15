@@ -113,18 +113,17 @@
   padding: 14px 16px;
   border-radius: var(--radius-md);
 }
-
 .customer-message {
   align-self: flex-end;
-  background: var(--ink);
-  color: var(--parchment);
+  background: #e5e7eb;
+  color: #111827;
   border-bottom-right-radius: 4px;
 }
 
 .admin-message {
   align-self: flex-start;
-  background: var(--parchment-deep);
-  color: var(--ink);
+  background: #eef2ff;
+  color: #111827;
   border-bottom-left-radius: 4px;
 }
 
@@ -134,13 +133,14 @@
   letter-spacing: 0.04em;
   opacity: 0.7;
   margin-bottom: 4px;
+  color: inherit;
 }
 
 .message-text {
   font-size: 0.9rem;
   line-height: 1.5;
+  color: inherit;
 }
-
 .conversation-reply {
   margin-top: 20px;
   padding-top: 20px;

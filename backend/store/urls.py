@@ -17,6 +17,12 @@ from .views import (
     send_support_message,
     add_product_review,
     get_product_reviews,
+    support_dashboard_summary,
+    support_dashboard_tickets,
+    support_dashboard_ticket_detail,
+    support_dashboard_reply,
+    support_dashboard_update_status,
+    check_delivery,
     )
 
 from .views import (
@@ -166,5 +172,36 @@ path(
     get_product_reviews
 ),
 
+path(
+    "support/dashboard/",
+    support_dashboard_summary,
+    name="support-dashboard-summary"
+),
+
+path(
+    "support/dashboard/tickets/",
+    support_dashboard_tickets,
+    name="support-dashboard-tickets"
+),
+
+path(
+    "support/dashboard/tickets/<int:ticket_id>/",
+    support_dashboard_ticket_detail,
+    name="support-dashboard-ticket-detail"
+),
+
+path(
+    "support/dashboard/tickets/<int:ticket_id>/reply/",
+    support_dashboard_reply,
+    name="support-dashboard-reply"
+),
+
+path(
+    "support/dashboard/tickets/<int:ticket_id>/status/",
+    support_dashboard_update_status,
+    name="support-dashboard-update-status"
+),
+
+path("delivery/check/", check_delivery, name="check-delivery"),
 
 ]

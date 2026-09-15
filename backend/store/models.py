@@ -344,3 +344,23 @@ class Notification(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True
     )
+
+
+class DeliveryPincode(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="delivery_pincodes"
+    )
+    pincode = models.CharField(max_length=6)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["product", "pincode"],
+                name="unique_product_pincode"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.pincode}"
