@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import api from "../services/api";
 import "./SupportDashboard.css";
 
@@ -19,7 +21,10 @@ function SupportDashboard() {
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("");
 
+    const [searchTerm, setSearchTerm] = useState("");
+
     const [profileOpen, setProfileOpen] = useState(false);
+    const [downloadOpen, setDownloadOpen] = useState(false);
 
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -136,6 +141,46 @@ function SupportDashboard() {
 
 
     // =========================
+    // SEARCH TICKETS
+    // =========================
+
+    const filteredTickets = tickets.filter((ticket) => {
+
+        const search = searchTerm.toLowerCase().trim();
+
+
+        // EMPTY SEARCH
+        if (!search) {
+            return true;
+        }
+
+
+        // IF USER ENTERS ONLY NUMBERS
+        // SEARCH EXACT TICKET ID OR ORDER ID
+
+        if (/^\d+$/.test(search)) {
+
+            return (
+                String(ticket.id) === search ||
+                String(ticket.order_id || "") === search
+            );
+        }
+
+
+        // IF USER ENTERS TEXT
+        // SEARCH TEXT FIELDS
+
+        return (
+            ticket.subject?.toLowerCase().includes(search) ||
+            ticket.customer_username?.toLowerCase().includes(search) ||
+            ticket.customer_email?.toLowerCase().includes(search) ||
+            ticket.category?.toLowerCase().includes(search) ||
+            ticket.description?.toLowerCase().includes(search)
+        );
+    });
+
+
+    // =========================
     // LOAD DATA
     // =========================
 
@@ -187,12 +232,166 @@ function SupportDashboard() {
 
 
     // =========================
+    // DOWNLOAD CSV
+    // =========================
+
+    const downloadCSV = () => {
+
+        const headers = [
+            "Ticket ID",
+            "Customer",
+            "Email",
+            "Category",
+            "Order ID",
+            "Status",
+            "Created"
+        ];
+
+
+        const rows = filteredTickets.map((ticket) => [
+
+            ticket.id,
+
+            ticket.customer_username || "",
+
+            ticket.customer_email || "",
+
+            ticket.category || "",
+
+            ticket.order_id || "",
+
+            ticket.status || "",
+
+            new Date(
+                ticket.created_at
+            ).toLocaleString()
+
+        ]);
+
+
+        const csvContent = [
+            headers,
+            ...rows
+        ]
+            .map((row) =>
+                row
+                    .map((value) =>
+                        `"${String(value).replace(/"/g, '""')}"`
+                    )
+                    .join(",")
+            )
+            .join("\n");
+
+
+        const blob = new Blob(
+            [csvContent],
+            {
+                type: "text/csv;charset=utf-8;"
+            }
+        );
+
+
+        const url = URL.createObjectURL(blob);
+
+
+        const link = document.createElement("a");
+
+        link.href = url;
+
+        link.download = "support-tickets.csv";
+
+        link.click();
+
+
+        URL.revokeObjectURL(url);
+
+
+        setDownloadOpen(false);
+    };
+
+
+    // =========================
+    // DOWNLOAD PDF
+    // =========================
+
+    const downloadPDF = () => {
+
+        const doc = new jsPDF();
+
+
+        doc.setFontSize(16);
+
+        doc.text(
+            "Support Tickets",
+            14,
+            15
+        );
+
+
+        const tableData = filteredTickets.map(
+            (ticket) => [
+
+                `#${ticket.id}`,
+
+                ticket.customer_username || "",
+
+                ticket.category || "",
+
+                ticket.status || "",
+
+                new Date(
+                    ticket.created_at
+                ).toLocaleDateString()
+
+            ]
+        );
+
+
+        autoTable(doc, {
+
+            startY: 22,
+
+            head: [
+                [
+                    "Ticket ID",
+                    "Customer",
+                    "Category",
+                    "Status",
+                    "Created"
+                ]
+            ],
+
+            body: tableData,
+
+            styles: {
+                fontSize: 9,
+                cellPadding: 3
+            },
+
+            headStyles: {
+                fontSize: 9
+            }
+
+        });
+
+
+        doc.save(
+            "support-tickets.pdf"
+        );
+
+
+        setDownloadOpen(false);
+    };
+
+
+    // =========================
     // LOADING DASHBOARD
     // =========================
 
     if (loading) {
 
         return (
+
             <div className="support-dashboard">
 
                 <h1>
@@ -215,6 +414,7 @@ function SupportDashboard() {
     if (error && !dashboard) {
 
         return (
+
             <div className="support-dashboard">
 
                 <h1>
@@ -375,11 +575,14 @@ function SupportDashboard() {
                                     setProfileOpen(false);
 
                                     window.scrollTo({
+
                                         top:
                                             document.body
                                                 .scrollHeight,
+
                                         behavior:
                                             "smooth"
+
                                     });
 
                                 }}
@@ -703,31 +906,80 @@ function SupportDashboard() {
             <div className="dashboard-tickets-section">
 
 
+                {/* TICKETS HEADER */}
+
                 <div className="tickets-section-header">
 
-                    <h2>
+    <div className="tickets-header-left">
 
-                        {selectedStatus
+        <h2>
+            {selectedStatus
+                ? `${selectedStatus} Tickets`
+                : selectedCategory
+                ? `${selectedCategory} Tickets`
+                : "All Support Tickets"}
+        </h2>
 
-                            ? `${selectedStatus} Tickets`
+        <span>
+            {filteredTickets.length} Tickets
+        </span>
 
-                            : selectedCategory
-
-                            ? `${selectedCategory} Tickets`
-
-                            : "All Support Tickets"
-
-                        }
-
-                    </h2>
+    </div>
 
 
-                    <span>
-                        {tickets.length} Tickets
-                    </span>
+    <div className="tickets-header-right">
+
+        {/* SEARCH */}
+
+        <div className="ticket-search-section">
+
+            <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) =>
+                    setSearchTerm(e.target.value)
+                }
+                placeholder="🔍 Search tickets..."
+            />
+
+        </div>
+
+
+        {/* DOWNLOAD */}
+
+        <div className="download-container">
+
+            <button
+                className="download-button"
+                onClick={() =>
+                    setDownloadOpen(!downloadOpen)
+                }
+            >
+                ⬇ Download
+            </button>
+
+
+            {downloadOpen && (
+
+                <div className="download-menu">
+
+                    <button onClick={downloadCSV}>
+                        📄 Download CSV
+                    </button>
+
+                    <button onClick={downloadPDF}>
+                        📑 Download PDF
+                    </button>
 
                 </div>
 
+            )}
+
+        </div>
+
+    </div>
+
+</div>
 
                 {/* =========================
                     LOADING
@@ -743,7 +995,7 @@ function SupportDashboard() {
 
                     </div>
 
-                ) : tickets.length === 0 ? (
+                ) : filteredTickets.length === 0 ? (
 
 
                     /* =========================
@@ -762,173 +1014,157 @@ function SupportDashboard() {
 
 
                     /* =========================
-                       TICKET LIST
+                       TICKET TABLE
                     ========================= */
 
-                    <div className="dashboard-ticket-list">
+                    <div className="dashboard-ticket-table-wrapper">
 
 
-                        {tickets.map(
-                            (ticket) => (
-
-                                <div
-                                    className="dashboard-ticket-card"
-                                    key={ticket.id}
-                                >
+                        <table className="dashboard-ticket-table">
 
 
-                                    {/* =========================
-                                        TICKET TOP
-                                    ========================= */}
+                            <thead>
 
-                                    <div className="dashboard-ticket-top">
+                                <tr>
+
+                                    <th>
+                                        Ticket ID
+                                    </th>
+
+                                    <th>
+                                        Customer
+                                    </th>
+
+                                    <th>
+                                        Category
+                                    </th>
+
+                                    <th>
+                                        Status
+                                    </th>
+
+                                    <th>
+                                        Created
+                                    </th>
+
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
 
 
-                                        <div>
-
-                                            <span className="dashboard-ticket-id">
-                                                Ticket #{ticket.id}
-                                            </span>
-
-                                            <h3>
-                                                {ticket.subject}
-                                            </h3>
-
-                                        </div>
+                            <tbody>
 
 
-                                        <span
-                                            className={
-                                                `dashboard-ticket-status status-${ticket.status
-                                                    .toLowerCase()
-                                                    .replace(
-                                                        /\s+/g,
-                                                        "-"
-                                                    )}`
-                                            }
+                                {filteredTickets.map(
+                                    (ticket) => (
+
+                                        <tr
+                                            key={ticket.id}
                                         >
-                                            {ticket.status}
-                                        </span>
 
 
-                                    </div>
+                                            {/* TICKET ID */}
+
+                                            <td>
+
+                                                <span className="table-ticket-id">
+                                                    #{ticket.id}
+                                                </span>
+
+                                            </td>
 
 
-                                    {/* =========================
-                                        CUSTOMER INFO
-                                    ========================= */}
+                                            {/* CUSTOMER */}
 
-                                    <div className="dashboard-ticket-info">
+                                            <td>
 
+                                                <div className="table-customer">
 
-                                        <span>
-                                            Customer:{" "}
-                                            {ticket.customer_username}
-                                        </span>
+                                                    <strong>
+                                                        {ticket.customer_username}
+                                                    </strong>
 
+                                                    <span>
+                                                        {ticket.customer_email}
+                                                    </span>
 
-                                        <span>
-                                            Email:{" "}
-                                            {ticket.customer_email}
-                                        </span>
+                                                </div>
 
-
-                                        <span>
-                                            Category:{" "}
-                                            {ticket.category}
-                                        </span>
+                                            </td>
 
 
-                                        {ticket.order_id && (
+                                            {/* CATEGORY */}
 
-                                            <span>
-                                                Order: #
-                                                {ticket.order_id}
-                                            </span>
-
-                                        )}
+                                            <td>
+                                                {ticket.category}
+                                            </td>
 
 
-                                    </div>
+                                            {/* STATUS */}
+
+                                            <td>
+
+                                                <span
+                                                    className={
+                                                        `dashboard-ticket-status status-${ticket.status
+                                                            .toLowerCase()
+                                                            .replace(
+                                                                /\s+/g,
+                                                                "-"
+                                                            )}`
+                                                    }
+                                                >
+
+                                                    {ticket.status}
+
+                                                </span>
+
+                                            </td>
 
 
-                                    {/* =========================
-                                        DESCRIPTION
-                                    ========================= */}
+                                            {/* CREATED */}
 
-                                    <div className="dashboard-ticket-description">
+                                            <td>
 
-                                        <strong>
-                                            Issue
-                                        </strong>
+                                                {new Date(
+                                                    ticket.created_at
+                                                ).toLocaleDateString()}
 
-                                        <p>
-                                            {ticket.description}
-                                        </p>
-
-                                    </div>
+                                            </td>
 
 
-                                    {/* =========================
-                                        DATE
-                                    ========================= */}
+                                            {/* ACTION */}
 
-                                    <div className="dashboard-ticket-date">
+                                            <td>
 
-                                        <span>
+                                                <button
+                                                    className="table-view-button"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/support-dashboard/tickets/${ticket.id}`
+                                                        )
+                                                    }
+                                                >
+                                                    View
+                                                </button>
 
-                                            Created:{" "}
-
-                                            {new Date(
-                                                ticket.created_at
-                                            ).toLocaleString()}
-
-                                        </span>
-
-                                    </div>
-
-
-                                    {/* =========================
-                                        ADMIN REPLY
-                                    ========================= */}
-
-                                    {ticket.admin_reply && (
-
-                                        <div className="dashboard-ticket-reply">
-
-                                            <strong>
-                                                Latest Reply
-                                            </strong>
-
-                                            <p>
-                                                {ticket.admin_reply}
-                                            </p>
-
-                                        </div>
-
-                                    )}
+                                            </td>
 
 
-                                    {/* =========================
-                                        VIEW TICKET
-                                    ========================= */}
+                                        </tr>
 
-                                    <button
-                                        className="open-ticket-button"
-                                        onClick={() =>
-                                            navigate(
-                                                `/support-dashboard/tickets/${ticket.id}`
-                                            )
-                                        }
-                                    >
-                                        View Ticket →
-                                    </button>
+                                    )
+                                )}
 
 
-                                </div>
+                            </tbody>
 
-                            )
-                        )}
+
+                        </table>
 
 
                     </div>

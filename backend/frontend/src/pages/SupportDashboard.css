@@ -1032,3 +1032,239 @@
         0 0 0 2px #111827,
         0 6px 16px rgba(0, 0, 0, 0.08);
 }
+
+/* =========================
+   TICKETS TABLE
+========================= */
+
+.dashboard-ticket-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+
+.dashboard-ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+
+.dashboard-ticket-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+
+.dashboard-ticket-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: #374151;
+    border-bottom: 1px solid #eef0f3;
+    vertical-align: middle;
+}
+
+
+.dashboard-ticket-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+.table-ticket-id {
+    font-weight: 700;
+    color: #2563eb;
+}
+
+
+.table-customer {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+
+.table-customer strong {
+    font-size: 14px;
+    color: #1f2937;
+}
+
+
+.table-customer span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+
+.table-view-button {
+    padding: 7px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+
+.table-view-button:hover {
+    background: #f3f4f6;
+}
+
+
+/* =========================
+   DOWNLOAD BUTTON
+========================= */
+
+.download-container {
+    position: relative;
+}
+
+
+.download-button {
+    padding: 9px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+.download-button:hover {
+    background: #f3f4f6;
+}
+
+
+.download-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 170px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    z-index: 100;
+}
+
+
+.download-menu button {
+    width: 100%;
+    padding: 11px 14px;
+    border: none;
+    background: #ffffff;
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+
+.download-menu button:hover {
+    background: #f3f4f6;
+}
+
+.tickets-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 20px;
+}
+
+.tickets-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.tickets-header-left h2 {
+    margin: 0;
+}
+
+.tickets-header-left span {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.tickets-header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.ticket-search-section {
+    display: flex;
+    align-items: center;
+}
+
+.ticket-search-section input {
+    width: 280px;
+    padding: 10px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.ticket-search-section input:focus {
+    border-color: #2563eb;
+}
+
+.download-container {
+    position: relative;
+}
+
+.download-button {
+    padding: 10px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.download-button:hover {
+    background: #f3f4f6;
+}
+
+.download-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 175px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    z-index: 100;
+}
+
+.download-menu button {
+    width: 100%;
+    padding: 11px 14px;
+    border: none;
+    background: #ffffff;
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.download-menu button:hover {
+    background: #f3f4f6;
+}

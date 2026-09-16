@@ -312,3 +312,53 @@
   }
 
 }
+
+/* =========================
+   PRODUCTS HEADER
+========================= */
+
+.section-header {
+  width: 100%;
+}
+
+.section-label {
+  margin: 0 0 8px;
+}
+
+.products-title-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 30px;
+}
+
+.products-title-row h2 {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.product-search-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.product-search-section input {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 18px;
+  border: 1px solid #d6d6d6;
+  border-radius: 25px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.product-search-section input:focus {
+  border-color: #222;
+}
+
+.product-count {
+  margin: 0;
+  white-space: nowrap;
+}

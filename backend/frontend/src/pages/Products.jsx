@@ -7,6 +7,8 @@ function Products() {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [searchTerm, setSearchTerm] = useState("");
   
   const [pincode, setPincode] = useState("");
   const [checkedPincode, setCheckedPincode] = useState("");
@@ -91,6 +93,16 @@ const handleCheckDelivery = async () => {
       });
   }, []);
 
+ const filteredProducts = products.filter((product) => {
+  const search = searchTerm.toLowerCase();
+
+  return (
+    product.name?.toLowerCase().includes(search) ||
+    product.description?.toLowerCase().includes(search) ||
+    product.category?.toLowerCase().includes(search)
+  );
+});
+
   // =========================
   // OPEN REVIEWS
   // =========================
@@ -153,23 +165,33 @@ const handleCheckDelivery = async () => {
 
       <div className="section-header">
 
-        <div>
+  <p className="section-label">
+    OUR COLLECTION
+  </p>
 
-          <p className="section-label">
-            OUR COLLECTION
-          </p>
+  <div className="products-title-row">
 
-          <h2>
-            All Products
-          </h2>
+    <h2>
+      All Products
+    </h2>
 
-        </div>
+    <div className="product-search-section">
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="🔍 Search products..."
+      />
+    </div>
 
-        <p className="product-count">
-          {products.length} products
-        </p>
+    <p className="product-count">
+      {filteredProducts.length} products
+    </p>
 
-      </div>
+  </div>
+
+</div>
+      
 
       {/* =========================
     DELIVERY CHECK
@@ -234,7 +256,7 @@ const handleCheckDelivery = async () => {
 
       <div className="products-grid">
 
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
 
           <ProductCard
   key={product.id}
