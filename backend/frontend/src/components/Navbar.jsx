@@ -42,7 +42,7 @@ function Navbar() {
 
   useEffect(() => {
     loadNotifications();
-  }, [user]);
+  }, []);
 
   // =========================
   // MARK NOTIFICATION READ
