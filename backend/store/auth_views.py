@@ -12,6 +12,7 @@ import requests
 from rest_framework.authtoken.models import Token
 
 
+
 OTP_EXPIRY = 5 * 60  # 5 minutes
 
 
@@ -632,20 +633,16 @@ def login_user(request):
 
 @csrf_exempt
 def forgot_password(request):
-
     if request.method != "POST":
         return JsonResponse(
-            {"error": "Only POST requests are allowed."},
+            {"error": "Only POST method allowed."},
             status=405
         )
 
     try:
         data = json.loads(request.body)
 
-        email = data.get(
-            "email",
-            ""
-        ).strip().lower()
+        email = data.get("email", "").strip()
 
         if not email:
             return JsonResponse(
@@ -655,31 +652,13 @@ def forgot_password(request):
 
         try:
             user = User.objects.get(
-                email__iexact=email,
-                is_superuser=False,
-                is_staff=False
+                email=email,
+                is_active=True
             )
-
         except User.DoesNotExist:
             return JsonResponse(
-                {
-                    "error": (
-                        "No customer account found "
-                        "with this email."
-                    )
-                },
+                {"error": "No active account found with this email."},
                 status=404
-            )
-
-        if not user.is_active:
-            return JsonResponse(
-                {
-                    "error": (
-                        "Please verify your email "
-                        "before resetting your password."
-                    )
-                },
-                status=403
             )
 
         otp = generate_otp()
@@ -687,282 +666,180 @@ def forgot_password(request):
         cache.set(
             f"password_reset_otp_{user.id}",
             make_password(otp),
-            OTP_EXPIRY
+            timeout=OTP_EXPIRY
         )
 
-        # =================================================
-        # SEND PASSWORD RESET OTP USING BREVO API
-        # =================================================
-
-        try:
-
-            print(
-                "STARTING BREVO PASSWORD RESET OTP",
-                flush=True
-            )
-
-            print(
-                "OTP Recipient:",
-                user.email,
-                flush=True
-            )
-
-            brevo_api_key = os.environ.get(
-                "BREVO_API_KEY"
-            )
-
-            otp_message = f"""
-Hello {user.username},
-
-Your MyStore password reset OTP is:
-
-{otp}
-
-This OTP is valid for 5 minutes.
-
-If you did not request a password reset, please ignore this email.
-
-MyStore Team
-"""
-
-            response = requests.post(
-                "https://api.brevo.com/v3/smtp/email",
-
-                headers={
-                    "accept": "application/json",
-                    "api-key": brevo_api_key,
-                    "content-type": "application/json",
-                },
-
-                json={
-                    "sender": {
-                        "name": "MyStore",
-                        "email": "kumarvamshi1832@gmail.com",
-                    },
-
-                    "to": [
-                        {
-                            "email": user.email,
-                        }
-                    ],
-
-                    "subject": (
-                        "Your MyStore Password Reset OTP"
-                    ),
-
-                    "textContent": otp_message,
-                },
-
-                timeout=10,
-            )
-
-            print(
-                "BREVO PASSWORD RESET OTP STATUS:",
-                response.status_code,
-                flush=True
-            )
-
-            print(
-                "BREVO PASSWORD RESET OTP RESPONSE:",
-                response.text,
-                flush=True
-            )
-
-            response.raise_for_status()
-
-            print(
-                "BREVO PASSWORD RESET OTP SENT SUCCESSFULLY",
-                flush=True
-            )
-
-        except Exception as email_error:
-
-            print(
-                "BREVO PASSWORD RESET OTP ERROR:",
-                repr(email_error),
-                flush=True
-            )
-
-            return JsonResponse(
+        email_data = {
+            "sender": {
+                "name": "MyStore",
+                "email": "kumarvamshi1832@gmail.com"
+            },
+            "to": [
                 {
-                    "error": (
-                        "Unable to send OTP email. "
-                        "Please try again."
-                    )
-                },
+                    "email": user.email,
+                    "name": user.username
+                }
+            ],
+            "subject": "Your MyStore Password Reset OTP",
+            "htmlContent": f"""
+                <html>
+                    <body>
+                        <h2>Password Reset Request</h2>
+
+                        <p>Hello {user.username},</p>
+
+                        <p>
+                            Use the following OTP to reset your
+                            MyStore password:
+                        </p>
+
+                        <h1>{otp}</h1>
+
+                        <p>
+                            This OTP is valid for 5 minutes.
+                        </p>
+
+                        <p>
+                            If you did not request a password reset,
+                            please ignore this email.
+                        </p>
+
+                        <p>
+                            Regards,<br>
+                            MyStore Team
+                        </p>
+                    </body>
+                </html>
+            """
+        }
+
+        headers = {
+            "accept": "application/json",
+            "api-key": os.environ.get("BREVO_API_KEY"),
+            "content-type": "application/json"
+        }
+
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers=headers,
+            json=email_data
+        )
+
+        if response.status_code not in [200, 201, 202]:
+            return JsonResponse(
+                {"error": "Unable to send OTP email."},
                 status=500
             )
 
         return JsonResponse(
             {
-                "message": (
-                    "Password reset OTP sent "
-                    "successfully to your email."
-                ),
-
-                "email": email,
-            }
+                "message": "Password reset OTP sent successfully."
+            },
+            status=200
         )
 
     except json.JSONDecodeError:
-
         return JsonResponse(
-            {
-                "error": "Invalid JSON data."
-            },
+            {"error": "Invalid JSON data."},
             status=400
-        )
-
-    except Exception as e:
-
-        return JsonResponse(
-            {
-                "error": str(e)
-            },
-            status=500
         )
 
 
 @csrf_exempt
 def reset_password(request):
-
     if request.method != "POST":
         return JsonResponse(
-            {"error": "Only POST requests are allowed."},
+            {"error": "Only POST method allowed."},
             status=405
         )
 
     try:
-
         data = json.loads(request.body)
 
-        email = data.get(
-            "email",
-            ""
-        ).strip().lower()
-
-        otp = data.get(
-            "otp",
-            ""
-        ).strip()
-
-        new_password = data.get(
-            "new_password",
-            ""
-        )
-
+        email = data.get("email", "").strip()
+        otp = data.get("otp", "").strip()
+        new_password = data.get("new_password", "")
         confirm_password = data.get(
             "confirm_password",
             ""
         )
 
-        if (
-            not email
-            or not otp
-            or not new_password
-            or not confirm_password
-        ):
+        if not email:
             return JsonResponse(
-                {
-                    "error": (
-                        "All fields are required."
-                    )
-                },
+                {"error": "Email is required."},
                 status=400
             )
 
-        if not otp.isdigit() or len(otp) != 6:
+        if not otp:
             return JsonResponse(
-                {
-                    "error": "OTP must be 6 digits."
-                },
+                {"error": "OTP is required."},
+                status=400
+            )
+
+        if not new_password:
+            return JsonResponse(
+                {"error": "New password is required."},
+                status=400
+            )
+
+        if not confirm_password:
+            return JsonResponse(
+                {"error": "Please confirm your password."},
                 status=400
             )
 
         if new_password != confirm_password:
             return JsonResponse(
-                {
-                    "error": "Passwords do not match."
-                },
+                {"error": "Passwords do not match."},
                 status=400
             )
 
         try:
-
             user = User.objects.get(
-                email__iexact=email,
-                is_superuser=False,
-                is_staff=False
+                email=email,
+                is_active=True
             )
-
         except User.DoesNotExist:
-
             return JsonResponse(
-                {
-                    "error": "Customer account not found."
-                },
+                {"error": "Account not found."},
                 status=404
             )
 
-        stored_otp = cache.get(
-            f"password_reset_otp_{user.id}"
-        )
+        cache_key = f"password_reset_otp_{user.id}"
+
+        stored_otp = cache.get(cache_key)
 
         if not stored_otp:
             return JsonResponse(
                 {
-                    "error": (
-                        "OTP has expired. "
-                        "Please request a new OTP."
-                    )
+                    "error":
+                    "OTP has expired. Please request a new OTP."
                 },
                 status=400
             )
 
-        if not check_password(
-            otp,
-            stored_otp
-        ):
+        if not check_password(otp, stored_otp):
             return JsonResponse(
-                {
-                    "error": "Invalid OTP."
-                },
+                {"error": "Invalid OTP."},
                 status=400
             )
 
-        user.set_password(
-            new_password
-        )
-
+        user.set_password(new_password)
         user.save()
+        Token.objects.filter(user=user).delete()
 
-        cache.delete(
-            f"password_reset_otp_{user.id}"
-        )
+        cache.delete(cache_key)
 
         return JsonResponse(
             {
-                "message": (
-                    "Password reset successfully. "
-                    "You can now login with your new password."
-                )
-            }
+                "message":
+                "Password reset successfully. Please login again."
+            },
+            status=200
         )
 
     except json.JSONDecodeError:
-
         return JsonResponse(
-            {
-                "error": "Invalid JSON data."
-            },
+            {"error": "Invalid JSON data."},
             status=400
-        )
-
-    except Exception as e:
-
-        return JsonResponse(
-            {
-                "error": str(e)
-            },
-            status=500
         )
