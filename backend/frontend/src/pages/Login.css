@@ -133,3 +133,19 @@
 .register-link a:hover {
   text-decoration: underline;
 }
+
+.forgot-password-link {
+    text-align: right;
+    margin-top: 8px;
+}
+
+.forgot-password-link a {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.forgot-password-link a:hover {
+    text-decoration: underline;
+}

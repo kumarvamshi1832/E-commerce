@@ -46,26 +46,25 @@ function Login() {
 
       setSuccess(response.data.message);
 
-      // Save the logged-in user for now.
       localStorage.setItem(
-  "user",
-  JSON.stringify(response.data.user)
-);
+        "user",
+        JSON.stringify(response.data.user)
+      );
 
-localStorage.setItem(
-  "token",
-  response.data.token
-);
+      localStorage.setItem(
+        "token",
+        response.data.token
+      );
 
-     setTimeout(() => {
-    if (response.data.user.role === "support") {
-        navigate("/support-dashboard");
-    } else if (response.data.user.role === "admin") {
-        navigate("/admin");
-    } else {
-        navigate("/");
-    }
-}, 1200);
+      setTimeout(() => {
+        if (response.data.user.role === "support") {
+          navigate("/support-dashboard");
+        } else if (response.data.user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      }, 1200);
 
     } catch (error) {
       setError(
@@ -79,21 +78,14 @@ localStorage.setItem(
 
   return (
     <main className="login-page">
-
       <div className="login-card">
 
         <div className="login-header">
-
-          <p className="login-label">
-            WELCOME BACK
-          </p>
+          <p className="login-label">WELCOME BACK</p>
 
           <h1>Login</h1>
 
-          <p>
-            Sign in to continue shopping.
-          </p>
-
+          <p>Sign in to continue shopping.</p>
         </div>
 
         {error && (
@@ -111,7 +103,6 @@ localStorage.setItem(
         <form onSubmit={handleSubmit}>
 
           <div className="form-group">
-
             <label>Email</label>
 
             <input
@@ -121,11 +112,9 @@ localStorage.setItem(
               value={formData.email}
               onChange={handleChange}
             />
-
           </div>
 
           <div className="form-group">
-
             <label>Password</label>
 
             <input
@@ -136,6 +125,11 @@ localStorage.setItem(
               onChange={handleChange}
             />
 
+            <div className="forgot-password-link">
+              <Link to="/forgot-password">
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           <button
@@ -143,25 +137,19 @@ localStorage.setItem(
             className="login-button"
             disabled={loading}
           >
-            {loading
-              ? "Logging in..."
-              : "Login"}
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
 
         <div className="register-link">
-
           Don't have an account?{" "}
-
           <Link to="/register">
             Create an account
           </Link>
-
         </div>
 
       </div>
-
     </main>
   );
 }

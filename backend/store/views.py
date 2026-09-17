@@ -1,4 +1,5 @@
 import json
+from django.db.models import Sum
 from django.db.models import Avg, Count
 from django.contrib.auth.models import User
 from django.http import JsonResponse
@@ -50,13 +51,1323 @@ def token_auth_required(view_func):
     return wrapper
 
 
+def admin_required(view_func):
+    @wraps(view_func)
+    @token_auth_required
+    def wrapper(request, *args, **kwargs):
+
+        if not request.user.is_authenticated:
+            return JsonResponse(
+                {"error": "Authentication required."},
+                status=401
+            )
+
+        if not request.user.is_superuser:
+            return JsonResponse(
+                {"error": "Admin access required."},
+                status=403
+            )
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+@csrf_exempt
+@admin_required
+def admin_dashboard(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    total_products = Product.objects.count()
+
+    active_products = Product.objects.filter(
+        is_active=True
+    ).count()
+
+    total_orders = Order.objects.count()
+
+    pending_orders = Order.objects.filter(
+        status="Pending"
+    ).count()
+
+    total_customers = User.objects.filter(
+        is_superuser=False,
+        is_staff=False
+    ).count()
+
+    total_revenue = Order.objects.exclude(
+        status="Cancelled"
+    ).aggregate(
+        total=Sum("total_amount")
+    )["total"] or 0
+
+    low_stock_products = Product.objects.filter(
+        stock__gt=0,
+        stock__lte=5
+    ).count()
+
+    out_of_stock_products = Product.objects.filter(
+        stock=0
+    ).count()
+
+    recent_orders = Order.objects.select_related(
+        "user"
+    ).order_by("-created_at")[:20]
+
+    recent_order_data = []
+
+    for order in recent_orders:
+        recent_order_data.append({
+            "id": order.id,
+            "customer": order.user.username,
+            "email": order.user.email,
+            "total_amount": float(order.total_amount),
+            "status": order.status,
+            "created_at": order.created_at,
+        })
+
+    low_stock = Product.objects.filter(
+        stock__lte=5
+    ).order_by("stock", "name")[:5]
+
+    low_stock_data = []
+
+    for product in low_stock:
+        low_stock_data.append({
+            "id": product.id,
+            "name": product.name,
+            "stock": product.stock,
+            "is_active": product.is_active,
+        })
+
+    return JsonResponse({
+        "summary": {
+            "total_products": total_products,
+            "active_products": active_products,
+            "total_orders": total_orders,
+            "pending_orders": pending_orders,
+            "total_customers": total_customers,
+            "total_revenue": float(total_revenue),
+            "low_stock_products": low_stock_products,
+            "out_of_stock_products": out_of_stock_products,
+        },
+        "recent_orders": recent_order_data,
+        "low_stock": low_stock_data,
+    })
+
+
+@csrf_exempt
+@admin_required
+def admin_product_list(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    products = Product.objects.all().order_by("-created_at")
+
+    data = []
+
+    for product in products:
+        data.append({
+            "id": product.id,
+            "name": product.name,
+            "price": float(product.price),
+            "description": product.description,
+            "image": request.build_absolute_uri(product.image.url)
+                     if product.image else None,
+            "category": product.category,
+            "stock": product.stock,
+            "is_active": product.is_active,
+            "created_at": product.created_at,
+            "updated_at": product.updated_at,
+        })
+
+    return JsonResponse(data, safe=False)
+
+def admin_required(view_func):
+    @wraps(view_func)
+    @token_auth_required
+    def wrapper(request, *args, **kwargs):
+
+        if not request.user.is_authenticated:
+            return JsonResponse(
+                {"error": "Authentication required."},
+                status=401
+            )
+
+        if not request.user.is_superuser:
+            return JsonResponse(
+                {"error": "Admin access required."},
+                status=403
+            )
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+@csrf_exempt
+@admin_required
+def admin_create_product(request):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed."},
+            status=405
+        )
+
+    name = request.POST.get("name", "").strip()
+    price = request.POST.get("price")
+    description = request.POST.get("description", "").strip()
+    category = request.POST.get("category", "").strip()
+    stock = request.POST.get("stock")
+    image = request.FILES.get("image")
+
+    if not name or price is None or not category or stock is None:
+        return JsonResponse(
+            {"error": "Name, price, category and stock are required."},
+            status=400
+        )
+
+    product = Product.objects.create(
+        name=name,
+        price=price,
+        description=description,
+        category=category,
+        stock=stock,
+        image=image,
+        is_active=True
+    )
+
+    return JsonResponse({
+        "message": "Product created successfully.",
+        "product": {
+            "id": product.id,
+            "name": product.name,
+            "price": float(product.price),
+            "description": product.description,
+            "category": product.category,
+            "stock": product.stock,
+            "image": product.image.url if product.image else None,
+            "is_active": product.is_active,
+        }
+    }, status=201)
+
+
+@csrf_exempt
+@admin_required
+def admin_update_product(request, product_id):
+
+    if request.method != "PUT":
+        return JsonResponse(
+            {"error": "Only PUT method allowed."},
+            status=405
+        )
+
+    try:
+        product = Product.objects.get(id=product_id)
+
+    except Product.DoesNotExist:
+        return JsonResponse(
+            {"error": "Product not found."},
+            status=404
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        name = data.get("name")
+        price = data.get("price")
+        description = data.get("description")
+        category = data.get("category")
+        stock = data.get("stock")
+
+        if name is not None:
+            product.name = name.strip()
+
+        if price is not None:
+            product.price = price
+
+        if description is not None:
+            product.description = description.strip()
+
+        if category is not None:
+            product.category = category.strip()
+
+        if stock is not None:
+            product.stock = stock
+
+        product.save()
+
+        return JsonResponse(
+            {
+                "message": "Product updated successfully.",
+                "product": {
+                    "id": product.id,
+                    "name": product.name,
+                    "price": float(product.price),
+                    "description": product.description,
+                    "category": product.category,
+                    "stock": product.stock,
+                    "is_active": product.is_active,
+                }
+            }
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+    except Exception as e:
+        return JsonResponse(
+            {"error": str(e)},
+            status=500
+        )
+
+@csrf_exempt
+@admin_required
+def admin_toggle_product_status(request, product_id):
+
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH method allowed."},
+            status=405
+        )
+
+    try:
+        product = Product.objects.get(id=product_id)
+
+    except Product.DoesNotExist:
+        return JsonResponse(
+            {"error": "Product not found."},
+            status=404
+        )
+
+    product.is_active = not product.is_active
+    product.save()
+
+    return JsonResponse(
+        {
+            "message": (
+                "Product activated successfully."
+                if product.is_active
+                else "Product deactivated successfully."
+            ),
+            "id": product.id,
+            "is_active": product.is_active
+        }
+    )
+
+@csrf_exempt
+@admin_required
+def admin_delete_product(request, product_id):
+
+    if request.method != "DELETE":
+        return JsonResponse(
+            {"error": "Only DELETE method allowed."},
+            status=405
+        )
+
+    try:
+        product = Product.objects.get(id=product_id)
+
+    except Product.DoesNotExist:
+        return JsonResponse(
+            {"error": "Product not found."},
+            status=404
+        )
+
+    product.delete()
+
+    return JsonResponse(
+        {
+            "message": "Product deleted successfully."
+        }
+    )
+
+@csrf_exempt
+@admin_required
+def admin_order_list(request):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    orders = Order.objects.all().select_related("user").order_by("-created_at")
+
+    data = []
+
+    for order in orders:
+
+        data.append({
+            "id": order.id,
+            "user": {
+                "id": order.user.id,
+                "username": order.user.username,
+                "email": order.user.email,
+            },
+            "total_amount": float(order.total_amount),
+            "status": order.status,
+            "created_at": order.created_at,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_order_detail(request, order_id):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    try:
+        order = Order.objects.select_related("user").get(id=order_id)
+    except Order.DoesNotExist:
+        return JsonResponse(
+            {"error": "Order not found."},
+            status=404
+        )
+
+    items = order.items.select_related("product").all()
+
+    data = {
+        "id": order.id,
+        "user": {
+            "id": order.user.id,
+            "username": order.user.username,
+            "email": order.user.email,
+        },
+        "total_amount": float(order.total_amount),
+        "status": order.status,
+        "created_at": order.created_at,
+        "items": []
+    }
+
+    for item in items:
+
+        data["items"].append({
+            "id": item.id,
+            "product_id": item.product.id,
+            "product_name": item.product.name,
+            "quantity": item.quantity,
+            "price": float(item.price),
+            "subtotal": float(item.price * item.quantity),
+            "image": (
+                request.build_absolute_uri(item.product.image.url)
+                if item.product.image else None
+            ),
+        })
+
+    return JsonResponse(data)
+
+@csrf_exempt
+@admin_required
+def admin_update_order_status(request, order_id):
+
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH method allowed."},
+            status=405
+        )
+
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return JsonResponse(
+            {"error": "Order not found."},
+            status=404
+        )
+
+    try:
+        data = json.loads(request.body)
+        new_status = data.get("status")
+
+        valid_statuses = [
+            choice[0]
+            for choice in Order.STATUS_CHOICES
+        ]
+
+        if new_status not in valid_statuses:
+            return JsonResponse(
+                {
+                    "error": "Invalid order status.",
+                    "valid_statuses": valid_statuses
+                },
+                status=400
+            )
+
+        order.status = new_status
+        order.save()
+
+        return JsonResponse({
+            "message": "Order status updated successfully.",
+            "id": order.id,
+            "status": order.status
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+@csrf_exempt
+@admin_required
+def admin_customer_list(request):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    customers = User.objects.filter(
+        is_superuser=False,
+        is_staff=False
+    ).order_by("-date_joined")
+
+    data = []
+
+    for customer in customers:
+
+        order_count = Order.objects.filter(
+            user=customer
+        ).count()
+
+        data.append({
+            "id": customer.id,
+            "username": customer.username,
+            "email": customer.email,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "date_joined": customer.date_joined,
+            "is_active": customer.is_active,
+            "order_count": order_count,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_customer_detail(request, customer_id):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    try:
+        customer = User.objects.get(
+            id=customer_id,
+            is_superuser=False,
+            is_staff=False
+        )
+    except User.DoesNotExist:
+        return JsonResponse(
+            {"error": "Customer not found."},
+            status=404
+        )
+
+    orders = Order.objects.filter(
+        user=customer
+    ).order_by("-created_at")
+
+    data = {
+        "id": customer.id,
+        "username": customer.username,
+        "email": customer.email,
+        "first_name": customer.first_name,
+        "last_name": customer.last_name,
+        "date_joined": customer.date_joined,
+        "is_active": customer.is_active,
+        "order_count": orders.count(),
+        "total_spent": float(
+            sum(order.total_amount for order in orders)
+        ),
+        "orders": []
+    }
+
+    for order in orders:
+        data["orders"].append({
+            "id": order.id,
+            "total_amount": float(order.total_amount),
+            "status": order.status,
+            "created_at": order.created_at,
+        })
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
+@admin_required
+def admin_inventory_list(request):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    products = Product.objects.all().order_by("stock", "name")
+
+    data = []
+
+    for product in products:
+
+        if product.stock == 0:
+            stock_status = "Out of Stock"
+        elif product.stock <= 5:
+            stock_status = "Low Stock"
+        else:
+            stock_status = "In Stock"
+
+        data.append({
+            "id": product.id,
+            "name": product.name,
+            "category": product.category,
+            "stock": product.stock,
+            "stock_status": stock_status,
+            "is_active": product.is_active,
+            "image": (
+                request.build_absolute_uri(product.image.url)
+                if product.image else None
+            ),
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_update_inventory(request, product_id):
+
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH method allowed."},
+            status=405
+        )
+
+    try:
+        product = Product.objects.get(id=product_id)
+    except Product.DoesNotExist:
+        return JsonResponse(
+            {"error": "Product not found."},
+            status=404
+        )
+
+    try:
+        data = json.loads(request.body)
+        stock = data.get("stock")
+
+        if stock is None:
+            return JsonResponse(
+                {"error": "Stock is required."},
+                status=400
+            )
+
+        stock = int(stock)
+
+        if stock < 0:
+            return JsonResponse(
+                {"error": "Stock cannot be negative."},
+                status=400
+            )
+
+        product.stock = stock
+        product.save()
+
+        return JsonResponse({
+            "message": "Stock updated successfully.",
+            "id": product.id,
+            "stock": product.stock
+        })
+
+    except (ValueError, TypeError):
+        return JsonResponse(
+            {"error": "Stock must be a valid number."},
+            status=400
+        )
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+@csrf_exempt
+@admin_required
+def admin_review_list(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    reviews = ProductReview.objects.select_related(
+        "user",
+        "product",
+        "order_item"
+    ).order_by("-created_at")
+
+    data = []
+
+    for review in reviews:
+        data.append({
+            "id": review.id,
+            "customer": {
+                "id": review.user.id,
+                "username": review.user.username,
+                "email": review.user.email,
+            },
+            "product": {
+                "id": review.product.id,
+                "name": review.product.name,
+                "image": (
+                    request.build_absolute_uri(review.product.image.url)
+                    if review.product.image
+                    else None
+                ),
+            },
+            "rating": review.rating,
+            "review": review.review,
+            "created_at": review.created_at,
+            "updated_at": review.updated_at,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_review_detail(request, review_id):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    try:
+        review = ProductReview.objects.select_related(
+            "user",
+            "product",
+            "order_item"
+        ).get(id=review_id)
+
+    except ProductReview.DoesNotExist:
+        return JsonResponse(
+            {"error": "Review not found."},
+            status=404
+        )
+
+    data = {
+        "id": review.id,
+
+        "customer": {
+            "id": review.user.id,
+            "username": review.user.username,
+            "email": review.user.email,
+        },
+
+        "product": {
+            "id": review.product.id,
+            "name": review.product.name,
+            "image": (
+                request.build_absolute_uri(review.product.image.url)
+                if review.product.image
+                else None
+            ),
+        },
+
+        "rating": review.rating,
+        "review": review.review,
+        "created_at": review.created_at,
+        "updated_at": review.updated_at,
+    }
+
+    return JsonResponse(data)
+
+
+@csrf_exempt
+@admin_required
+def admin_feedback_list(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    feedbacks = ProductFeedback.objects.select_related(
+        "user",
+        "product",
+        "order_item"
+    ).order_by("-created_at")
+
+    data = []
+
+    for feedback in feedbacks:
+        data.append({
+            "id": feedback.id,
+
+            "customer": {
+                "id": feedback.user.id,
+                "username": feedback.user.username,
+                "email": feedback.user.email,
+            },
+
+            "product": {
+                "id": feedback.product.id,
+                "name": feedback.product.name,
+                "image": (
+                    request.build_absolute_uri(feedback.product.image.url)
+                    if feedback.product.image
+                    else None
+                ),
+            },
+
+            "feedback": feedback.feedback,
+            "admin_reply": feedback.admin_reply,
+            "status": feedback.status,
+            "created_at": feedback.created_at,
+            "replied_at": feedback.replied_at,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_feedback_detail(request, feedback_id):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    try:
+        feedback = ProductFeedback.objects.select_related(
+            "user",
+            "product",
+            "order_item"
+        ).get(id=feedback_id)
+
+    except ProductFeedback.DoesNotExist:
+        return JsonResponse(
+            {"error": "Feedback not found."},
+            status=404
+        )
+
+    data = {
+        "id": feedback.id,
+
+        "customer": {
+            "id": feedback.user.id,
+            "username": feedback.user.username,
+            "email": feedback.user.email,
+        },
+
+        "product": {
+            "id": feedback.product.id,
+            "name": feedback.product.name,
+            "image": (
+                request.build_absolute_uri(feedback.product.image.url)
+                if feedback.product.image
+                else None
+            ),
+        },
+
+        "feedback": feedback.feedback,
+        "admin_reply": feedback.admin_reply,
+        "status": feedback.status,
+        "created_at": feedback.created_at,
+        "replied_at": feedback.replied_at,
+    }
+
+    return JsonResponse(data)
+
+@csrf_exempt
+@admin_required
+def admin_reply_feedback(request, feedback_id):
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH method allowed."},
+            status=405
+        )
+
+    try:
+        feedback = ProductFeedback.objects.get(id=feedback_id)
+
+    except ProductFeedback.DoesNotExist:
+        return JsonResponse(
+            {"error": "Feedback not found."},
+            status=404
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        admin_reply = data.get("admin_reply", "").strip()
+
+        if not admin_reply:
+            return JsonResponse(
+                {"error": "Reply cannot be empty."},
+                status=400
+            )
+
+        feedback.admin_reply = admin_reply
+        feedback.status = "Replied"
+        feedback.replied_at = timezone.now()
+        feedback.save()
+
+        return JsonResponse({
+            "message": "Reply sent successfully.",
+            "id": feedback.id,
+            "admin_reply": feedback.admin_reply,
+            "status": feedback.status,
+            "replied_at": feedback.replied_at,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+@csrf_exempt
+@admin_required
+def admin_update_feedback_status(request, feedback_id):
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH method allowed."},
+            status=405
+        )
+
+    try:
+        feedback = ProductFeedback.objects.get(id=feedback_id)
+
+    except ProductFeedback.DoesNotExist:
+        return JsonResponse(
+            {"error": "Feedback not found."},
+            status=404
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        new_status = data.get("status")
+
+        valid_statuses = [
+            choice[0]
+            for choice in ProductFeedback.STATUS_CHOICES
+        ]
+
+        if new_status not in valid_statuses:
+            return JsonResponse(
+                {
+                    "error": "Invalid feedback status.",
+                    "valid_statuses": valid_statuses
+                },
+                status=400
+            )
+
+        feedback.status = new_status
+        feedback.save()
+
+        return JsonResponse({
+            "message": "Feedback status updated successfully.",
+            "id": feedback.id,
+            "status": feedback.status,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+@csrf_exempt
+@admin_required
+def admin_notification_list(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    notifications = Notification.objects.select_related(
+        "user"
+    ).order_by("-created_at")
+
+    data = []
+
+    for notification in notifications:
+        data.append({
+            "id": notification.id,
+
+            "customer": {
+                "id": notification.user.id,
+                "username": notification.user.username,
+                "email": notification.user.email,
+            },
+
+            "message": notification.message,
+            "notification_type": notification.notification_type,
+            "is_read": notification.is_read,
+            "created_at": notification.created_at,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_create_notification(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed."},
+            status=405
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        user_id = data.get("user_id")
+        send_to = data.get("send_to", "single")
+
+        message = data.get("message", "").strip()
+
+        notification_type = data.get(
+            "notification_type",
+            "General"
+        ).strip()
+
+        if not message:
+            return JsonResponse(
+                {"error": "Message cannot be empty."},
+                status=400
+            )
+
+        if send_to == "all":
+
+            customers = User.objects.filter(
+                is_superuser=False,
+                is_staff=False
+            )
+
+            if not customers.exists():
+                return JsonResponse(
+                    {"error": "No customers found."},
+                    status=404
+                )
+
+            notifications = []
+
+            for customer in customers:
+                notification = Notification.objects.create(
+                    user=customer,
+                    message=message,
+                    notification_type=notification_type
+                )
+
+                notifications.append({
+                    "id": notification.id,
+                    "user_id": customer.id,
+                    "username": customer.username,
+                    "email": customer.email,
+                    "message": notification.message,
+                    "notification_type":
+                        notification.notification_type,
+                    "is_read": notification.is_read,
+                    "created_at": notification.created_at,
+                })
+
+            return JsonResponse({
+                "message": "Notification sent to all customers.",
+                "count": len(notifications),
+                "notifications": notifications
+            }, status=201)
+
+        if not user_id:
+            return JsonResponse(
+                {"error": "Customer is required."},
+                status=400
+            )
+
+        try:
+            user = User.objects.get(
+                id=user_id,
+                is_superuser=False,
+                is_staff=False
+            )
+
+        except User.DoesNotExist:
+            return JsonResponse(
+                {"error": "Customer not found."},
+                status=404
+            )
+
+        notification = Notification.objects.create(
+            user=user,
+            message=message,
+            notification_type=notification_type
+        )
+
+        return JsonResponse({
+            "message": "Notification sent successfully.",
+            "notification": {
+                "id": notification.id,
+                "user_id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "message": notification.message,
+                "notification_type":
+                    notification.notification_type,
+                "is_read": notification.is_read,
+                "created_at": notification.created_at,
+            }
+        }, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+    
+@csrf_exempt
+@admin_required
+def admin_notification_customers(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    customers = User.objects.filter(
+        is_superuser=False,
+        is_staff=False
+    ).order_by("username")
+
+    data = []
+
+    for customer in customers:
+        data.append({
+            "id": customer.id,
+            "username": customer.username,
+            "email": customer.email,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_coupon_list(request):
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET method allowed."},
+            status=405
+        )
+
+    coupons = Coupon.objects.all().order_by("-created_at")
+
+    data = []
+
+    for coupon in coupons:
+        data.append({
+            "id": coupon.id,
+            "code": coupon.code,
+            "discount_percent": coupon.discount_percent,
+            "active": coupon.active,
+            "created_at": coupon.created_at,
+        })
+
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+@admin_required
+def admin_create_coupon(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST method allowed."},
+            status=405
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        code = data.get("code", "").strip().upper()
+        discount_percent = data.get("discount_percent")
+
+        if not code:
+            return JsonResponse(
+                {"error": "Coupon code is required."},
+                status=400
+            )
+
+        if not discount_percent:
+            return JsonResponse(
+                {"error": "Discount percentage is required."},
+                status=400
+            )
+
+        discount_percent = int(discount_percent)
+
+        if discount_percent <= 0 or discount_percent > 100:
+            return JsonResponse(
+                {"error": "Discount must be between 1 and 100."},
+                status=400
+            )
+
+        if Coupon.objects.filter(code=code).exists():
+            return JsonResponse(
+                {"error": "Coupon code already exists."},
+                status=400
+            )
+
+        coupon = Coupon.objects.create(
+            code=code,
+            discount_percent=discount_percent
+        )
+
+        return JsonResponse({
+            "message": "Coupon created successfully.",
+            "coupon": {
+                "id": coupon.id,
+                "code": coupon.code,
+                "discount_percent": coupon.discount_percent,
+                "active": coupon.active,
+                "created_at": coupon.created_at,
+            }
+        }, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+    except (ValueError, TypeError):
+        return JsonResponse(
+            {"error": "Discount must be a valid number."},
+            status=400
+        )
+
+@csrf_exempt
+@admin_required
+def admin_update_coupon(request, coupon_id):
+    if request.method != "PUT":
+        return JsonResponse(
+            {"error": "Only PUT method allowed."},
+            status=405
+        )
+
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+
+    except Coupon.DoesNotExist:
+        return JsonResponse(
+            {"error": "Coupon not found."},
+            status=404
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        code = data.get("code", "").strip().upper()
+        discount_percent = data.get("discount_percent")
+
+        if not code:
+            return JsonResponse(
+                {"error": "Coupon code is required."},
+                status=400
+            )
+
+        if discount_percent is None:
+            return JsonResponse(
+                {"error": "Discount percentage is required."},
+                status=400
+            )
+
+        discount_percent = int(discount_percent)
+
+        if discount_percent <= 0 or discount_percent > 100:
+            return JsonResponse(
+                {"error": "Discount must be between 1 and 100."},
+                status=400
+            )
+
+        if Coupon.objects.filter(code=code).exclude(id=coupon_id).exists():
+            return JsonResponse(
+                {"error": "Coupon code already exists."},
+                status=400
+            )
+
+        coupon.code = code
+        coupon.discount_percent = discount_percent
+        coupon.save()
+
+        return JsonResponse({
+            "message": "Coupon updated successfully.",
+            "id": coupon.id,
+            "code": coupon.code,
+            "discount_percent": coupon.discount_percent,
+            "active": coupon.active,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON data."},
+            status=400
+        )
+
+    except (ValueError, TypeError):
+        return JsonResponse(
+            {"error": "Discount must be a valid number."},
+            status=400
+        )
+
+@csrf_exempt
+@admin_required
+def admin_toggle_coupon_status(request, coupon_id):
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH method allowed."},
+            status=405
+        )
+
+    try:
+        coupon = Coupon.objects.get(id=coupon_id)
+
+    except Coupon.DoesNotExist:
+        return JsonResponse(
+            {"error": "Coupon not found."},
+            status=404
+        )
+
+    coupon.active = not coupon.active
+    coupon.save()
+
+    return JsonResponse({
+        "message": "Coupon status updated successfully.",
+        "id": coupon.id,
+        "active": coupon.active,
+    })
+
+
 # =========================================================
 # PRODUCT LIST
 # =========================================================
 
 def product_list(request):
 
-    products = Product.objects.all()
+    products = Product.objects.filter(is_active=True)
 
     data = []
 
@@ -91,6 +1402,8 @@ def product_list(request):
 
     return JsonResponse(data, safe=False)
 
+
+
 # =========================================================
 # PRODUCT DETAIL
 # =========================================================
@@ -98,7 +1411,7 @@ def product_detail(request, product_id):
 
     try:
 
-        product = Product.objects.get(id=product_id)
+        product = Product.objects.get(id=product_id,is_active=True)
 
     except Product.DoesNotExist:
 

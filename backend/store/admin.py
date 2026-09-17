@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from django.db.models import Sum
+
 from .models import (
     Product,
     Order,
@@ -395,3 +397,4 @@ class DeliveryPincodeAdmin(admin.ModelAdmin):
     list_display = ("product", "pincode")
     list_filter = ("product",)
     search_fields = ("pincode", "product__name")
+

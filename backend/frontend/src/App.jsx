@@ -14,6 +14,7 @@ import ProductDetails from "./pages/ProductDetails";
 
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
 import OrderDetails from "./pages/OrderDetails";
@@ -29,6 +30,16 @@ import SupportTicketDetail from "./pages/SupportTicketDetail";
 import { CartProvider } from "./context/CartContext";
 import ChatBot from "./components/ChatBot";
 
+import AdminLayout from "./components/AdminLayout";
+import AdminProducts from "./pages/AdminProducts";
+import AdminOrders from "./pages/AdminOrders";
+import AdminCustomers from "./pages/AdminCustomers";
+import AdminInventory from "./pages/AdminInventory";
+import AdminReviews from "./pages/AdminReviews";
+import AdminSupport from "./pages/AdminSupport";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminCoupons from "./pages/AdminCoupons";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function AppContent() {
   const location = useLocation();
@@ -36,149 +47,237 @@ function AppContent() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const isSupport = user?.role === "support";
+  const isAdmin = user?.role === "admin";
+
+  if (isSupport) {
+    return (
+      <Routes>
+        <Route
+          path="/support-dashboard"
+          element={<SupportDashboard />}
+        />
+
+        <Route
+          path="/support-dashboard/tickets/:ticketId"
+          element={<SupportTicketDetail />}
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/support-dashboard"
+              replace
+            />
+          }
+        />
+      </Routes>
+    );
+  }
+
+  if (isAdmin) {
+    return (
+      <Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="dashboard"
+            element={<AdminDashboard />}
+          />
+
+          <Route
+            path="products"
+            element={<AdminProducts />}
+          />
+
+          <Route
+            path="orders"
+            element={<AdminOrders />}
+          />
+
+          <Route
+            path="customers"
+            element={<AdminCustomers />}
+          />
+
+          <Route
+            path="coupons"
+            element={<AdminCoupons />}
+          />
+
+          <Route
+            path="inventory"
+            element={<AdminInventory />}
+          />
+
+          <Route
+            path="reviews"
+            element={<AdminReviews />}
+          />
+
+          <Route
+            path="support"
+            element={<AdminSupport />}
+          />
+
+          <Route
+            path="notifications"
+            element={<AdminNotifications />}
+          />
+
+          <Route
+            path="settings"
+            element={
+              <div>
+                <h1>Settings</h1>
+                <p>Admin settings will be available here.</p>
+              </div>
+            }
+          />
+
+          <Route
+            index
+            element={
+              <Navigate
+                to="/admin/dashboard"
+                replace
+              />
+            }
+          />
+        </Route>
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/admin/dashboard"
+              replace
+            />
+          }
+        />
+      </Routes>
+    );
+  }
 
   return (
     <>
-      {/* =========================
-          SUPPORT STAFF
-      ========================= */}
+      <Navbar />
 
-      {isSupport ? (
-        <>
-          <Routes>
+      <Routes>
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-            {/* Support Dashboard */}
-            <Route
-              path="/support-dashboard"
-              element={<SupportDashboard />}
+        <Route
+          path="/products"
+          element={<Products />}
+        />
+
+        <Route
+          path="/product/:id"
+          element={<ProductDetails />}
+        />
+
+        <Route
+          path="/cart"
+          element={<Cart />}
+        />
+
+        <Route
+          path="/checkout"
+          element={<Checkout />}
+        />
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        <Route
+  path="/forgot-password"
+  element={<ForgotPassword />}
+/>
+
+        <Route
+          path="/my-orders"
+          element={<MyOrders />}
+        />
+
+        <Route
+          path="/orders/:id"
+          element={<OrderDetails />}
+        />
+
+        <Route
+          path="/wishlist"
+          element={<Wishlist />}
+        />
+
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+        <Route
+          path="/support"
+          element={<Support />}
+        />
+
+        <Route
+          path="/support/tickets/:ticketId"
+          element={<SupportTicketDetails />}
+        />
+
+        <Route
+          path="/support-dashboard"
+          element={
+            <Navigate
+              to="/"
+              replace
             />
+          }
+        />
 
-            {/* Support Ticket Details */}
-            <Route
-              path="/support-dashboard/tickets/:ticketId"
-              element={<SupportTicketDetail />}
+        <Route
+          path="/support-dashboard/tickets/:ticketId"
+          element={
+            <Navigate
+              to="/"
+              replace
             />
+          }
+        />
 
-            {/* If support staff opens any other URL */}
-            <Route
-              path="*"
-              element={
-                <Navigate
-                  to="/support-dashboard"
-                  replace
-                />
-              }
+        <Route
+          path="/admin/*"
+          element={
+            <Navigate
+              to="/"
+              replace
             />
+          }
+        />
 
-          </Routes>
-        </>
-      ) : (
-
-        /* =========================
-           CUSTOMER / NORMAL USER
-        ========================= */
-
-        <>
-          <Navbar />
-
-          <Routes>
-
-            <Route
-              path="/"
-              element={<Home />}
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/"
+              replace
             />
+          }
+        />
+      </Routes>
 
-            <Route
-              path="/products"
-              element={<Products />}
-            />
-
-            <Route
-              path="/product/:id"
-              element={<ProductDetails />}
-            />
-
-            <Route
-              path="/cart"
-              element={<Cart />}
-            />
-
-            <Route
-              path="/checkout"
-              element={<Checkout />}
-            />
-
-            <Route
-              path="/register"
-              element={<Register />}
-            />
-
-            <Route
-              path="/login"
-              element={<Login />}
-            />
-
-            <Route
-              path="/my-orders"
-              element={<MyOrders />}
-            />
-
-            <Route
-              path="/orders/:id"
-              element={<OrderDetails />}
-            />
-
-            <Route
-              path="/wishlist"
-              element={<Wishlist />}
-            />
-
-            <Route
-              path="/profile"
-              element={<Profile />}
-            />
-
-            {/* Customer Support */}
-            <Route
-              path="/support"
-              element={<Support />}
-            />
-
-            <Route
-              path="/support/tickets/:ticketId"
-              element={<SupportTicketDetails />}
-            />
-
-            {/* Prevent normal users from opening Support Dashboard */}
-            <Route
-              path="/support-dashboard"
-              element={
-                <Navigate
-                  to="/"
-                  replace
-                />
-              }
-            />
-
-            <Route
-              path="/support-dashboard/tickets/:ticketId"
-              element={
-                <Navigate
-                  to="/"
-                  replace
-                />
-              }
-            />
-
-          </Routes>
-
-          <ChatBot />
-        </>
-      )}
+      <ChatBot />
     </>
   );
 }
-
 
 function App() {
   return (
@@ -189,6 +288,5 @@ function App() {
     </CartProvider>
   );
 }
-
 
 export default App;
