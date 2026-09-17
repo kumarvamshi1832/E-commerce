@@ -50,6 +50,30 @@ function AppContent() {
   const isSupport = user?.role === "support";
   const isAdmin = user?.role === "admin";
 
+  if (
+    location.pathname === "/forgot-password" ||
+    location.pathname === "/reset-password"
+  ) {
+    return (
+      <Routes>
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password"
+          element={<ResetPassword />}
+        />
+
+        <Route
+          path="*"
+          element={<Navigate to="/login" replace />}
+        />
+      </Routes>
+    );
+  }
+
   if (isSupport) {
     return (
       <Routes>
