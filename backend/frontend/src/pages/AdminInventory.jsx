@@ -157,7 +157,7 @@ const exportData = products.map((product) => ({
             <div className="admin-inventory-header">
 
     <div>
-        <h1>Inventory</h1>
+        <h1>Stock Management</h1>
 
         <p>
             Monitor product stock and inventory levels
