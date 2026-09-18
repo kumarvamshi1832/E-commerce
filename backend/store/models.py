@@ -98,6 +98,30 @@ class Order(models.Model):
         blank=True
     )
 
+    subtotal = models.DecimalField(
+    max_digits=10,
+    decimal_places=2,
+    default=0
+    )
+
+    discount = models.DecimalField(
+    max_digits=10,
+    decimal_places=2,
+    default=0
+    )
+
+    delivery_charge = models.DecimalField(
+    max_digits=10,
+    decimal_places=2,
+    default=0
+    )
+
+    coupon_code = models.CharField(
+    max_length=50,
+    null=True,
+    blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -100,16 +100,7 @@ function Navbar() {
           Products
         </Link>
 
-        <Link to="/cart" className="cart-button">
-          🛒
-          <span>Cart</span>
-
-          {cartCount > 0 && (
-            <span className="cart-count">
-              {cartCount}
-            </span>
-          )}
-        </Link>
+        
 
         {user ? (
           <>
@@ -120,6 +111,17 @@ function Navbar() {
             <Link to="/my-orders">
               My Orders
             </Link>
+
+            <Link to="/cart" className="cart-button">
+          🛒
+          <span>Cart</span>
+
+          {cartCount > 0 && (
+            <span className="cart-count">
+              {cartCount}
+            </span>
+          )}
+        </Link>
 
             {/* =========================
                 NOTIFICATIONS

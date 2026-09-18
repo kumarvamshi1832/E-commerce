@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../services/api";
+import InvoiceActions from "../components/InvoiceActions";
 import "./OrderDetails.css";
 
 function OrderDetails() {
@@ -11,10 +12,10 @@ function OrderDetails() {
   const [error, setError] = useState("");
 
   const [feedbacks, setFeedbacks] = useState({});
-const [feedbackText, setFeedbackText] = useState({});
-const [feedbackLoading, setFeedbackLoading] = useState({});
-const [feedbackSubmitting, setFeedbackSubmitting] = useState({});
-const [feedbackMessage, setFeedbackMessage] = useState({});
+  const [feedbackText, setFeedbackText] = useState({});
+  const [feedbackLoading, setFeedbackLoading] = useState({});
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState({});
+  const [feedbackMessage, setFeedbackMessage] = useState({});
 
   useEffect(() => {
     fetchOrder();
@@ -28,7 +29,6 @@ const [feedbackMessage, setFeedbackMessage] = useState({});
       const response = await api.get(`orders/${id}/`);
 
       setOrder(response.data);
-
     } catch (error) {
       setError(
         error.response?.data?.error ||
@@ -40,93 +40,94 @@ const [feedbackMessage, setFeedbackMessage] = useState({});
   };
 
   const fetchFeedback = async (orderItemId) => {
-  try {
-    setFeedbackLoading((prev) => ({
-      ...prev,
-      [orderItemId]: true,
-    }));
+    try {
+      setFeedbackLoading((prev) => ({
+        ...prev,
+        [orderItemId]: true,
+      }));
 
-    const response = await api.get(
-      `order-items/${orderItemId}/feedback/list/`
-    );
+      const response = await api.get(
+        `order-items/${orderItemId}/feedback/list/`
+      );
 
-    console.log("FEEDBACK RESPONSE:", response.data);
+      console.log("FEEDBACK RESPONSE:", response.data);
 
-    setFeedbacks((prev) => ({
-      ...prev,
-      [orderItemId]: response.data.feedbacks || [],
-    }));
+      setFeedbacks((prev) => ({
+        ...prev,
+        [orderItemId]: response.data.feedbacks || [],
+      }));
+    } catch (error) {
+      console.log("FULL FEEDBACK ERROR:", error.response);
+      console.log(
+        "FEEDBACK ERROR DATA:",
+        error.response?.data
+      );
+      console.log(
+        "FEEDBACK ERROR STATUS:",
+        error.response?.status
+      );
+    } finally {
+      setFeedbackLoading((prev) => ({
+        ...prev,
+        [orderItemId]: false,
+      }));
+    }
+  };
 
-  } catch (error) {
-    console.log("FULL FEEDBACK ERROR:", error.response);
-    console.log("FEEDBACK ERROR DATA:", error.response?.data);
-    console.log("FEEDBACK ERROR STATUS:", error.response?.status);
+  const handleSubmitFeedback = async (orderItemId) => {
+    const text = feedbackText[orderItemId]?.trim();
 
-  } finally {
-    setFeedbackLoading((prev) => ({
-      ...prev,
-      [orderItemId]: false,
-    }));
-  }
-};
+    if (!text) {
+      setFeedbackMessage((prev) => ({
+        ...prev,
+        [orderItemId]: "Please enter your feedback.",
+      }));
+      return;
+    }
 
-const handleSubmitFeedback = async (orderItemId) => {
-  const text = feedbackText[orderItemId]?.trim();
+    try {
+      setFeedbackSubmitting((prev) => ({
+        ...prev,
+        [orderItemId]: true,
+      }));
 
-  if (!text) {
-    setFeedbackMessage((prev) => ({
-      ...prev,
-      [orderItemId]: "Please enter your feedback.",
-    }));
-    return;
-  }
+      setFeedbackMessage((prev) => ({
+        ...prev,
+        [orderItemId]: "",
+      }));
 
-  try {
-    setFeedbackSubmitting((prev) => ({
-      ...prev,
-      [orderItemId]: true,
-    }));
+      const response = await api.post(
+        `order-items/${orderItemId}/feedback/`,
+        {
+          feedback: text,
+        }
+      );
 
-    setFeedbackMessage((prev) => ({
-      ...prev,
-      [orderItemId]: "",
-    }));
+      setFeedbackText((prev) => ({
+        ...prev,
+        [orderItemId]: "",
+      }));
 
-    const response = await api.post(
-      `order-items/${orderItemId}/feedback/`,
-      {
-        feedback: text,
-      }
-    );
+      setFeedbackMessage((prev) => ({
+        ...prev,
+        [orderItemId]: response.data.message,
+      }));
 
-    setFeedbackText((prev) => ({
-      ...prev,
-      [orderItemId]: "",
-    }));
-
-    setFeedbackMessage((prev) => ({
-      ...prev,
-      [orderItemId]: response.data.message,
-    }));
-
-    // Refresh feedback history
-    await fetchFeedback(orderItemId);
-
-  } catch (error) {
-    setFeedbackMessage((prev) => ({
-      ...prev,
-      [orderItemId]:
-        error.response?.data?.error ||
-        "Unable to submit feedback.",
-    }));
-
-  } finally {
-    setFeedbackSubmitting((prev) => ({
-      ...prev,
-      [orderItemId]: false,
-    }));
-  }
-};
+      await fetchFeedback(orderItemId);
+    } catch (error) {
+      setFeedbackMessage((prev) => ({
+        ...prev,
+        [orderItemId]:
+          error.response?.data?.error ||
+          "Unable to submit feedback.",
+      }));
+    } finally {
+      setFeedbackSubmitting((prev) => ({
+        ...prev,
+        [orderItemId]: false,
+      }));
+    }
+  };
 
   if (loading) {
     return (
@@ -200,7 +201,7 @@ const handleSubmitFeedback = async (orderItemId) => {
 
         </div>
 
-               {/* PRODUCTS */}
+        {/* PRODUCTS */}
 
         <section className="order-products">
 
@@ -252,133 +253,158 @@ const handleSubmitFeedback = async (orderItemId) => {
 
                 {/* FEEDBACK */}
 
-{order.status === "Delivered" && (
+                {order.status === "Delivered" && (
 
-  <div className="order-item-feedback">
+                  <div className="order-item-feedback">
 
-    <button
-      type="button"
-      className="feedback-button"
-      onClick={() => fetchFeedback(item.id)}
-    >
-      💬 Feedback
-    </button>
+                    <button
+                      type="button"
+                      className="feedback-button"
+                      onClick={() =>
+                        fetchFeedback(item.id)
+                      }
+                    >
+                      💬 Feedback
+                    </button>
 
-    {feedbackLoading[item.id] && (
-      <p>Loading feedback...</p>
-    )}
+                    {feedbackLoading[item.id] && (
+                      <p>
+                        Loading feedback...
+                      </p>
+                    )}
 
-    {feedbacks[item.id] && (
+                    {feedbacks[item.id] && (
 
-      <div className="feedback-history">
+                      <div className="feedback-history">
 
-        {feedbacks[item.id].length === 0 ? (
+                        {feedbacks[item.id].length === 0 ? (
 
-          <p className="no-feedback">
-            No feedback submitted yet.
-          </p>
+                          <p className="no-feedback">
+                            No feedback submitted yet.
+                          </p>
 
-        ) : (
+                        ) : (
 
-          feedbacks[item.id].map((feedback) => (
+                          feedbacks[item.id].map(
+                            (feedback) => (
 
-            <div
-              className="feedback-card"
-              key={feedback.id}
-            >
+                              <div
+                                className="feedback-card"
+                                key={feedback.id}
+                              >
 
-              <p className="feedback-label">
-                Your Feedback
-              </p>
+                                <p className="feedback-label">
+                                  Your Feedback
+                                </p>
 
-              <p className="feedback-text">
-                {feedback.feedback}
-              </p>
+                                <p className="feedback-text">
+                                  {feedback.feedback}
+                                </p>
 
-              <p className="feedback-status">
-                Status: {feedback.status}
-              </p>
+                                <p className="feedback-status">
+                                  Status:{" "}
+                                  {feedback.status}
+                                </p>
 
-              {feedback.admin_reply ? (
+                                {feedback.admin_reply ? (
 
-                <div className="admin-reply">
+                                  <div className="admin-reply">
 
-                  <p className="admin-reply-label">
-                    Admin Reply
-                  </p>
+                                    <p className="admin-reply-label">
+                                      Admin Reply
+                                    </p>
 
-                  <p>
-                    {feedback.admin_reply}
-                  </p>
+                                    <p>
+                                      {
+                                        feedback.admin_reply
+                                      }
+                                    </p>
 
-                  {feedback.replied_at && (
-                    <small>
-                      Replied on{" "}
-                      {new Date(
-                        feedback.replied_at
-                      ).toLocaleDateString()}
-                    </small>
-                  )}
+                                    {feedback.replied_at && (
+                                      <small>
+                                        Replied on{" "}
+                                        {new Date(
+                                          feedback.replied_at
+                                        ).toLocaleDateString()}
+                                      </small>
+                                    )}
 
-                </div>
+                                  </div>
 
-              ) : (
+                                ) : (
 
-                <p className="no-admin-reply">
-                  No reply yet.
-                </p>
+                                  <p className="no-admin-reply">
+                                    No reply yet.
+                                  </p>
 
-              )}
+                                )}
 
-            </div>
+                              </div>
 
-          ))
+                            )
+                          )
 
-        )}
+                        )}
 
-        {/* NEW FEEDBACK */}
+                        {/* NEW FEEDBACK */}
 
-        <div className="new-feedback">
+                        <div className="new-feedback">
 
-          <textarea
-            value={feedbackText[item.id] || ""}
-            onChange={(e) =>
-              setFeedbackText((prev) => ({
-                ...prev,
-                [item.id]: e.target.value,
-              }))
-            }
-            placeholder="Write your feedback..."
-            maxLength={2000}
-          />
+                          <textarea
+                            value={
+                              feedbackText[item.id] ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              setFeedbackText((prev) => ({
+                                ...prev,
+                                [item.id]:
+                                  e.target.value,
+                              }))
+                            }
+                            placeholder="Write your feedback..."
+                            maxLength={2000}
+                          />
 
-          <button
-            type="button"
-            onClick={() =>
-              handleSubmitFeedback(item.id)
-            }
-            disabled={feedbackSubmitting[item.id]}
-          >
-            {feedbackSubmitting[item.id]
-              ? "Submitting..."
-              : "Submit Feedback"}
-          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleSubmitFeedback(
+                                item.id
+                              )
+                            }
+                            disabled={
+                              feedbackSubmitting[
+                                item.id
+                              ]
+                            }
+                          >
+                            {feedbackSubmitting[
+                              item.id
+                            ]
+                              ? "Submitting..."
+                              : "Submit Feedback"}
+                          </button>
 
-          {feedbackMessage[item.id] && (
-            <p>
-              {feedbackMessage[item.id]}
-            </p>
-          )}
+                          {feedbackMessage[item.id] && (
+                            <p>
+                              {
+                                feedbackMessage[
+                                  item.id
+                                ]
+                              }
+                            </p>
+                          )}
 
-        </div>
+                        </div>
 
-      </div>
+                      </div>
 
-    )}
+                    )}
 
-  </div>
+                  </div>
 
-)}  
+                )}
 
                 {/* ITEM TOTAL */}
 
@@ -395,8 +421,8 @@ const handleSubmitFeedback = async (orderItemId) => {
           </div>
 
         </section>
-        
-        {/* SUMMARY */}
+
+        {/* ORDER SUMMARY */}
 
         <section className="order-summary">
 
@@ -416,6 +442,28 @@ const handleSubmitFeedback = async (orderItemId) => {
 
           </div>
 
+          {Number(order.discount) > 0 && (
+
+            <div className="order-summary-row">
+
+              <span>
+                Discount
+
+                {order.coupon_code && (
+                  <> ({order.coupon_code})</>
+                )}
+              </span>
+
+              <strong>
+                -₹{Number(
+                  order.discount
+                ).toFixed(2)}
+              </strong>
+
+            </div>
+
+          )}
+
           <div className="order-summary-row">
 
             <span>
@@ -424,7 +472,7 @@ const handleSubmitFeedback = async (orderItemId) => {
 
             <strong>
               ₹{Number(
-                order.delivery
+                order.delivery_charge
               ).toFixed(2)}
             </strong>
 
@@ -448,9 +496,11 @@ const handleSubmitFeedback = async (orderItemId) => {
 
         </section>
 
-        {/* ACTION */}
+        {/* ACTIONS */}
 
         <div className="order-details-actions">
+
+          <InvoiceActions order={order} />
 
           <Link
             to="/products"

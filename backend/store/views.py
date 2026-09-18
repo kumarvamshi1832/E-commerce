@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+import csv
 import json
 from django.db.models import Sum
 from django.db.models import Avg, Count
@@ -1739,6 +1741,11 @@ def create_order(request):
 
         order = Order.objects.create(
             user=user,
+
+            subtotal=total_amount,
+            discount=discount_amount,
+            delivery_charge=delivery,
+            coupon_code=coupon_code if coupon_code else None,
             total_amount=final_total,
 
             address_full_name=address.full_name,
@@ -2506,16 +2513,12 @@ def address_detail(request, address_id):
 def order_detail(request, order_id):
 
     if not request.user.is_authenticated:
-
         return JsonResponse(
             {"error": "User must be logged in"},
             status=401
         )
 
     try:
-
-        # Only allow logged-in user
-        # to access their own order
 
         order = Order.objects.get(
             id=order_id,
@@ -2535,15 +2538,11 @@ def order_detail(request, order_id):
 
     order_items = []
 
-    subtotal = 0
-
     for item in items:
 
         item_total = (
             item.price * item.quantity
         )
-
-        subtotal += item_total
 
         order_items.append({
 
@@ -2568,8 +2567,6 @@ def order_detail(request, order_id):
             ),
         })
 
-    delivery = 40 if subtotal > 0 else 0
-
     return JsonResponse({
 
         "id": order.id,
@@ -2578,17 +2575,53 @@ def order_detail(request, order_id):
 
         "created_at": order.created_at,
 
-        "subtotal": float(subtotal),
+        "subtotal": float(
+            order.subtotal
+        ),
 
-        "delivery": delivery,
+        "discount": float(
+            order.discount
+        ),
+
+        "delivery_charge": float(
+            order.delivery_charge
+        ),
+
+        "coupon_code": (
+            order.coupon_code
+            if order.coupon_code
+            else None
+        ),
 
         "total_amount": float(
             order.total_amount
         ),
 
-        "items": order_items,
-    })
+        "address": {
 
+            "full_name": order.address_full_name,
+
+            "phone": order.address_phone,
+
+            "address_line1": order.address_line1,
+
+            "address_line2": order.address_line2,
+
+            "city": order.address_city,
+
+            "state": order.address_state,
+
+            "pincode": order.address_pincode,
+
+            "landmark": order.address_landmark,
+
+            "address_type": order.address_type,
+
+        },
+
+        "items": order_items,
+
+    })
 # =========================================================
 # PRODUCT FEEDBACK
 # =========================================================
