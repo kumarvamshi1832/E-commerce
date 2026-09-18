@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import api from "../services/api";
+import api, { getAddresses } from "../services/api";
 import BalloonEffect from "../components/BalloonEffect";
 import "./Checkout.css";
 
@@ -31,9 +31,71 @@ function Checkout() {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinError, setPinError] = useState("");
 
+  // Addresses
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addressLoading, setAddressLoading] = useState(true);
+
   // Delivery availability
   const [deliveryStatus, setDeliveryStatus] = useState({});
   const [checkingDelivery, setCheckingDelivery] = useState(false);
+
+  // =========================
+  // LOAD ADDRESSES
+  // =========================
+
+  useEffect(() => {
+    loadAddresses();
+  }, []);
+
+  const loadAddresses = async () => {
+    try {
+      setAddressLoading(true);
+
+      const response = await getAddresses();
+
+      setAddresses(response.data);
+
+      const defaultAddress = response.data.find(
+        (address) => address.is_default
+      );
+
+      if (defaultAddress) {
+        setSelectedAddress(defaultAddress);
+        setPin(defaultAddress.pincode);
+
+        checkPincode(defaultAddress.pincode);
+      }
+    } catch (error) {
+      console.error(
+        "Address loading error:",
+        error
+      );
+
+      setError(
+        "Unable to load your saved addresses."
+      );
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  // =========================
+  // SELECT ADDRESS
+  // =========================
+
+  const selectAddress = (address) => {
+    setSelectedAddress(address);
+
+    setPin(address.pincode);
+
+    setLocation(null);
+    setPinError("");
+    setError("");
+    setDeliveryStatus({});
+
+    checkPincode(address.pincode);
+  };
 
   // =========================
   // CHECK CART DELIVERY
@@ -71,24 +133,10 @@ function Checkout() {
   };
 
   // =========================
-  // PINCODE
+  // CHECK PINCODE
   // =========================
 
-  const pincode = async (e) => {
-    let value = e.target.value;
-
-    // Only numbers + maximum 6 digits
-    value = value.replace(/\D/g, "").slice(0, 6);
-
-    setPin(value);
-
-    // Reset old location/error/delivery status
-    setLocation(null);
-    setPinError("");
-    setError("");
-    setDeliveryStatus({});
-
-    // Don't call API until 6 digits
+  const checkPincode = async (value) => {
     if (value.length !== 6) {
       return;
     }
@@ -108,6 +156,8 @@ function Checkout() {
         !data[0].PostOffice?.length
       ) {
         setPinError("Invalid pincode");
+        setLocation(null);
+        setDeliveryStatus({});
         return;
       }
 
@@ -119,10 +169,13 @@ function Checkout() {
         state: firstOffice.State,
       });
 
-      // Check delivery availability for all cart products
       await checkCartDelivery(value);
+
     } catch (error) {
-      console.error("Pincode error:", error);
+      console.error(
+        "Pincode error:",
+        error
+      );
 
       setPinError(
         "Unable to check pincode. Please try again."
@@ -130,6 +183,31 @@ function Checkout() {
     } finally {
       setPinLoading(false);
     }
+  };
+
+  // =========================
+  // PINCODE INPUT
+  // =========================
+
+  const pincode = async (e) => {
+    let value = e.target.value;
+
+    value = value
+      .replace(/\D/g, "")
+      .slice(0, 6);
+
+    setPin(value);
+
+    setLocation(null);
+    setPinError("");
+    setError("");
+    setDeliveryStatus({});
+
+    if (value.length !== 6) {
+      return;
+    }
+
+    await checkPincode(value);
   };
 
   // =========================
@@ -183,7 +261,9 @@ function Checkout() {
   // =========================
 
   const applyCoupon = (code) => {
-    const coupon = String(code || couponCode)
+    const coupon = String(
+      code || couponCode
+    )
       .trim()
       .toUpperCase();
 
@@ -194,6 +274,7 @@ function Checkout() {
       setCouponMessage(
         "✓ 10% discount applied!"
       );
+
     } else if (coupon === "SAVE20") {
       setCouponCode("SAVE20");
       setAppliedCoupon("SAVE20");
@@ -201,6 +282,7 @@ function Checkout() {
       setCouponMessage(
         "✓ 20% discount applied!"
       );
+
     } else if (coupon === "SAVE30") {
       setCouponCode("SAVE30");
       setAppliedCoupon("SAVE30");
@@ -208,6 +290,7 @@ function Checkout() {
       setCouponMessage(
         "✓ 30% discount applied!"
       );
+
     } else {
       setAppliedCoupon("");
       setDiscountPercent(0);
@@ -222,7 +305,14 @@ function Checkout() {
   // =========================
 
   const handlePlaceOrder = async () => {
-    // No pincode
+
+    if (!selectedAddress) {
+      setError(
+        "Please select a delivery address."
+      );
+      return;
+    }
+
     if (pin.length !== 6) {
       setError(
         "Please enter a valid 6-digit pincode."
@@ -230,7 +320,6 @@ function Checkout() {
       return;
     }
 
-    // Invalid pincode
     if (!location) {
       setError(
         "Please enter a valid pincode before placing the order."
@@ -238,8 +327,17 @@ function Checkout() {
       return;
     }
 
-    // Check delivery one more time before order
-    const status = await checkCartDelivery(pin);
+    if (
+      selectedAddress.pincode !== pin
+    ) {
+      setError(
+        "Selected address pincode and delivery pincode must match."
+      );
+      return;
+    }
+
+    const status =
+      await checkCartDelivery(pin);
 
     if (!status) {
       setError(
@@ -248,15 +346,20 @@ function Checkout() {
       return;
     }
 
-    // Find products that cannot be delivered
-    const unavailableProducts = cart.filter(
-      (item) => status[item.id] === false
-    );
+    const unavailableProducts =
+      cart.filter(
+        (item) =>
+          status[item.id] === false
+      );
 
-    if (unavailableProducts.length > 0) {
-      const productNames = unavailableProducts
-        .map((item) => item.name)
-        .join(", ");
+    if (
+      unavailableProducts.length > 0
+    ) {
+
+      const productNames =
+        unavailableProducts
+          .map((item) => item.name)
+          .join(", ");
 
       setError(
         `${productNames} ${
@@ -270,56 +373,64 @@ function Checkout() {
     }
 
     try {
+
       setLoading(true);
       setError("");
 
-      const orderItems = cart.map((item) => ({
-        product_id: item.id,
-        quantity: item.quantity,
-      }));
+      const orderItems =
+        cart.map((item) => ({
+          product_id: item.id,
+          quantity: item.quantity,
+        }));
 
-      const response = await api.post(
-        "orders/",
-        {
-          items: orderItems,
-          coupon_code: appliedCoupon,
-          pincode: pin,
-        }
-      );
+      const response =
+        await api.post(
+          "orders/",
+          {
+            items: orderItems,
+            coupon_code: appliedCoupon,
+            pincode: pin,
+            address_id:
+              selectedAddress.id,
+          }
+        );
 
       console.log(
         "Order created:",
         response.data
       );
 
-      // Empty cart
       clearCart();
 
-      // Show balloons
       setShowBalloons(true);
 
-      // Redirect after 4 seconds
       setTimeout(() => {
         navigate("/");
       }, 4000);
+
     } catch (error) {
+
       console.error(
         "Order error:",
         error
       );
 
-      // Backend delivery error
       if (
         error.response?.data
           ?.non_deliverable_products
       ) {
+
         const products =
           error.response.data
             .non_deliverable_products;
 
-        const productNames = products
-          .map((item) => item.product_name)
-          .join(", ");
+        const productNames =
+          products
+            .map(
+              (item) =>
+                item.product_name
+            )
+            .join(", ");
 
         setError(
           `${productNames} ${
@@ -327,16 +438,21 @@ function Checkout() {
               ? "is"
               : "are"
           } not deliverable to ${
-            error.response.data.pincode || pin
+            error.response.data.pincode ||
+            pin
           }.`
         );
+
       } else {
+
         setError(
           error.response?.data?.error ||
           "Failed to place order. Please try again."
         );
       }
+
     } finally {
+
       setLoading(false);
     }
   };
@@ -349,9 +465,12 @@ function Checkout() {
     cart.length === 0 &&
     !showBalloons
   ) {
+
     return (
       <main className="checkout-page">
+
         <div className="checkout-empty">
+
           <h1>
             Your cart is empty
           </h1>
@@ -363,7 +482,9 @@ function Checkout() {
           <Link to="/products">
             Continue Shopping
           </Link>
+
         </div>
+
       </main>
     );
   }
@@ -375,17 +496,11 @@ function Checkout() {
   return (
     <main className="checkout-page">
 
-      {/* BALLOON EFFECT */}
-
       {showBalloons && (
         <BalloonEffect />
       )}
 
       {showBalloons ? (
-
-        // =========================
-        // ORDER SUCCESS
-        // =========================
 
         <div className="order-success">
 
@@ -413,10 +528,6 @@ function Checkout() {
 
       ) : (
 
-        // =========================
-        // NORMAL CHECKOUT
-        // =========================
-
         <>
 
           {cart.length === 0 ? (
@@ -441,10 +552,6 @@ function Checkout() {
 
             <div className="checkout-container">
 
-              {/* =========================
-                  HEADER
-              ========================= */}
-
               <div className="checkout-header">
 
                 <p className="checkout-eyebrow">
@@ -461,8 +568,6 @@ function Checkout() {
 
               </div>
 
-              {/* ERROR */}
-
               {error && (
                 <div className="checkout-error">
                   ⚠️ {error}
@@ -471,9 +576,7 @@ function Checkout() {
 
               <div className="checkout-layout">
 
-                {/* =========================
-                    ORDER ITEMS
-                ========================= */}
+                {/* ORDER ITEMS */}
 
                 <section className="checkout-items">
 
@@ -487,8 +590,6 @@ function Checkout() {
                       className="checkout-item"
                       key={item.id}
                     >
-
-                      {/* IMAGE */}
 
                       <div className="checkout-item-image">
 
@@ -509,8 +610,6 @@ function Checkout() {
 
                       </div>
 
-                      {/* INFO */}
-
                       <div className="checkout-item-info">
 
                         <h3>
@@ -524,22 +623,27 @@ function Checkout() {
                           ).toFixed(2)}
                         </p>
 
-                        {/* DELIVERY STATUS */}
-
                         {pin.length === 6 &&
-                          deliveryStatus[item.id] !==
-                            undefined && (
+                          deliveryStatus[
+                            item.id
+                          ] !== undefined && (
 
                             <p
                               className={
-                                deliveryStatus[item.id]
+                                deliveryStatus[
+                                  item.id
+                                ]
                                   ? "checkout-deliverable"
                                   : "checkout-not-deliverable"
                               }
                             >
-                              {deliveryStatus[item.id]
+
+                              {deliveryStatus[
+                                item.id
+                              ]
                                 ? `✓ Deliverable to ${pin}`
                                 : `✕ Not deliverable to ${pin}`}
+
                             </p>
 
                           )}
@@ -549,7 +653,9 @@ function Checkout() {
                           <button
                             type="button"
                             onClick={() =>
-                              decreaseQuantity(item.id)
+                              decreaseQuantity(
+                                item.id
+                              )
                             }
                           >
                             −
@@ -562,7 +668,9 @@ function Checkout() {
                           <button
                             type="button"
                             onClick={() =>
-                              increaseQuantity(item.id)
+                              increaseQuantity(
+                                item.id
+                              )
                             }
                           >
                             +
@@ -571,8 +679,6 @@ function Checkout() {
                         </div>
 
                       </div>
-
-                      {/* ITEM TOTAL */}
 
                       <strong>
                         ₹
@@ -588,9 +694,7 @@ function Checkout() {
 
                 </section>
 
-                {/* =========================
-                    COUPON + PINCODE
-                ========================= */}
+                {/* COUPON + ADDRESS + PINCODE */}
 
                 <div className="coupon-section">
 
@@ -610,11 +714,16 @@ function Checkout() {
                         )
                       }
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
+
+                        if (
+                          e.key === "Enter"
+                        ) {
+
                           applyCoupon(
                             e.target.value
                           );
                         }
+
                       }}
                     />
 
@@ -630,8 +739,6 @@ function Checkout() {
                     </button>
 
                   </div>
-
-                  {/* COUPON BUTTONS */}
 
                   <div className="coupon-buttons">
 
@@ -671,6 +778,143 @@ function Checkout() {
                   )}
 
                   {/* =========================
+                      DELIVERY ADDRESS
+                  ========================= */}
+
+                  <div className="checkout-address-section">
+
+                    <h2>
+                      Delivery Address
+                    </h2>
+
+                    {addressLoading ? (
+
+                      <p>
+                        Loading addresses...
+                      </p>
+
+                    ) : addresses.length === 0 ? (
+
+                      <div className="no-address">
+
+                        <p>
+                          No saved addresses found.
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(
+                              "/addresses"
+                            )
+                          }
+                        >
+                          Add Address
+                        </button>
+
+                      </div>
+
+                    ) : (
+
+                      <div className="address-list">
+
+                        {addresses.map(
+                          (address) => (
+
+                            <div
+                              key={address.id}
+                              className={`checkout-address-card ${
+                                selectedAddress?.id ===
+                                address.id
+                                  ? "selected"
+                                  : ""
+                              }`}
+                              onClick={() =>
+                                selectAddress(
+                                  address
+                                )
+                              }
+                            >
+
+                              <div className="address-card-header">
+
+                                <strong>
+                                  {address.full_name}
+                                </strong>
+
+                                <span>
+                                  {
+                                    address.address_type
+                                  }
+                                </span>
+
+                              </div>
+
+                              <p>
+                                {address.phone}
+                              </p>
+
+                              <p>
+                                {
+                                  address.address_line1
+                                }
+
+                                {address.address_line2 &&
+                                  `, ${address.address_line2}`}
+                              </p>
+
+                              <p>
+                                {address.city},{" "}
+                                {address.state} -{" "}
+                                {address.pincode}
+                              </p>
+
+                              {address.landmark && (
+
+                                <p>
+                                  Landmark:{" "}
+                                  {address.landmark}
+                                </p>
+
+                              )}
+
+                              {selectedAddress?.id ===
+                                address.id && (
+
+                                <div className="selected-address">
+                                  ✓ Selected
+                                </div>
+
+                              )}
+
+                            </div>
+
+                          )
+                        )}
+
+                      </div>
+
+                    )}
+
+                    {addresses.length > 0 && (
+
+                      <button
+                        type="button"
+                        className="add-new-address-button"
+                        onClick={() =>
+                          navigate(
+                            "/addresses"
+                          )
+                        }
+                      >
+                        + Add New Address
+                      </button>
+
+                    )}
+
+                  </div>
+
+                  {/* =========================
                       PINCODE
                   ========================= */}
 
@@ -701,6 +945,7 @@ function Checkout() {
                     )}
 
                     {location && (
+
                       <div className="pincode-location">
 
                         <p>
@@ -728,29 +973,28 @@ function Checkout() {
                         </p>
 
                       </div>
+
                     )}
 
                     {pinError && (
+
                       <p className="pincode-error">
                         ⚠️ {pinError}
                       </p>
+
                     )}
 
                   </div>
 
                 </div>
 
-                {/* =========================
-                    ORDER SUMMARY
-                ========================= */}
+                {/* ORDER SUMMARY */}
 
                 <aside className="checkout-summary">
 
                   <h2>
                     Order Summary
                   </h2>
-
-                  {/* SUBTOTAL */}
 
                   <div className="checkout-row">
 
@@ -765,8 +1009,6 @@ function Checkout() {
 
                   </div>
 
-                  {/* DELIVERY */}
-
                   <div className="checkout-row">
 
                     <span>
@@ -774,15 +1016,15 @@ function Checkout() {
                     </span>
 
                     <strong>
+
                       {pin.length === 0 ||
                       !location
                         ? "—"
                         : `₹${delivery.toFixed(2)}`}
+
                     </strong>
 
                   </div>
-
-                  {/* DISCOUNT */}
 
                   {discountPercent > 0 && (
 
@@ -856,8 +1098,6 @@ function Checkout() {
 
                   <div className="checkout-divider" />
 
-                  {/* FINAL TOTAL */}
-
                   <div className="checkout-total">
 
                     <span>
@@ -873,8 +1113,6 @@ function Checkout() {
 
                   <div className="checkout-divider" />
 
-                  {/* TOTAL */}
-
                   <div className="checkout-total">
 
                     <span>
@@ -888,17 +1126,17 @@ function Checkout() {
 
                   </div>
 
-                  {/* DELIVERY WARNING */}
-
                   {hasUndeliverableItems && (
+
                     <div className="checkout-delivery-warning">
+
                       ⚠️ Some products cannot be delivered
                       to {pin}. Please remove them or
                       choose another pincode.
-                    </div>
-                  )}
 
-                  {/* PLACE ORDER */}
+                    </div>
+
+                  )}
 
                   <button
                     className="place-order-button"
@@ -919,8 +1157,6 @@ function Checkout() {
                           : "Place Order"}
 
                   </button>
-
-                  {/* BACK TO CART */}
 
                   <Link
                     to="/cart"

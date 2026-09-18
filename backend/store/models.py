@@ -44,11 +44,64 @@ class Order(models.Model):
         default='Pending'
     )
 
+    address_full_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    address_phone = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True
+    )
+
+    address_line1 = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    address_line2 = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    address_city = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    address_state = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    address_pincode = models.CharField(
+        max_length=6,
+        null=True,
+        blank=True
+    )
+
+    address_landmark = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    address_type = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"
-
 
 class OrderItem(models.Model):
 
@@ -365,3 +418,34 @@ class DeliveryPincode(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.pincode}"
+
+class Address(models.Model):
+    ADDRESS_TYPES = (
+        ("home", "Home"),
+        ("work", "Work"),
+        ("other", "Other"),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="addresses"
+    )
+    full_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=6)
+    landmark = models.CharField(max_length=255, blank=True)
+    address_type = models.CharField(
+        max_length=10,
+        choices=ADDRESS_TYPES,
+        default="home"
+    )
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name} - {self.city}"

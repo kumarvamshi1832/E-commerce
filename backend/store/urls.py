@@ -56,6 +56,8 @@ from .views import (
     admin_update_coupon,
     admin_toggle_coupon_status,
     admin_dashboard,
+    address_list,
+    address_detail,
     )
 
 from .views import (
@@ -385,8 +387,7 @@ path(
     name="admin-dashboard"
 ),
 
-
-
-
+path("addresses/", address_list),
+path("addresses/<int:address_id>/", address_detail),
 
 ]

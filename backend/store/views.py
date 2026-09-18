@@ -7,7 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import (Product, Order, OrderItem, Coupon,
                      EmailOTP,Wishlist,ProductFeedback,
-                     SupportTicket,SupportMessage,Notification,ProductReview,DeliveryPincode)
+                     SupportTicket,SupportMessage,Notification,ProductReview,
+                     DeliveryPincode, Address,)
 import random
 import os
 import requests
@@ -1615,6 +1616,51 @@ def create_order(request):
             )
 
         # =================================================
+        # GET SELECTED ADDRESS
+        # =================================================
+
+        address_id = data.get("address_id")
+
+        if not address_id:
+            return JsonResponse(
+                {
+                    "error": "Please select an address"
+                },
+                status=400
+            )
+
+        try:
+
+            address = Address.objects.get(
+                id=address_id,
+                user=user
+            )
+
+        except Address.DoesNotExist:
+
+            return JsonResponse(
+                {
+                    "error": "Selected address not found"
+                },
+                status=404
+            )
+
+        # =================================================
+        # CHECK ADDRESS PINCODE
+        # =================================================
+
+        if address.pincode != pincode:
+            return JsonResponse(
+                {
+                    "error": (
+                        "Selected address pincode does not "
+                        "match the delivery pincode."
+                    )
+                },
+                status=400
+            )
+
+        # =================================================
         # CHECK PRODUCT DELIVERY AVAILABILITY
         # =================================================
 
@@ -1630,6 +1676,7 @@ def create_order(request):
             ).exists()
 
             if not deliverable:
+
                 non_deliverable_products.append(
                     {
                         "product_id": product.id,
@@ -1692,7 +1739,17 @@ def create_order(request):
 
         order = Order.objects.create(
             user=user,
-            total_amount=final_total
+            total_amount=final_total,
+
+            address_full_name=address.full_name,
+            address_phone=address.phone,
+            address_line1=address.address_line1,
+            address_line2=address.address_line2,
+            address_city=address.city,
+            address_state=address.state,
+            address_pincode=address.pincode,
+            address_landmark=address.landmark,
+            address_type=address.address_type
         )
 
         # =================================================
@@ -1773,6 +1830,32 @@ Your order has been placed successfully.
 
 Order ID : #{order.id}
 Status   : {order.status}
+
+----------------------------------------
+           DELIVERY ADDRESS
+----------------------------------------
+
+Name      : {address.full_name}
+Phone     : {address.phone}
+
+Address   : {address.address_line1}
+"""
+
+        if address.address_line2:
+            email_body += f"""Address 2 : {address.address_line2}
+"""
+
+        email_body += f"""City      : {address.city}
+State     : {address.state}
+Pincode   : {address.pincode}
+"""
+
+        if address.landmark:
+            email_body += f"""Landmark  : {address.landmark}
+"""
+
+        email_body += f"""
+Address Type : {address.address_type.title()}
 
 ----------------------------------------
            PRODUCT DETAILS
@@ -1956,7 +2039,19 @@ Your MyStore Team
                     order.total_amount
                 ),
 
-                "status": order.status
+                "status": order.status,
+
+                "address": {
+                    "full_name": order.address_full_name,
+                    "phone": order.address_phone,
+                    "address_line1": order.address_line1,
+                    "address_line2": order.address_line2,
+                    "city": order.address_city,
+                    "state": order.address_state,
+                    "pincode": order.address_pincode,
+                    "landmark": order.address_landmark,
+                    "address_type": order.address_type
+                }
             },
             status=201
         )
@@ -1980,11 +2075,12 @@ Your MyStore Team
 
     except (ValueError, KeyError) as e:
 
-        return JsonResponse({
-            "error": "Invalid order data.",
-            "details": str(e)
-                
-            },status=400
+        return JsonResponse(
+            {
+                "error": "Invalid order data.",
+                "details": str(e)
+            },
+            status=400
         )
 
     # =====================================================
@@ -1999,6 +2095,7 @@ Your MyStore Team
             },
             status=400
         )
+
 # =========================================================
 # MY ORDERS
 # =========================================================
@@ -2194,6 +2291,212 @@ def current_user(request):
         {"error": "Method not allowed"},
         status=405
     )
+
+@csrf_exempt
+@token_auth_required
+def address_list(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required."}, status=401)
+
+    if request.method == "GET":
+        addresses = Address.objects.filter(
+            user=request.user
+        ).order_by("-is_default", "-created_at")
+
+        data = []
+
+        for address in addresses:
+            data.append({
+                "id": address.id,
+                "full_name": address.full_name,
+                "phone": address.phone,
+                "address_line1": address.address_line1,
+                "address_line2": address.address_line2,
+                "city": address.city,
+                "state": address.state,
+                "pincode": address.pincode,
+                "landmark": address.landmark,
+                "address_type": address.address_type,
+                "is_default": address.is_default
+            })
+
+        return JsonResponse(data, safe=False)
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        full_name = data.get("full_name", "").strip()
+        phone = data.get("phone", "").strip()
+        address_line1 = data.get("address_line1", "").strip()
+        address_line2 = data.get("address_line2", "").strip()
+        city = data.get("city", "").strip()
+        state = data.get("state", "").strip()
+        pincode = data.get("pincode", "").strip()
+        landmark = data.get("landmark", "").strip()
+        address_type = data.get("address_type", "home")
+        is_default = data.get("is_default", False)
+
+        if not full_name or not phone or not address_line1 or not city or not state or not pincode:
+            return JsonResponse(
+                {"error": "Please fill all required fields."},
+                status=400
+            )
+
+        if not phone.isdigit() or len(phone) != 10:
+            return JsonResponse(
+                {"error": "Phone number must contain 10 digits."},
+                status=400
+            )
+
+        if not pincode.isdigit() or len(pincode) != 6:
+            return JsonResponse(
+                {"error": "Pincode must contain 6 digits."},
+                status=400
+            )
+
+        if address_type not in ["home", "work", "other"]:
+            return JsonResponse(
+                {"error": "Invalid address type."},
+                status=400
+            )
+
+        if not Address.objects.filter(user=request.user).exists():
+            is_default = True
+
+        if is_default:
+            Address.objects.filter(user=request.user).update(is_default=False)
+
+        address = Address.objects.create(
+            user=request.user,
+            full_name=full_name,
+            phone=phone,
+            address_line1=address_line1,
+            address_line2=address_line2,
+            city=city,
+            state=state,
+            pincode=pincode,
+            landmark=landmark,
+            address_type=address_type,
+            is_default=is_default
+        )
+
+        return JsonResponse({
+            "message": "Address added successfully.",
+            "address": {
+                "id": address.id,
+                "full_name": address.full_name,
+                "phone": address.phone,
+                "address_line1": address.address_line1,
+                "address_line2": address.address_line2,
+                "city": address.city,
+                "state": address.state,
+                "pincode": address.pincode,
+                "landmark": address.landmark,
+                "address_type": address.address_type,
+                "is_default": address.is_default
+            }
+        }, status=201)
+
+    return JsonResponse({"error": "Method not allowed."}, status=405)
+
+
+@csrf_exempt
+@token_auth_required
+def address_detail(request, address_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Authentication required."}, status=401)
+
+    try:
+        address = Address.objects.get(
+            id=address_id,
+            user=request.user
+        )
+    except Address.DoesNotExist:
+        return JsonResponse({"error": "Address not found."}, status=404)
+
+    if request.method in ["PUT", "PATCH"]:
+        data = json.loads(request.body)
+
+        if "full_name" in data:
+            address.full_name = data["full_name"].strip()
+
+        if "phone" in data:
+            phone = data["phone"].strip()
+
+            if not phone.isdigit() or len(phone) != 10:
+                return JsonResponse(
+                    {"error": "Phone number must contain 10 digits."},
+                    status=400
+                )
+
+            address.phone = phone
+
+        if "address_line1" in data:
+            address.address_line1 = data["address_line1"].strip()
+
+        if "address_line2" in data:
+            address.address_line2 = data["address_line2"].strip()
+
+        if "city" in data:
+            address.city = data["city"].strip()
+
+        if "state" in data:
+            address.state = data["state"].strip()
+
+        if "pincode" in data:
+            pincode = data["pincode"].strip()
+
+            if not pincode.isdigit() or len(pincode) != 6:
+                return JsonResponse(
+                    {"error": "Pincode must contain 6 digits."},
+                    status=400
+                )
+
+            address.pincode = pincode
+
+        if "landmark" in data:
+            address.landmark = data["landmark"].strip()
+
+        if "address_type" in data:
+            if data["address_type"] not in ["home", "work", "other"]:
+                return JsonResponse(
+                    {"error": "Invalid address type."},
+                    status=400
+                )
+
+            address.address_type = data["address_type"]
+
+        if data.get("is_default") is True:
+            Address.objects.filter(
+                user=request.user
+            ).exclude(id=address.id).update(is_default=False)
+
+            address.is_default = True
+
+        address.save()
+
+        return JsonResponse({
+            "message": "Address updated successfully."
+        })
+
+    if request.method == "DELETE":
+        was_default = address.is_default
+        address.delete()
+
+        if was_default:
+            next_address = Address.objects.filter(
+                user=request.user
+            ).order_by("-created_at").first()
+
+            if next_address:
+                next_address.is_default = True
+                next_address.save()
+
+        return JsonResponse({
+            "message": "Address deleted successfully."
+        })
+
+    return JsonResponse({"error": "Method not allowed."}, status=405)
 
 # =========================================================
 # ORDER DETAIL
@@ -3805,3 +4108,4 @@ def check_delivery(request):
         "pincode": pincode,
         "products": delivery_data
     })
+

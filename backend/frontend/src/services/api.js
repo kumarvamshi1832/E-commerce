@@ -35,4 +35,20 @@ export const markNotificationRead = (notificationId) => {
   return api.patch(`notifications/${notificationId}/read/`);
 };
 
+export const getAddresses = () => {
+  return api.get("addresses/");
+};
+
+export const addAddress = (addressData) => {
+  return api.post("addresses/", addressData);
+};
+
+export const updateAddress = (addressId, addressData) => {
+  return api.patch(`addresses/${addressId}/`, addressData);
+};
+
+export const deleteAddress = (addressId) => {
+  return api.delete(`addresses/${addressId}/`);
+};
+
 export default api;

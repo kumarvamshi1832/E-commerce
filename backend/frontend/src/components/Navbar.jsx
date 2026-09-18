@@ -219,6 +219,16 @@ function Navbar() {
                   </button>
 
                   <button
+  type="button"
+  onClick={() => {
+    setShowUserMenu(false);
+    navigate("/addresses");
+  }}
+>
+  🏠 My Addresses
+</button>
+
+                  <button
                     type="button"
                     onClick={() => {
                       setShowUserMenu(false);

@@ -42,6 +42,8 @@ import AdminNotifications from "./pages/AdminNotifications";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminDashboard from "./pages/AdminDashboard";
 
+import Addresses from "./pages/Addresses";
+
 function AppContent() {
   const location = useLocation();
 
@@ -212,6 +214,11 @@ function AppContent() {
           path="/checkout"
           element={<Checkout />}
         />
+
+        <Route
+  path="/addresses"
+  element={<Addresses />}
+/>
 
         <Route
           path="/register"
