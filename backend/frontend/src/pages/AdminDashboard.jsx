@@ -125,6 +125,7 @@ function AdminDashboard() {
                         <strong>
                             {summary.total_products}
                         </strong>
+                        
                     </div>
                 </div>
 

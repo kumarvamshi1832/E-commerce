@@ -10,11 +10,11 @@ function AdminLayout() {
     { name: "Orders", path: "/admin/orders", icon: "🛒" },
     { name: "Customers", path: "/admin/customers", icon: "👥" },
     { name: "Coupons", path: "/admin/coupons", icon: "🎟️" },
-    { name: "Inventory", path: "/admin/inventory", icon: "📋" },
+    { name: "Stock Management", path: "/admin/inventory", icon: "📋" },
     { name: "Reviews", path: "/admin/reviews", icon: "⭐" },
     { name: "Support", path: "/admin/support", icon: "🎧" },
     { name: "Notifications", path: "/admin/notifications", icon: "🔔" },
-    { name: "Settings", path: "/admin/settings", icon: "⚙️" },
+    // { name: "Settings", path: "/admin/settings", icon: "⚙️" },
   ];
 
   const handleLogout = () => {
@@ -27,7 +27,7 @@ function AdminLayout() {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="admin-logo">
-          <div className="admin-logo-icon">🛍️</div>
+          {/* <div className="admin-logo-icon"></div> */}
 
           <div className="admin-logo-content">
             <h2>MyStore</h2>
