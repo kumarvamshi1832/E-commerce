@@ -1,0 +1,252 @@
+.addresses-page {
+  min-height: calc(100vh - 70px);
+  padding: 40px 7%;
+  background: #f8fafc;
+}
+
+.addresses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.addresses-header h1 {
+  margin: 0;
+  font-size: 30px;
+  color: #111827;
+}
+
+.addresses-header p {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+.add-address-button {
+  border: none;
+  background: #111827;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-address-button:hover {
+  background: #1f2937;
+}
+
+.address-form {
+  background: white;
+  padding: 28px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+.address-form h2 {
+  margin-top: 0;
+  margin-bottom: 22px;
+  font-size: 21px;
+  color: #111827;
+}
+
+.address-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.address-form input,
+.address-type select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  font-size: 14px;
+  outline: none;
+}
+
+.address-form input:focus,
+.address-type select:focus {
+  border-color: #111827;
+}
+
+.address-type {
+  margin-top: 18px;
+  max-width: 50%;
+}
+
+.address-type label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.default-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.default-checkbox input {
+  width: auto;
+}
+
+.address-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.save-address-button,
+.cancel-address-button {
+  padding: 11px 20px;
+  border-radius: 7px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-address-button {
+  background: #111827;
+  color: white;
+}
+
+.cancel-address-button {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.address-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.address-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+}
+
+.address-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.address-type-badge,
+.default-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-right: 7px;
+}
+
+.address-type-badge {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.default-badge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.address-card h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  color: #111827;
+}
+
+.address-card p {
+  margin: 5px 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.address-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.address-actions button {
+  border: 1px solid #d1d5db;
+  background: white;
+  padding: 8px 13px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.address-actions button:hover {
+  background: #f3f4f6;
+}
+
+.address-actions .delete-address-button {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.address-actions .delete-address-button:hover {
+  background: #fef2f2;
+}
+
+.no-addresses {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.no-addresses h2 {
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.no-addresses p {
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+
+  .addresses-page {
+    padding: 25px 20px;
+  }
+
+  .addresses-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .address-form-grid,
+  .address-list {
+    grid-template-columns: 1fr;
+  }
+
+  .address-type {
+    max-width: 100%;
+  }
+
+}

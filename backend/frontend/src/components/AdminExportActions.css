@@ -1,0 +1,100 @@
+.admin-export-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-download-wrapper {
+  position: relative;
+}
+
+.admin-export-btn {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-export-btn:hover {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.admin-download-arrow {
+  margin-left: 2px;
+  font-size: 12px;
+}
+
+.admin-download-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 500;
+  width: 190px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.admin-download-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-download-menu button:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.admin-download-menu button span {
+  width: 20px;
+  text-align: center;
+  font-size: 15px;
+}
+
+@media (max-width: 600px) {
+  .admin-export-actions {
+    width: 100%;
+  }
+
+  .admin-download-wrapper {
+    flex: 1;
+  }
+
+  .admin-export-btn {
+    width: 100%;
+  }
+
+  .print-btn {
+    flex: 1;
+  }
+}

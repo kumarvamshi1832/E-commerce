@@ -1,0 +1,72 @@
+/* =========================================================
+   BALLOON EFFECT (order success celebration)
+   ========================================================= */
+
+.balloon-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.balloon {
+  position: absolute;
+  bottom: -120px;
+  width: 46px;
+  height: 58px;
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  opacity: 0.9;
+  box-shadow: inset -8px -8px 14px rgba(0, 0, 0, 0.12), inset 6px 8px 10px rgba(255, 255, 255, 0.35);
+  animation: balloonRise 5.5s ease-in forwards;
+}
+
+.balloon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid inherit;
+  border-top-color: currentColor;
+  transform: translateX(-50%);
+}
+
+.balloon-string {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: 46px;
+  background: rgba(32, 29, 23, 0.35);
+  transform-origin: top center;
+  animation: stringSway 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes balloonRise {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translateY(-55vh) translateX(18px) rotate(4deg);
+  }
+  100% {
+    transform: translateY(-115vh) translateX(-14px) rotate(-4deg);
+    opacity: 0;
+  }
+}
+
+@keyframes stringSway {
+  from { transform: rotate(-4deg); }
+  to { transform: rotate(4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .balloon-container {
+    display: none;
+  }
+}

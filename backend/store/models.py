@@ -1,0 +1,475 @@
+from django.db import models
+from django.contrib.auth.models import User
+from cloudinary.models import CloudinaryField
+
+# Create your models here.
+class Product(models.Model):
+    name=models.CharField(max_length=300)
+    price=models.DecimalField(max_digits=10,decimal_places=2)
+    description=models.TextField()
+    image = CloudinaryField("image", blank=True, null=True)
+    category = models.CharField(max_length=100)
+    stock = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class Order(models.Model):
+
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Confirmed', 'Confirmed'),
+        ('Shipped', 'Shipped'),
+        ('Delivered', 'Delivered'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='orders'
+    )
+
+    total_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
+
+    address_full_name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    address_phone = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True
+    )
+
+    address_line1 = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    address_line2 = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    address_city = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    address_state = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    address_pincode = models.CharField(
+        max_length=6,
+        null=True,
+        blank=True
+    )
+
+    address_landmark = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    address_type = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True
+    )
+
+    subtotal = models.DecimalField(
+    max_digits=10,
+    decimal_places=2,
+    default=0
+    )
+
+    discount = models.DecimalField(
+    max_digits=10,
+    decimal_places=2,
+    default=0
+    )
+
+    delivery_charge = models.DecimalField(
+    max_digits=10,
+    decimal_places=2,
+    default=0
+    )
+
+    coupon_code = models.CharField(
+    max_length=50,
+    null=True,
+    blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.user.username}"
+
+class OrderItem(models.Model):
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='items'
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.PositiveIntegerField()
+
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
+class ProductReview(models.Model):
+
+    RATING_CHOICES = [
+        (1, "1 Star"),
+        (2, "2 Stars"),
+        (3, "3 Stars"),
+        (4, "4 Stars"),
+        (5, "5 Stars"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="product_reviews"
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+
+    order_item = models.ForeignKey(
+        OrderItem,
+        on_delete=models.CASCADE,
+        related_name="review"
+    )
+
+    rating = models.PositiveIntegerField(
+        choices=RATING_CHOICES
+    )
+
+    review = models.TextField()
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+        return (
+            f"{self.product.name} - "
+            f"{self.user.username} - "
+            f"{self.rating} Stars"
+        )
+
+class ProductFeedback(models.Model):
+
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Replied', 'Replied'),
+        ('Closed', 'Closed'),
+    ]
+
+    order_item = models.ForeignKey(
+    OrderItem,
+    on_delete=models.CASCADE,
+    related_name='feedbacks'
+)
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='product_feedbacks'
+    )
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='feedbacks'
+    )
+
+    feedback = models.TextField()
+
+    admin_reply = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    replied_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return f"Feedback - {self.product.name} - {self.user.username}"
+
+class SupportTicket(models.Model):
+
+    STATUS_CHOICES = [
+        ("Open", "Open"),
+        ("In Progress", "In Progress"),
+        ("Resolved", "Resolved"),
+        ("Closed", "Closed"),
+    ]
+
+    CATEGORY_CHOICES = [
+        ("Order", "Order"),
+        ("Payment", "Payment"),
+        ("Delivery", "Delivery"),
+        ("Product", "Product"),
+        ("Refund", "Refund"),
+        ("Account", "Account"),
+        ("Other", "Other"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="support_tickets"
+    )
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="support_tickets"
+    )
+
+    category = models.CharField(
+        max_length=30,
+        choices=CATEGORY_CHOICES
+    )
+
+    subject = models.CharField(
+        max_length=200
+    )
+
+    description = models.TextField()
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Open"
+    )
+
+    admin_reply = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    resolved_at = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.subject}"
+
+class SupportMessage(models.Model):
+
+    SENDER_CHOICES = [
+        ("Customer", "Customer"),
+        ("Admin", "Admin"),
+    ]
+
+    ticket = models.ForeignKey(
+        SupportTicket,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+
+    sender = models.CharField(
+        max_length=20,
+        choices=SENDER_CHOICES
+    )
+
+    message = models.TextField()
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"Ticket #{self.ticket.id} - {self.sender}"
+
+
+class Coupon(models.Model):
+
+    code = models.CharField(
+        max_length=20,
+        unique=True
+    )
+
+    discount_percent = models.PositiveIntegerField()
+
+    active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.code} - {self.discount_percent}%"
+
+class EmailOTP(models.Model):
+    email=models.EmailField()
+    username=models.CharField(max_length=200)
+    password=models.CharField(max_length=200)
+    otp=models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="wishlist"
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="wishlist_items"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "product"],
+                name="unique_user_product_wishlist"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name}"
+
+class Notification(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+
+    message = models.TextField()
+
+    notification_type = models.CharField(
+        max_length=50
+    )
+
+    is_read = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+
+class DeliveryPincode(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="delivery_pincodes"
+    )
+    pincode = models.CharField(max_length=6)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["product", "pincode"],
+                name="unique_product_pincode"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.pincode}"
+
+class Address(models.Model):
+    ADDRESS_TYPES = (
+        ("home", "Home"),
+        ("work", "Work"),
+        ("other", "Other"),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="addresses"
+    )
+    full_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    address_line1 = models.CharField(max_length=255)
+    address_line2 = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=6)
+    landmark = models.CharField(max_length=255, blank=True)
+    address_type = models.CharField(
+        max_length=10,
+        choices=ADDRESS_TYPES,
+        default="home"
+    )
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name} - {self.city}"
