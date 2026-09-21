@@ -1,199 +1,215 @@
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
+import ProductCard from "../components/ProductCard";
 import "./Home.css";
 
 function Home() {
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+
   const categories = [
     {
-      name: "Vegetables",
-      emoji: "🥦",
-      description: "Fresh & healthy",
+      name: "Leafy Greens",
       category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?auto=format&fit=crop&w=500&q=85",
     },
     {
-      name: "Non-Veg",
-      emoji: "🍗",
-      description: "Quality meat",
-      category: "Non-Veg",
+      name: "Root Vegetables",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1445282768818-728615cc910a?auto=format&fit=crop&w=500&q=85",
     },
     {
-      name: "Dairy",
-      emoji: "🥛",
-      description: "Fresh dairy",
-      category: "Dairy",
+      name: "Tomatoes",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=500&q=85",
     },
     {
-      name: "Beverages",
-      emoji: "🥤",
-      description: "Cool & refreshing",
-      category: "Beverages",
+      name: "Onions & Garlic",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?auto=format&fit=crop&w=500&q=85",
     },
     {
-      name: "Snacks",
-      emoji: "🍪",
-      description: "Tasty bites",
-      category: "Snacks",
+      name: "Capsicum",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=500&q=85",
+    },
+    {
+      name: "Brinjal",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=500&q=85",
+    },
+    {
+      name: "Cucumbers",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1604977042946-1eecc30f269e?auto=format&fit=crop&w=500&q=85",
+    },
+    {
+      name: "Beans & Peas",
+      category: "Veg",
+      image:
+        "https://images.unsplash.com/photo-1567375698348-5d9d5ae99de0?auto=format&fit=crop&w=500&q=85",
     },
   ];
 
+  useEffect(() => {
+    api
+      .get("products/")
+      .then((response) => {
+        setProducts(response.data || []);
+      })
+      .catch((error) => {
+        console.error("Error loading home products:", error);
+      });
+  }, []);
+
+  const handleReviewsClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  const featuredProducts = products.slice(0, 4);
+
   return (
     <main className="home">
+
+      {/* ================= ANNOUNCEMENT ================= */}
+
+      <div className="announcement-bar">
+        <div className="announcement-left">
+          <span>🚚</span>
+          Fresh & Healthy Groceries Delivered to Your Doorstep
+          <b>•</b>
+          {/* Free Delivery on Orders Above ₹499 */}
+        </div>
+
+        {/* <div className="announcement-right">
+          <span>Track Order</span>
+          <span>|</span>
+          <span>Help</span>
+          <span>|</span>
+          <span>Login / Sign Up</span>
+        </div> */}
+      </div>
 
       {/* ================= HERO ================= */}
 
       <section className="home-hero">
 
-        <div className="hero-glow hero-glow-one"></div>
-        <div className="hero-glow hero-glow-two"></div>
+        <div className="hero-decoration hero-decoration-left"></div>
+        <div className="hero-decoration hero-decoration-right"></div>
 
         <div className="hero-content">
 
-          <div className="hero-badge">
-            <span>🔥</span>
-            Fresh & Fast Delivery
+          <div className="hero-eyebrow">
+            FRESH • LOCAL • ORGANIC
           </div>
 
           <h1>
-            Everything you need,
+            Nature's Goodness
             <br />
-            <span>delivered fresh.</span>
+            <span>On Your Table</span>
           </h1>
 
           <p>
-            Shop fresh groceries, quality products and everyday
-            essentials from the comfort of your home.
+            Farm fresh vegetables, handpicked for your
+            health and happiness. Because you deserve
+            the best, every day.
           </p>
 
-          <div className="hero-buttons">
-
-            <Link to="/products" className="hero-primary">
-              Shop Now
-              <span>→</span>
-            </Link>
-
-            <a href="#categories" className="hero-secondary">
-              Explore Categories
-            </a>
-
-          </div>
-
-          <div className="hero-pills">
-
-            <div className="hero-pill">
-              <span>🚚</span>
-              Fast Delivery
-            </div>
-
-            <div className="hero-pill">
-              <span>🌱</span>
-              Fresh Products
-            </div>
-
-            <div className="hero-pill">
-              <span>🔒</span>
-              Secure Shopping
-            </div>
-
-          </div>
+          <Link to="/products" className="hero-shop-button">
+            Shop Fresh Vegetables
+            <span>→</span>
+          </Link>
 
         </div>
-
-        {/* ================= HERO VISUAL ================= */}
 
         <div className="hero-visual">
 
-          <div className="hero-orbit orbit-one"></div>
-          <div className="hero-orbit orbit-two"></div>
-
-          <div className="hero-main-circle">
-            <div className="shopping-bag">
-              🛍️
-            </div>
+          <div className="hero-handwritten">
+            Farm to
+            <br />
+            Your Home
+            <span>♡</span>
           </div>
 
-          <div className="floating-product floating-one">
-            <span>🥦</span>
-            <div>
-              <strong>Fresh</strong>
-              <small>Vegetables</small>
-            </div>
-          </div>
+          <div className="hero-basket-glow"></div>
 
-          <div className="floating-product floating-two">
-            <span>🥛</span>
-            <div>
-              <strong>Quality</strong>
-              <small>Dairy Products</small>
-            </div>
-          </div>
+          <div className="hero-image-container">
 
-          <div className="floating-product floating-three">
-            <span>⚡</span>
-            <div>
-              <strong>Fast</strong>
-              <small>Delivery</small>
-            </div>
+            <img
+              src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=90"
+              alt="Fresh vegetables"
+            />
+
           </div>
 
         </div>
 
       </section>
 
+      {/* ================= BENEFITS ================= */}
 
-      {/* ================= SERVICE CARDS ================= */}
+      <section className="benefits-strip">
 
-      <section className="service-section">
-
-        <div className="service-card">
-          <div className="service-icon orange-icon">🌱</div>
+        <div className="benefit-item">
+          <div className="benefit-icon">♧</div>
           <div>
-            <h3>Fresh Products</h3>
-            <p>Carefully selected for quality</p>
+            <strong>100% Fresh</strong>
+            <span>Handpicked daily</span>
           </div>
         </div>
 
-        <div className="service-card">
-          <div className="service-icon red-icon">🛒</div>
+        <div className="benefit-item">
+          <div className="benefit-icon">♢</div>
           <div>
-            <h3>Easy Shopping</h3>
-            <p>Simple and convenient checkout</p>
+            <strong>No Harmful Chemicals</strong>
+            <span>Safe for your family</span>
           </div>
         </div>
 
-        <div className="service-card">
-          <div className="service-icon yellow-icon">🚚</div>
+        <div className="benefit-item">
+          <div className="benefit-icon">🚚</div>
           <div>
-            <h3>Quick Delivery</h3>
-            <p>Get your order at your doorstep</p>
+            <strong>Fast Delivery</strong>
+            <span>Across your city</span>
           </div>
         </div>
 
-        <div className="service-card">
-          <div className="service-icon green-icon">💬</div>
+        <div className="benefit-item">
+          <div className="benefit-icon">♡</div>
           <div>
-            <h3>Customer Support</h3>
-            <p>We're here whenever you need us</p>
+            <strong>Support Local Farmers</strong>
+            <span>Better for the community</span>
           </div>
         </div>
 
       </section>
-
 
       {/* ================= CATEGORIES ================= */}
 
-      <section
-        className="categories-section"
-        id="categories"
-      >
+      <section className="categories-section" id="categories">
 
-        <div className="section-heading">
+        <div className="section-top">
 
           <div>
-            <span>EXPLORE OUR STORE</span>
-            <h2>Shop by Category</h2>
+            <span className="section-label">
+              SHOP BY CATEGORY
+            </span>
+
+            <h2>
+              Fresh Picks for Every Meal
+            </h2>
           </div>
 
-          <Link to="/products">
-            View all →
+          <Link to="/products" className="view-link">
+            View All Categories →
           </Link>
 
         </div>
@@ -201,135 +217,85 @@ function Home() {
         <div className="categories-grid">
 
           {categories.map((category) => (
-
             <Link
-              key={category.category}
+              key={category.name}
               to={`/products?category=${category.category}`}
               className="category-card"
             >
 
-              <div className="category-top">
-                <div className="category-icon">
-                  {category.emoji}
-                </div>
-
-                <span className="category-arrow">
-                  →
-                </span>
+              <div className="category-image">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                />
               </div>
 
-              <h3>{category.name}</h3>
+              <div className="category-bottom">
 
-              <p>{category.description}</p>
+                <h3>{category.name}</h3>
 
-              <span className="category-shop">
-                Shop now
-              </span>
+                <span className="category-arrow">
+                  +
+                </span>
+
+              </div>
 
             </Link>
-
           ))}
 
         </div>
 
       </section>
 
+      {/* ================= FEATURED PRODUCTS ================= */}
 
-      {/* ================= PROMOTION ================= */}
+      {/* <section className="featured-section">
 
-      <section className="promo-section">
-
-        <div className="promo-glow"></div>
-
-        <div className="promo-content">
-
-          <span className="promo-label">
-            SPECIAL OFFER
-          </span>
-
-          <h2>
-            Fresh choices.
-            <br />
-            Better prices.
-          </h2>
-
-          <p>
-            Discover great products for your everyday needs
-            and enjoy amazing value while you shop.
-          </p>
-
-          <Link
-            to="/products"
-            className="promo-button"
-          >
-            Explore Offers
-            <span>→</span>
-          </Link>
-
-        </div>
-
-        <div className="promo-visual">
-
-          <div className="promo-circle">
-            🛒
-          </div>
-
-          <div className="promo-small-card">
-            <span>🎁</span>
-            <div>
-              <strong>Great Deals</strong>
-              <small>Everyday</small>
-            </div>
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================= FEATURED ================= */}
-
-      <section className="featured-section">
-
-        <div className="section-heading">
+        <div className="featured-heading">
 
           <div>
-            <span>OUR COLLECTION</span>
-            <h2>Ready to Shop?</h2>
+            <span className="section-label light-label">
+              FEATURED PRODUCTS
+            </span>
+
+            <h2>
+              Top Quality, Freshly Delivered
+            </h2>
           </div>
 
-          <Link to="/products">
-            View products →
+          <Link to="/products" className="featured-view-link">
+            View All Products →
           </Link>
 
         </div>
 
-        <div className="featured-box">
+        {featuredProducts.length > 0 ? (
 
-          <div className="featured-icon">
-            🛍️
+          <div className="featured-products-grid">
+
+            {featuredProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onReviewsClick={handleReviewsClick}
+              />
+            ))}
+
           </div>
 
-          <h3>
-            Your everyday essentials are waiting
-          </h3>
+        ) : (
 
-          <p>
-            Browse our complete collection and find
-            everything you need in one place.
-          </p>
+          <div className="featured-empty">
+            <h3>Fresh products are coming soon</h3>
 
-          <Link
-            to="/products"
-            className="featured-button"
-          >
-            Browse Products
-            <span>→</span>
-          </Link>
+            <Link to="/products">
+              Browse Products →
+            </Link>
+          </div>
 
-        </div>
+        )}
 
-      </section>
+      </section> */}
 
     </main>
   );

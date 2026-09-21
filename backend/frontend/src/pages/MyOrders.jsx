@@ -14,6 +14,19 @@ const [rating, setRating] = useState(0);
 const [reviewText, setReviewText] = useState("");
 const [submittingReview, setSubmittingReview] = useState(false);
 
+const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎"
+];
+
   // Stores which orders are expanded
   const [expandedOrders, setExpandedOrders] = useState({});
 
@@ -166,6 +179,16 @@ const handleSubmitReview = async () => {
 
   return (
     <main className="orders-page">
+      <div className="floating-groceries">
+  {vegetables.map((vegetable, index) => (
+    <span
+      key={index}
+      className="floating-grocery"
+    >
+      {vegetable}
+    </span>
+  ))}
+</div>
 
       <div className="orders-container">
 

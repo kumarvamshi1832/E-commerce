@@ -4,78 +4,80 @@ import ProductCard from "../components/ProductCard";
 import "./Products.css";
 
 function Products() {
-
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const [pincode, setPincode] = useState("");
   const [checkedPincode, setCheckedPincode] = useState("");
   const [deliveryStatus, setDeliveryStatus] = useState({});
   const [checkingDelivery, setCheckingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
 
-  // =========================
-// CHECK DELIVERY
-// =========================
-
-const handleCheckDelivery = async () => {
-  const enteredPincode = pincode.trim();
-
-  if (!enteredPincode) {
-    setDeliveryError("Please enter a pincode");
-    return;
-  }
-
-  if (!/^\d{6}$/.test(enteredPincode)) {
-    setDeliveryError("Please enter a valid 6-digit pincode");
-    return;
-  }
-
-  setCheckingDelivery(true);
-  setDeliveryError("");
-
-  try {
-    const response = await api.get(
-      `delivery/check/?pincode=${enteredPincode}`
-    );
-
-    const status = {};
-
-    response.data.products.forEach((item) => {
-      status[item.product_id] = item.deliverable;
-    });
-
-    setDeliveryStatus(status);
-    setCheckedPincode(response.data.pincode);
-  } catch (error) {
-    console.error(
-      "Error checking delivery:",
-      error
-    );
-
-    setDeliveryError(
-      error.response?.data?.error ||
-      "Unable to check delivery"
-    );
-  } finally {
-    setCheckingDelivery(false);
-  }
-};
-
-  // =========================
-  // REVIEWS
-  // =========================
-
   const [showReviews, setShowReviews] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
-  // =========================
-  // LOAD PRODUCTS
-  // =========================
+  const vegetables = [
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍏", "🍋", "🍊", "🥝",
+    "🍐", "🍓", "🍇", "🍉", "🍌",
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍋", "🍊", "🥝", "🍐",
+    "🍓", "🍇", "🍉", "🍌", "🥕",
+    "🥦", "🍅", "🥬", "🫑", "🥒",
+    "🌽", "🍆", "🧅", "🥔", "🍎"
+  ];
+
+  const handleCheckDelivery = async () => {
+    const enteredPincode = pincode.trim();
+
+    if (!enteredPincode) {
+      setDeliveryError("Please enter a pincode");
+      return;
+    }
+
+    if (!/^\d{6}$/.test(enteredPincode)) {
+      setDeliveryError(
+        "Please enter a valid 6-digit pincode"
+      );
+      return;
+    }
+
+    setCheckingDelivery(true);
+    setDeliveryError("");
+
+    try {
+      const response = await api.get(
+        `delivery/check/?pincode=${enteredPincode}`
+      );
+
+      const status = {};
+
+      response.data.products.forEach((item) => {
+        status[item.product_id] = item.deliverable;
+      });
+
+      setDeliveryStatus(status);
+      setCheckedPincode(response.data.pincode);
+    } catch (error) {
+      console.error(
+        "Error checking delivery:",
+        error
+      );
+
+      setDeliveryError(
+        error.response?.data?.error ||
+          "Unable to check delivery"
+      );
+    } finally {
+      setCheckingDelivery(false);
+    }
+  };
 
   useEffect(() => {
     api
@@ -93,21 +95,28 @@ const handleCheckDelivery = async () => {
       });
   }, []);
 
- const filteredProducts = products.filter((product) => {
-  const search = searchTerm.toLowerCase();
+  const filteredProducts = products.filter(
+    (product) => {
+      const search =
+        searchTerm.toLowerCase();
 
-  return (
-    product.name?.toLowerCase().includes(search) ||
-    product.description?.toLowerCase().includes(search) ||
-    product.category?.toLowerCase().includes(search)
+      return (
+        product.name
+          ?.toLowerCase()
+          .includes(search) ||
+        product.description
+          ?.toLowerCase()
+          .includes(search) ||
+        product.category
+          ?.toLowerCase()
+          .includes(search)
+      );
+    }
   );
-});
 
-  // =========================
-  // OPEN REVIEWS
-  // =========================
-
-  const handleReviewsClick = async (productId) => {
+  const handleReviewsClick = async (
+    productId
+  ) => {
     const product = products.find(
       (item) => item.id === productId
     );
@@ -136,141 +145,281 @@ const handleCheckDelivery = async () => {
     }
   };
 
-  // =========================
-  // CLOSE REVIEWS
-  // =========================
-
   const closeReviews = () => {
     setShowReviews(false);
     setSelectedProduct(null);
     setReviews([]);
   };
 
-  // =========================
-  // LOADING
-  // =========================
-
   if (loading) {
     return (
-      <h2>Loading products...</h2>
+      <main className="products-section products-loading-page">
+
+        <div className="floating-groceries">
+          {vegetables.map(
+            (vegetable, index) => (
+              <span
+                key={index}
+                className="floating-grocery"
+              >
+                {vegetable}
+              </span>
+            )
+          )}
+        </div>
+
+        <div className="products-loading-card">
+          <div className="products-loading-icon">
+            🥕
+          </div>
+
+          <h2>
+            Loading fresh products...
+          </h2>
+
+          <p>
+            Getting everything ready for you
+          </p>
+        </div>
+
+      </main>
     );
   }
 
   return (
     <main className="products-section">
 
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* FLOATING GROCERIES */}
 
-      <div className="section-header">
+      <div className="floating-groceries">
+        {vegetables.map(
+          (vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          )
+        )}
+      </div>
 
-  <p className="section-label">
-    OUR COLLECTION
-  </p>
+      <div className="products-page-container">
 
-  <div className="products-title-row">
+        {/* =========================
+            HEADER
+        ========================= */}
 
-    <h2>
-      All Products
-    </h2>
+        <div className="section-header">
 
-    <div className="product-search-section">
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="🔍 Search products..."
-      />
-    </div>
+          <div className="products-heading-content">
 
-    <p className="product-count">
-      {filteredProducts.length} products
-    </p>
+            <p className="section-label">
+              FRESH • LOCAL • QUALITY
+            </p>
 
-  </div>
+            <h1>
+              Fresh Products
+            </h1>
 
-</div>
-      
+            <p className="products-heading-text">
+              Discover fresh groceries and
+              everyday essentials, carefully
+              selected for you.
+            </p>
 
-      {/* =========================
-    DELIVERY CHECK
-========================= */}
+          </div>
 
-<div className="delivery-check-section">
+          <div className="products-search-box">
 
-  <div className="delivery-check-content">
+            <span className="search-icon">
+              🔍
+            </span>
 
-    <div>
-      <p className="delivery-check-label">
-        🚚 CHECK DELIVERY
-      </p>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) =>
+                setSearchTerm(e.target.value)
+              }
+              placeholder="Search products..."
+            />
 
-      <h3>
-        Check product delivery to your location
-      </h3>
+            {searchTerm && (
+              <button
+                type="button"
+                className="clear-search"
+                onClick={() =>
+                  setSearchTerm("")
+                }
+              >
+                ×
+              </button>
+            )}
 
-      {checkedPincode && !deliveryError && (
-        <p className="delivery-checked-message">
-          Delivery status for {checkedPincode}
-        </p>
-      )}
-    </div>
+          </div>
 
-    <div className="delivery-input-area">
+          <div className="product-count-box">
+            <strong>
+              {filteredProducts.length}
+            </strong>
 
-      <input
-        type="text"
-        value={pincode}
-        onChange={(e) => {
-          setPincode(e.target.value);
-          setDeliveryError("");
-        }}
-        placeholder="Enter 6-digit pincode"
-        maxLength="6"
-      />
+            <span>
+              {filteredProducts.length === 1
+                ? "Product"
+                : "Products"}
+            </span>
+          </div>
 
-      <button
-        type="button"
-        onClick={handleCheckDelivery}
-        disabled={checkingDelivery}
-      >
-        {checkingDelivery ? "Checking..." : "CHECK"}
-      </button>
+        </div>
 
-    </div>
+        {/* =========================
+            DELIVERY CHECK
+        ========================= */}
 
-  </div>
+        <section className="delivery-check-section">
 
-  {deliveryError && (
-    <p className="delivery-error">
-      {deliveryError}
-    </p>
-  )}
+          <div className="delivery-check-content">
 
-</div>
+            <div className="delivery-info">
 
-      {/* =========================
-          PRODUCTS
-      ========================= */}
+              <div className="delivery-icon">
+                🚚
+              </div>
 
-      <div className="products-grid">
+              <div>
 
-        {filteredProducts.map((product) => (
+                <p className="delivery-check-label">
+                  CHECK DELIVERY
+                </p>
 
-          <ProductCard
-  key={product.id}
-  product={product}
-  onReviewsClick={handleReviewsClick}
-  deliveryStatus={
-    checkedPincode
-      ? deliveryStatus[product.id]
-      : null
-  }
-  checkedPincode={checkedPincode}
-/>
+                <h3>
+                  Check product delivery
+                  to your location
+                </h3>
 
-        ))}
+                {checkedPincode &&
+                  !deliveryError && (
+                    <p className="delivery-checked-message">
+                      ✓ Delivery status for{" "}
+                      <strong>
+                        {checkedPincode}
+                      </strong>
+                    </p>
+                  )}
+
+              </div>
+
+            </div>
+
+            <div className="delivery-input-area">
+
+              <input
+                type="text"
+                value={pincode}
+                onChange={(e) => {
+                  setPincode(
+                    e.target.value
+                  );
+                  setDeliveryError("");
+                }}
+                placeholder="Enter 6-digit pincode"
+                maxLength="6"
+              />
+
+              <button
+                type="button"
+                onClick={
+                  handleCheckDelivery
+                }
+                disabled={
+                  checkingDelivery
+                }
+              >
+                {checkingDelivery
+                  ? "Checking..."
+                  : "CHECK"}
+              </button>
+
+            </div>
+
+          </div>
+
+          {deliveryError && (
+            <p className="delivery-error">
+              ⚠️ {deliveryError}
+            </p>
+          )}
+
+        </section>
+
+        {/* =========================
+            PRODUCT RESULTS
+        ========================= */}
+
+        {filteredProducts.length > 0 ? (
+
+          <div className="products-grid">
+
+            {filteredProducts.map(
+              (product) => (
+
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onReviewsClick={
+                    handleReviewsClick
+                  }
+                  deliveryStatus={
+                    checkedPincode
+                      ? deliveryStatus[
+                          product.id
+                        ]
+                      : null
+                  }
+                  checkedPincode={
+                    checkedPincode
+                  }
+                />
+
+              )
+            )}
+
+          </div>
+
+        ) : (
+
+          <div className="products-empty">
+
+            <div className="products-empty-icon">
+              🥕
+            </div>
+
+            <p className="section-label">
+              NO RESULTS
+            </p>
+
+            <h2>
+              No products found
+            </h2>
+
+            <p>
+              We couldn't find anything
+              matching "{searchTerm}".
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                setSearchTerm("")
+              }
+            >
+              View All Products
+            </button>
+
+          </div>
+
+        )}
 
       </div>
 
@@ -292,8 +441,6 @@ const handleCheckDelivery = async () => {
             }
           >
 
-            {/* CLOSE BUTTON */}
-
             <button
               type="button"
               className="reviews-modal-close"
@@ -303,7 +450,13 @@ const handleCheckDelivery = async () => {
               ×
             </button>
 
-            {/* TITLE */}
+            <div className="reviews-modal-icon">
+              ⭐
+            </div>
+
+            <p className="reviews-modal-label">
+              CUSTOMER FEEDBACK
+            </p>
 
             <h2>
               {selectedProduct?.name}
@@ -313,19 +466,38 @@ const handleCheckDelivery = async () => {
               Customer Reviews
             </p>
 
-            {/* LOADING */}
-
             {reviewsLoading ? (
 
-              <p className="reviews-loading">
-                Loading reviews...
-              </p>
+              <div className="reviews-loading-box">
+
+                <div className="reviews-loading-icon">
+                  ⭐
+                </div>
+
+                <p>
+                  Loading reviews...
+                </p>
+
+              </div>
 
             ) : reviews.length === 0 ? (
 
-              <p className="no-reviews-message">
-                No reviews yet.
-              </p>
+              <div className="no-reviews-box">
+
+                <span>
+                  💬
+                </span>
+
+                <p>
+                  No reviews yet.
+                </p>
+
+                <small>
+                  Be the first to share
+                  your experience.
+                </small>
+
+              </div>
 
             ) : (
 
@@ -340,9 +512,17 @@ const handleCheckDelivery = async () => {
 
                     <div className="review-header">
 
-                      <strong>
-                        {item.username}
-                      </strong>
+                      <div className="review-user">
+
+                        <span className="review-user-icon">
+                          👤
+                        </span>
+
+                        <strong>
+                          {item.username}
+                        </strong>
+
+                      </div>
 
                       <span className="review-item-stars">
                         {"★".repeat(

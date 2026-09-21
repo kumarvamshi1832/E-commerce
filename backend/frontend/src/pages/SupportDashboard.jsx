@@ -2,9 +2,23 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import {
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell,
+    Tooltip,
+    Legend,
+    BarChart,
+    Bar,
+    LineChart,
+    Line,
+    CartesianGrid,
+    XAxis,
+    YAxis
+} from "recharts";
 import api from "../services/api";
 import "./SupportDashboard.css";
-
 
 function SupportDashboard() {
 
@@ -12,6 +26,7 @@ function SupportDashboard() {
 
     const [dashboard, setDashboard] = useState(null);
     const [tickets, setTickets] = useState([]);
+    const [allTickets, setAllTickets] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [ticketsLoading, setTicketsLoading] = useState(false);
@@ -28,11 +43,6 @@ function SupportDashboard() {
 
     const user = JSON.parse(localStorage.getItem("user"));
 
-
-    // =========================
-    // LOGOUT
-    // =========================
-
     const handleLogout = () => {
 
         localStorage.removeItem("user");
@@ -41,10 +51,6 @@ function SupportDashboard() {
         navigate("/login");
     };
 
-
-    // =========================
-    // FETCH DASHBOARD
-    // =========================
 
     const fetchDashboard = async () => {
 
@@ -73,10 +79,6 @@ function SupportDashboard() {
     };
 
 
-    // =========================
-    // FETCH TICKETS
-    // =========================
-
     const fetchTickets = async (
         category = "",
         status = ""
@@ -91,18 +93,12 @@ function SupportDashboard() {
 
             const params = [];
 
-
-            // CATEGORY FILTER
-
             if (category) {
 
                 params.push(
                     `category=${encodeURIComponent(category)}`
                 );
             }
-
-
-            // STATUS FILTER
 
             if (status) {
 
@@ -111,14 +107,10 @@ function SupportDashboard() {
                 );
             }
 
-
-            // ADD QUERY PARAMETERS
-
             if (params.length > 0) {
 
                 url += `?${params.join("&")}`;
             }
-
 
             const response = await api.get(url);
 
@@ -139,24 +131,38 @@ function SupportDashboard() {
         }
     };
 
+    const fetchAllTickets = async () => {
 
-    // =========================
-    // SEARCH TICKETS
-    // =========================
+    try {
+
+        const response = await api.get(
+            "support/dashboard/tickets/"
+        );
+
+        setAllTickets(
+            response.data.tickets || []
+        );
+
+    } catch (error) {
+
+        console.log(
+            "Unable to load ticket chart data:",
+            error
+        );
+
+    }
+};
+
 
     const filteredTickets = tickets.filter((ticket) => {
 
-        const search = searchTerm.toLowerCase().trim();
+        const search = searchTerm
+            .toLowerCase()
+            .trim();
 
-
-        // EMPTY SEARCH
         if (!search) {
             return true;
         }
-
-
-        // IF USER ENTERS ONLY NUMBERS
-        // SEARCH EXACT TICKET ID OR ORDER ID
 
         if (/^\d+$/.test(search)) {
 
@@ -166,35 +172,38 @@ function SupportDashboard() {
             );
         }
 
-
-        // IF USER ENTERS TEXT
-        // SEARCH TEXT FIELDS
-
         return (
-            ticket.subject?.toLowerCase().includes(search) ||
-            ticket.customer_username?.toLowerCase().includes(search) ||
-            ticket.customer_email?.toLowerCase().includes(search) ||
-            ticket.category?.toLowerCase().includes(search) ||
-            ticket.description?.toLowerCase().includes(search)
+            ticket.subject
+                ?.toLowerCase()
+                .includes(search) ||
+
+            ticket.customer_username
+                ?.toLowerCase()
+                .includes(search) ||
+
+            ticket.customer_email
+                ?.toLowerCase()
+                .includes(search) ||
+
+            ticket.category
+                ?.toLowerCase()
+                .includes(search) ||
+
+            ticket.description
+                ?.toLowerCase()
+                .includes(search)
         );
     });
 
-
-    // =========================
-    // LOAD DATA
-    // =========================
 
     useEffect(() => {
 
         fetchDashboard();
         fetchTickets();
+        fetchAllTickets();
 
     }, []);
 
-
-    // =========================
-    // ALL TICKETS
-    // =========================
 
     const handleAllTickets = () => {
 
@@ -205,10 +214,6 @@ function SupportDashboard() {
     };
 
 
-    // =========================
-    // STATUS FILTER
-    // =========================
-
     const handleStatusClick = (status) => {
 
         setSelectedStatus(status);
@@ -217,10 +222,6 @@ function SupportDashboard() {
         fetchTickets("", status);
     };
 
-
-    // =========================
-    // CATEGORY FILTER
-    // =========================
 
     const handleCategoryClick = (category) => {
 
@@ -231,9 +232,100 @@ function SupportDashboard() {
     };
 
 
-    // =========================
-    // DOWNLOAD CSV
-    // =========================
+    const statusChartData = [
+        {
+            name: "Open",
+            value: dashboard?.open_tickets || 0
+        },
+        {
+            name: "In Progress",
+            value: dashboard?.in_progress_tickets || 0
+        },
+        {
+            name: "Resolved",
+            value: dashboard?.resolved_tickets || 0
+        },
+        {
+            name: "Closed",
+            value: dashboard?.closed_tickets || 0
+        }
+    ];
+
+
+    const categoryChartData = dashboard?.categories
+        ? Object.entries(dashboard.categories).map(
+            ([category, count]) => ({
+                category,
+                tickets: count
+            })
+        )
+        : [];
+
+    const ticketTrendData = (() => {
+
+    const today = new Date();
+
+    const data = [];
+
+    for (let i = 6; i >= 0; i--) {
+
+        const date = new Date(today);
+
+        date.setDate(
+            today.getDate() - i
+        );
+
+        date.setHours(0, 0, 0, 0);
+
+        const nextDate = new Date(date);
+
+        nextDate.setDate(
+            date.getDate() + 1
+        );
+
+        const count = allTickets.filter(
+            (ticket) => {
+
+                const ticketDate =
+                    new Date(
+                        ticket.created_at
+                    );
+
+                return (
+                    ticketDate >= date &&
+                    ticketDate < nextDate
+                );
+
+            }
+        ).length;
+
+        data.push({
+
+            date: date.toLocaleDateString(
+                "en-US",
+                {
+                    weekday: "short"
+                }
+            ),
+
+            tickets: count
+
+        });
+
+    }
+
+    return data;
+
+})();
+
+
+    const statusColors = [
+        "#f97316",
+        "#2563eb",
+        "#16a34a",
+        "#64748b"
+    ];
+
 
     const downloadCSV = () => {
 
@@ -246,7 +338,6 @@ function SupportDashboard() {
             "Status",
             "Created"
         ];
-
 
         const rows = filteredTickets.map((ticket) => [
 
@@ -268,7 +359,6 @@ function SupportDashboard() {
 
         ]);
 
-
         const csvContent = [
             headers,
             ...rows
@@ -276,12 +366,14 @@ function SupportDashboard() {
             .map((row) =>
                 row
                     .map((value) =>
-                        `"${String(value).replace(/"/g, '""')}"`
+                        `"${String(value).replace(
+                            /"/g,
+                            '""'
+                        )}"`
                     )
                     .join(",")
             )
             .join("\n");
-
 
         const blob = new Blob(
             [csvContent],
@@ -290,34 +382,28 @@ function SupportDashboard() {
             }
         );
 
+        const url =
+            URL.createObjectURL(blob);
 
-        const url = URL.createObjectURL(blob);
-
-
-        const link = document.createElement("a");
+        const link =
+            document.createElement("a");
 
         link.href = url;
 
-        link.download = "support-tickets.csv";
+        link.download =
+            "support-tickets.csv";
 
         link.click();
 
-
         URL.revokeObjectURL(url);
-
 
         setDownloadOpen(false);
     };
 
 
-    // =========================
-    // DOWNLOAD PDF
-    // =========================
-
     const downloadPDF = () => {
 
         const doc = new jsPDF();
-
 
         doc.setFontSize(16);
 
@@ -327,25 +413,27 @@ function SupportDashboard() {
             15
         );
 
+        const tableData =
+            filteredTickets.map(
+                (ticket) => [
 
-        const tableData = filteredTickets.map(
-            (ticket) => [
+                    `#${ticket.id}`,
 
-                `#${ticket.id}`,
+                    ticket.customer_username ||
+                    "",
 
-                ticket.customer_username || "",
+                    ticket.category ||
+                    "",
 
-                ticket.category || "",
+                    ticket.status ||
+                    "",
 
-                ticket.status || "",
+                    new Date(
+                        ticket.created_at
+                    ).toLocaleDateString()
 
-                new Date(
-                    ticket.created_at
-                ).toLocaleDateString()
-
-            ]
-        );
-
+                ]
+            );
 
         autoTable(doc, {
 
@@ -374,19 +462,13 @@ function SupportDashboard() {
 
         });
 
-
         doc.save(
             "support-tickets.pdf"
         );
 
-
         setDownloadOpen(false);
     };
 
-
-    // =========================
-    // LOADING DASHBOARD
-    // =========================
 
     if (loading) {
 
@@ -407,10 +489,6 @@ function SupportDashboard() {
     }
 
 
-    // =========================
-    // ERROR
-    // =========================
-
     if (error && !dashboard) {
 
         return (
@@ -430,18 +508,10 @@ function SupportDashboard() {
     }
 
 
-    // =========================
-    // RETURN
-    // =========================
-
     return (
 
         <div className="support-dashboard">
 
-
-            {/* =========================
-                PROFILE SIDEBAR
-            ========================= */}
 
             {profileOpen && (
 
@@ -456,9 +526,6 @@ function SupportDashboard() {
 
 
                     <div className="staff-sidebar">
-
-
-                        {/* SIDEBAR HEADER */}
 
                         <div className="staff-sidebar-header">
 
@@ -478,8 +545,6 @@ function SupportDashboard() {
                         </div>
 
 
-                        {/* PROFILE */}
-
                         <div className="staff-profile-section">
 
                             <div className="large-profile-icon">
@@ -487,7 +552,8 @@ function SupportDashboard() {
                             </div>
 
                             <h3>
-                                {user?.username || "Staff"}
+                                {user?.username ||
+                                    "Staff"}
                             </h3>
 
                             <p>
@@ -498,10 +564,7 @@ function SupportDashboard() {
                         </div>
 
 
-                        {/* STAFF INFORMATION */}
-
                         <div className="staff-info-section">
-
 
                             <div className="staff-info-item">
 
@@ -543,19 +606,17 @@ function SupportDashboard() {
 
                             </div>
 
-
                         </div>
 
 
-                        {/* SIDEBAR MENU */}
-
                         <div className="staff-sidebar-menu">
-
 
                             <button
                                 onClick={() => {
 
-                                    setProfileOpen(false);
+                                    setProfileOpen(
+                                        false
+                                    );
 
                                     handleAllTickets();
 
@@ -572,7 +633,9 @@ function SupportDashboard() {
                             <button
                                 onClick={() => {
 
-                                    setProfileOpen(false);
+                                    setProfileOpen(
+                                        false
+                                    );
 
                                     window.scrollTo({
 
@@ -590,22 +653,20 @@ function SupportDashboard() {
                                 🎫 Support Tickets
                             </button>
 
-
                         </div>
 
-
-                        {/* LOGOUT */}
 
                         <div className="staff-sidebar-logout">
 
                             <button
-                                onClick={handleLogout}
+                                onClick={
+                                    handleLogout
+                                }
                             >
                                 🚪 Logout
                             </button>
 
                         </div>
-
 
                     </div>
 
@@ -613,12 +674,7 @@ function SupportDashboard() {
             )}
 
 
-            {/* =========================
-                HEADER
-            ========================= */}
-
             <div className="dashboard-header">
-
 
                 <div className="dashboard-title">
 
@@ -633,8 +689,6 @@ function SupportDashboard() {
                 </div>
 
 
-                {/* PROFILE BUTTON */}
-
                 <button
                     className="staff-profile-button"
                     onClick={() =>
@@ -647,18 +701,14 @@ function SupportDashboard() {
                     </span>
 
                     <span className="staff-profile-name">
-                        {user?.username || "Staff"}
+                        {user?.username ||
+                            "Staff"}
                     </span>
 
                 </button>
 
-
             </div>
 
-
-            {/* =========================
-                ERROR MESSAGE
-            ========================= */}
 
             {error && (
 
@@ -669,25 +719,21 @@ function SupportDashboard() {
             )}
 
 
-            {/* =========================
-                SUMMARY CARDS
-            ========================= */}
-
             <div className="dashboard-cards">
 
-
-                {/* TOTAL */}
 
                 <div
                     className={
                         `dashboard-card total ${
-                            selectedStatus === ""
-                                && selectedCategory === ""
+                            selectedStatus === "" &&
+                            selectedCategory === ""
                                 ? "selected-dashboard-card"
                                 : ""
                         }`
                     }
-                    onClick={handleAllTickets}
+                    onClick={
+                        handleAllTickets
+                    }
                 >
 
                     <h3>
@@ -695,13 +741,12 @@ function SupportDashboard() {
                     </h3>
 
                     <strong>
-                        {dashboard?.total_tickets || 0}
+                        {dashboard?.total_tickets ||
+                            0}
                     </strong>
 
                 </div>
 
-
-                {/* OPEN */}
 
                 <div
                     className={
@@ -712,7 +757,9 @@ function SupportDashboard() {
                         }`
                     }
                     onClick={() =>
-                        handleStatusClick("Open")
+                        handleStatusClick(
+                            "Open"
+                        )
                     }
                 >
 
@@ -721,13 +768,12 @@ function SupportDashboard() {
                     </h3>
 
                     <strong>
-                        {dashboard?.open_tickets || 0}
+                        {dashboard?.open_tickets ||
+                            0}
                     </strong>
 
                 </div>
 
-
-                {/* IN PROGRESS */}
 
                 <div
                     className={
@@ -757,8 +803,6 @@ function SupportDashboard() {
                 </div>
 
 
-                {/* RESOLVED */}
-
                 <div
                     className={
                         `dashboard-card resolved ${
@@ -787,8 +831,6 @@ function SupportDashboard() {
                 </div>
 
 
-                {/* CLOSED */}
-
                 <div
                     className={
                         `dashboard-card closed ${
@@ -816,13 +858,8 @@ function SupportDashboard() {
 
                 </div>
 
-
             </div>
 
-
-            {/* =========================
-                ALL TICKETS BUTTON
-            ========================= */}
 
             <div className="category-filter-section">
 
@@ -833,7 +870,9 @@ function SupportDashboard() {
                             ? "category-filter active"
                             : "category-filter"
                     }
-                    onClick={handleAllTickets}
+                    onClick={
+                        handleAllTickets
+                    }
                 >
                     All Tickets
                 </button>
@@ -841,12 +880,7 @@ function SupportDashboard() {
             </div>
 
 
-            {/* =========================
-                CATEGORY SECTION
-            ========================= */}
-
             <div className="dashboard-category-section">
-
 
                 <h2>
                     Ticket Categories
@@ -854,7 +888,6 @@ function SupportDashboard() {
 
 
                 <div className="category-grid">
-
 
                     {dashboard?.categories &&
 
@@ -893,97 +926,405 @@ function SupportDashboard() {
 
                     }
 
-
                 </div>
 
             </div>
 
 
-            {/* =========================
-                TICKETS SECTION
-            ========================= */}
-
-            <div className="dashboard-tickets-section">
+            <div className="support-charts-section">
 
 
-                {/* TICKETS HEADER */}
+                <div className="support-chart-card">
 
-                <div className="tickets-section-header">
+                    <div className="support-chart-header">
 
-    <div className="tickets-header-left">
+                        <div>
 
-        <h2>
-            {selectedStatus
-                ? `${selectedStatus} Tickets`
-                : selectedCategory
-                ? `${selectedCategory} Tickets`
-                : "All Support Tickets"}
-        </h2>
+                            <h2>
+                                Ticket Status
+                            </h2>
 
-        <span>
-            {filteredTickets.length} Tickets
-        </span>
+                            <p>
+                                Distribution of support tickets
+                            </p>
 
-    </div>
+                        </div>
+
+                        <span>
+                            {dashboard?.total_tickets ||
+                                0} Total
+                        </span>
+
+                    </div>
 
 
-    <div className="tickets-header-right">
+                    <div className="support-pie-chart">
 
-        {/* SEARCH */}
+                        <ResponsiveContainer
+                            width="100%"
+                            height={330}
+                        >
 
-        <div className="ticket-search-section">
+                            <PieChart>
 
-            <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) =>
-                    setSearchTerm(e.target.value)
-                }
-                placeholder="🔍 Search tickets..."
-            />
+                                <Pie
+                                    data={
+                                        statusChartData
+                                    }
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="48%"
+                                    outerRadius={105}
+                                    innerRadius={55}
+                                    paddingAngle={3}
+                                    label={({
+                                        name,
+                                        percent
+                                    }) =>
+                                        `${name} ${(
+                                            percent *
+                                            100
+                                        ).toFixed(1)}%`
+                                    }
+                                    labelLine={false}
+                                >
+
+                                    {statusChartData.map(
+                                        (
+                                            entry,
+                                            index
+                                        ) => (
+
+                                            <Cell
+                                                key={
+                                                    `cell-${index}`
+                                                }
+                                                fill={
+                                                    statusColors[
+                                                        index
+                                                    ]
+                                                }
+                                            />
+
+                                        )
+                                    )}
+
+                                </Pie>
+
+
+                                <Tooltip
+                                    formatter={(
+                                        value
+                                    ) => [
+                                        value,
+                                        "Tickets"
+                                    ]}
+                                />
+
+
+                                <Legend />
+
+                            </PieChart>
+
+                        </ResponsiveContainer>
+
+                    </div>
+
+                </div>
+
+
+                <div className="support-chart-card">
+
+                    <div className="support-chart-header">
+
+                        <div>
+
+                            <h2>
+                                Tickets by Category
+                            </h2>
+
+                            <p>
+                                Support tickets grouped by category
+                            </p>
+
+                        </div>
+
+                        <span>
+                            {categoryChartData.length ||
+                                0} Categories
+                        </span>
+
+                    </div>
+
+
+                    <div className="support-bar-chart">
+
+                        <ResponsiveContainer
+                            width="100%"
+                            height={330}
+                        >
+
+                            <BarChart
+                                data={
+                                    categoryChartData
+                                }
+                                margin={{
+                                    top: 20,
+                                    right: 15,
+                                    left: 0,
+                                    bottom: 10
+                                }}
+                            >
+
+                                <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    vertical={false}
+                                />
+
+
+                                <XAxis
+                                    dataKey="category"
+                                    tick={{
+                                        fontSize: 12
+                                    }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+
+
+                                <YAxis
+                                    allowDecimals={false}
+                                    tick={{
+                                        fontSize: 12
+                                    }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                />
+
+
+                                <Tooltip
+                                    formatter={(
+                                        value
+                                    ) => [
+                                        value,
+                                        "Tickets"
+                                    ]}
+                                />
+
+
+                                <Bar
+                                    dataKey="tickets"
+                                    name="Tickets"
+                                    fill="#2563eb"
+                                    radius={[
+                                        6,
+                                        6,
+                                        0,
+                                        0
+                                    ]}
+                                />
+
+                            </BarChart>
+
+                        </ResponsiveContainer>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+<div className="support-trend-section">
+
+    <div className="support-chart-card support-trend-card">
+
+        <div className="support-chart-header">
+
+            <div>
+
+                <h2>
+                    Tickets Created Over Time
+                </h2>
+
+                <p>
+                    Support tickets created during the last 7 days
+                </p>
+
+            </div>
+
+            <span>
+                Last 7 Days
+            </span>
 
         </div>
 
 
-        {/* DOWNLOAD */}
+        <div className="support-line-chart">
 
-        <div className="download-container">
-
-            <button
-                className="download-button"
-                onClick={() =>
-                    setDownloadOpen(!downloadOpen)
-                }
+            <ResponsiveContainer
+                width="100%"
+                height={330}
             >
-                ⬇ Download
-            </button>
+
+                <LineChart
+                    data={ticketTrendData}
+                    margin={{
+                        top: 20,
+                        right: 20,
+                        left: 0,
+                        bottom: 10
+                    }}
+                >
+
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                    />
 
 
-            {downloadOpen && (
+                    <XAxis
+                        dataKey="date"
+                        tick={{
+                            fontSize: 12
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
 
-                <div className="download-menu">
 
-                    <button onClick={downloadCSV}>
-                        📄 Download CSV
-                    </button>
+                    <YAxis
+                        allowDecimals={false}
+                        tick={{
+                            fontSize: 12
+                        }}
+                        axisLine={false}
+                        tickLine={false}
+                    />
 
-                    <button onClick={downloadPDF}>
-                        📑 Download PDF
-                    </button>
 
-                </div>
+                    <Tooltip
+                        formatter={(value) => [
+                            value,
+                            "Tickets"
+                        ]}
+                    />
 
-            )}
+
+                    <Line
+                        type="monotone"
+                        dataKey="tickets"
+                        name="Tickets"
+                        stroke="#2563eb"
+                        strokeWidth={3}
+                        dot={{
+                            r: 5
+                        }}
+                        activeDot={{
+                            r: 7
+                        }}
+                    />
+
+                </LineChart>
+
+            </ResponsiveContainer>
 
         </div>
 
     </div>
 
 </div>
+            <div className="dashboard-tickets-section">
 
-                {/* =========================
-                    LOADING
-                ========================= */}
+
+                <div className="tickets-section-header">
+
+                    <div className="tickets-header-left">
+
+                        <h2>
+
+                            {selectedStatus
+                                ? `${selectedStatus} Tickets`
+                                : selectedCategory
+                                ? `${selectedCategory} Tickets`
+                                : "All Support Tickets"}
+
+                        </h2>
+
+                        <span>
+                            {filteredTickets.length}
+                            {" "}
+                            Tickets
+                        </span>
+
+                    </div>
+
+
+                    <div className="tickets-header-right">
+
+
+                        <div className="ticket-search-section">
+
+                            <input
+                                type="text"
+                                value={
+                                    searchTerm
+                                }
+                                onChange={(e) =>
+                                    setSearchTerm(
+                                        e.target.value
+                                    )
+                                }
+                                placeholder="🔍 Search tickets..."
+                            />
+
+                        </div>
+
+
+                        <div className="download-container">
+
+                            <button
+                                className="download-button"
+                                onClick={() =>
+                                    setDownloadOpen(
+                                        !downloadOpen
+                                    )
+                                }
+                            >
+                                ⬇ Download
+                            </button>
+
+
+                            {downloadOpen && (
+
+                                <div className="download-menu">
+
+                                    <button
+                                        onClick={
+                                            downloadCSV
+                                        }
+                                    >
+                                        📄 Download CSV
+                                    </button>
+
+                                    <button
+                                        onClick={
+                                            downloadPDF
+                                        }
+                                    >
+                                        📑 Download PDF
+                                    </button>
+
+                                </div>
+
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
 
                 {ticketsLoading ? (
 
@@ -997,11 +1338,6 @@ function SupportDashboard() {
 
                 ) : filteredTickets.length === 0 ? (
 
-
-                    /* =========================
-                       NO TICKETS
-                    ========================= */
-
                     <div className="no-dashboard-tickets">
 
                         <p>
@@ -1012,16 +1348,9 @@ function SupportDashboard() {
 
                 ) : (
 
-
-                    /* =========================
-                       TICKET TABLE
-                    ========================= */
-
                     <div className="dashboard-ticket-table-wrapper">
 
-
                         <table className="dashboard-ticket-table">
-
 
                             <thead>
 
@@ -1058,16 +1387,14 @@ function SupportDashboard() {
 
                             <tbody>
 
-
                                 {filteredTickets.map(
                                     (ticket) => (
 
                                         <tr
-                                            key={ticket.id}
+                                            key={
+                                                ticket.id
+                                            }
                                         >
-
-
-                                            {/* TICKET ID */}
 
                                             <td>
 
@@ -1078,18 +1405,20 @@ function SupportDashboard() {
                                             </td>
 
 
-                                            {/* CUSTOMER */}
-
                                             <td>
 
                                                 <div className="table-customer">
 
                                                     <strong>
-                                                        {ticket.customer_username}
+                                                        {
+                                                            ticket.customer_username
+                                                        }
                                                     </strong>
 
                                                     <span>
-                                                        {ticket.customer_email}
+                                                        {
+                                                            ticket.customer_email
+                                                        }
                                                     </span>
 
                                                 </div>
@@ -1097,14 +1426,12 @@ function SupportDashboard() {
                                             </td>
 
 
-                                            {/* CATEGORY */}
-
                                             <td>
-                                                {ticket.category}
+                                                {
+                                                    ticket.category
+                                                }
                                             </td>
 
-
-                                            {/* STATUS */}
 
                                             <td>
 
@@ -1118,15 +1445,13 @@ function SupportDashboard() {
                                                             )}`
                                                     }
                                                 >
-
-                                                    {ticket.status}
-
+                                                    {
+                                                        ticket.status
+                                                    }
                                                 </span>
 
                                             </td>
 
-
-                                            {/* CREATED */}
 
                                             <td>
 
@@ -1136,8 +1461,6 @@ function SupportDashboard() {
 
                                             </td>
 
-
-                                            {/* ACTION */}
 
                                             <td>
 
@@ -1154,30 +1477,23 @@ function SupportDashboard() {
 
                                             </td>
 
-
                                         </tr>
 
                                     )
                                 )}
 
-
                             </tbody>
 
-
                         </table>
-
 
                     </div>
 
                 )}
 
-
             </div>
-
 
         </div>
     );
 }
-
 
 export default SupportDashboard;

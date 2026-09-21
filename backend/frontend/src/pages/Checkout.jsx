@@ -40,6 +40,19 @@ function Checkout() {
   const [deliveryStatus, setDeliveryStatus] = useState({});
   const [checkingDelivery, setCheckingDelivery] = useState(false);
 
+  const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎"
+];
+
   // =========================
   // LOAD ADDRESSES
   // =========================
@@ -495,6 +508,17 @@ function Checkout() {
 
   return (
     <main className="checkout-page">
+
+       <div className="floating-groceries">
+    {vegetables.map((vegetable, index) => (
+      <span
+        key={index}
+        className="floating-grocery"
+      >
+        {vegetable}
+      </span>
+    ))}
+  </div>
 
       {showBalloons && (
         <BalloonEffect />

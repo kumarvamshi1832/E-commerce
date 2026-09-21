@@ -3,6 +3,19 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./ResetPassword.css";
 
+const vegetables = [
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍏", "🍋", "🍊", "🥝",
+    "🍐", "🍓", "🍇", "🍉", "🍌",
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍋", "🍊", "🥝", "🍐",
+    "🍓", "🍇", "🍉", "🍌", "🥕",
+    "🥦", "🍅", "🥬", "🫑", "🥒",
+    "🌽", "🍆", "🧅", "🥔", "🍎"
+];
+
 function ResetPassword() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -36,7 +49,9 @@ function ResetPassword() {
         setSuccess("");
 
         if (!email) {
-            setError("Email information is missing. Please start again.");
+            setError(
+                "Email information is missing. Please start again."
+            );
             return;
         }
 
@@ -49,7 +64,10 @@ function ResetPassword() {
             return;
         }
 
-        if (formData.new_password !== formData.confirm_password) {
+        if (
+            formData.new_password !==
+            formData.confirm_password
+        ) {
             setError("Passwords do not match.");
             return;
         }
@@ -63,7 +81,8 @@ function ResetPassword() {
                     email: email,
                     otp: formData.otp,
                     new_password: formData.new_password,
-                    confirm_password: formData.confirm_password,
+                    confirm_password:
+                        formData.confirm_password,
                 }
             );
 
@@ -86,96 +105,178 @@ function ResetPassword() {
     return (
         <main className="reset-password-page">
 
-            <div className="reset-password-card">
+            <div className="floating-groceries">
+                {vegetables.map((vegetable, index) => (
+                    <span
+                        key={index}
+                        className="floating-grocery"
+                    >
+                        {vegetable}
+                    </span>
+                ))}
+            </div>
 
-                <div className="reset-password-header">
+            <div className="reset-password-content">
 
-                    <p className="reset-password-label">
-                        ACCOUNT RECOVERY
-                    </p>
+                <div className="reset-password-card">
 
-                    <h1>Reset Password</h1>
+                    <div className="reset-password-icon">
+                        🔐
+                    </div>
 
-                    <p>
-                        Enter the OTP sent to your email and
-                        create a new password.
-                    </p>
+                    <div className="reset-password-header">
 
-                    {email && (
-                        <div className="reset-email">
-                            OTP sent to <strong>{email}</strong>
+                        <p className="reset-password-label">
+                            ACCOUNT RECOVERY
+                        </p>
+
+                        <h1>Reset Password</h1>
+
+                        <p>
+                            Enter the OTP sent to your email
+                            and create a new password.
+                        </p>
+
+                        {email && (
+                            <div className="reset-email">
+                                <span>✉️</span>
+                                <div>
+                                    <small>OTP sent to</small>
+                                    <strong>{email}</strong>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {error && (
+                        <div className="reset-password-error">
+                            <span>⚠️</span>
+                            <p>{error}</p>
                         </div>
                     )}
 
-                </div>
+                    {success && (
+                        <div className="reset-password-success">
+                            <span>✓</span>
+                            <p>{success}</p>
+                        </div>
+                    )}
 
-                {error && (
-                    <div className="reset-password-error">
-                        ⚠️ {error}
+                    <form onSubmit={handleSubmit}>
+
+                        <div className="form-group">
+
+                            <label htmlFor="otp">
+                                Verification OTP
+                            </label>
+
+                            <div className="reset-input-wrapper">
+
+                                <span>🔢</span>
+
+                                <input
+                                    id="otp"
+                                    type="text"
+                                    name="otp"
+                                    placeholder="Enter 6-digit OTP"
+                                    value={formData.otp}
+                                    onChange={handleChange}
+                                    maxLength="6"
+                                    inputMode="numeric"
+                                    autoComplete="one-time-code"
+                                />
+
+                            </div>
+
+                            <small className="input-hint">
+                                Enter the OTP sent to your email
+                            </small>
+
+                        </div>
+
+                        <div className="form-group">
+
+                            <label htmlFor="new_password">
+                                New Password
+                            </label>
+
+                            <div className="reset-input-wrapper">
+
+                                <span>🔒</span>
+
+                                <input
+                                    id="new_password"
+                                    type="password"
+                                    name="new_password"
+                                    placeholder="Enter new password"
+                                    value={formData.new_password}
+                                    onChange={handleChange}
+                                    autoComplete="new-password"
+                                />
+
+                            </div>
+
+                        </div>
+
+                        <div className="form-group">
+
+                            <label htmlFor="confirm_password">
+                                Confirm New Password
+                            </label>
+
+                            <div className="reset-input-wrapper">
+
+                                <span>🔐</span>
+
+                                <input
+                                    id="confirm_password"
+                                    type="password"
+                                    name="confirm_password"
+                                    placeholder="Confirm new password"
+                                    value={formData.confirm_password}
+                                    onChange={handleChange}
+                                    autoComplete="new-password"
+                                />
+
+                            </div>
+
+                        </div>
+
+                        <div className="password-security-note">
+                            <span>🛡️</span>
+
+                            <p>
+                                Choose a strong password that
+                                you don't use on other websites.
+                            </p>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="reset-password-button"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="reset-spinner"></span>
+                                    Resetting Password...
+                                </>
+                            ) : (
+                                <>
+                                    🔑 Reset Password
+                                </>
+                            )}
+                        </button>
+
+                    </form>
+
+                    <div className="back-to-login">
+                        <Link to="/login">
+                            ← Back to Login
+                        </Link>
                     </div>
-                )}
 
-                {success && (
-                    <div className="reset-password-success">
-                        ✅ {success}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit}>
-
-                    <div className="form-group">
-                        <label>OTP</label>
-
-                        <input
-                            type="text"
-                            name="otp"
-                            placeholder="Enter 6-digit OTP"
-                            value={formData.otp}
-                            onChange={handleChange}
-                            maxLength="6"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>New Password</label>
-
-                        <input
-                            type="password"
-                            name="new_password"
-                            placeholder="Enter new password"
-                            value={formData.new_password}
-                            onChange={handleChange}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Confirm Password</label>
-
-                        <input
-                            type="password"
-                            name="confirm_password"
-                            placeholder="Confirm new password"
-                            value={formData.confirm_password}
-                            onChange={handleChange}
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="reset-password-button"
-                        disabled={loading}
-                    >
-                        {loading
-                            ? "Resetting Password..."
-                            : "Reset Password"}
-                    </button>
-
-                </form>
-
-                <div className="back-to-login">
-                    <Link to="/login">
-                        ← Back to Login
-                    </Link>
                 </div>
 
             </div>

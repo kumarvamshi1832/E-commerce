@@ -4,7 +4,12 @@ import { Link } from "react-router-dom";
 import api from "../services/api";
 import "./ProductCard.css";
 
-function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode, }) {
+function ProductCard({
+  product,
+  onReviewsClick,
+  deliveryStatus,
+  checkedPincode,
+}) {
   const {
     cart,
     addToCart,
@@ -12,21 +17,21 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
     decreaseQuantity,
   } = useCart();
 
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlisted, setIsWishlisted] =
+    useState(false);
 
   const cartItem = cart.find(
     (item) => item.id === product.id
   );
 
-  const quantity = cartItem ? cartItem.quantity : 0;
-
-  // =========================
-  // CHECK WISHLIST
-  // =========================
+  const quantity = cartItem
+    ? cartItem.quantity
+    : 0;
 
   useEffect(() => {
     const checkWishlist = async () => {
-      const user = localStorage.getItem("user");
+      const user =
+        localStorage.getItem("user");
 
       if (!user) {
         setIsWishlisted(false);
@@ -34,11 +39,15 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
       }
 
       try {
-        const response = await api.get("wishlist/");
-
-        const exists = response.data.some(
-          (item) => item.id === product.id
+        const response = await api.get(
+          "wishlist/"
         );
+
+        const exists =
+          response.data.some(
+            (item) =>
+              item.id === product.id
+          );
 
         setIsWishlisted(exists);
       } catch (error) {
@@ -52,12 +61,9 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
     checkWishlist();
   }, [product.id]);
 
-  // =========================
-  // ADD TO CART
-  // =========================
-
   const handleAddToCart = () => {
-    const user = localStorage.getItem("user");
+    const user =
+      localStorage.getItem("user");
 
     if (!user) {
       alert(
@@ -73,12 +79,9 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
     addToCart(product);
   };
 
-  // =========================
-  // ADD / REMOVE WISHLIST
-  // =========================
-
   const handleWishlist = async () => {
-    const user = localStorage.getItem("user");
+    const user =
+      localStorage.getItem("user");
 
     if (!user) {
       alert(
@@ -107,7 +110,9 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
         error
       );
 
-      if (error.response?.status === 401) {
+      if (
+        error.response?.status === 401
+      ) {
         alert("Please login first.");
       }
     }
@@ -116,14 +121,13 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
   return (
     <article className="product-card">
 
-      {/* =========================
-          PRODUCT IMAGE
-      ========================= */}
+      {/* IMAGE */}
 
       <div className="product-image-wrapper">
 
         <Link
           to={`/product/${product.id}`}
+          className="product-image-link"
         >
           {product.image ? (
             <img
@@ -133,12 +137,10 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
             />
           ) : (
             <div className="no-image">
-              No Image
+              🛍️
             </div>
           )}
         </Link>
-
-        {/* WISHLIST HEART */}
 
         <button
           type="button"
@@ -157,21 +159,21 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
           {isWishlisted ? "♥" : "♡"}
         </button>
 
+        {product.stock <= 0 && (
+          <span className="out-stock-badge">
+            OUT OF STOCK
+          </span>
+        )}
+
       </div>
 
-      {/* =========================
-          PRODUCT DETAILS
-      ========================= */}
+      {/* DETAILS */}
 
       <div className="product-details">
-
-        {/* CATEGORY */}
 
         <p className="product-category">
           {product.category}
         </p>
-
-        {/* PRODUCT NAME */}
 
         <Link
           to={`/product/${product.id}`}
@@ -180,71 +182,77 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
           <h3>{product.name}</h3>
         </Link>
 
-        {/* =========================
-            PRODUCT RATING
-        ========================= */}
+        {/* RATING */}
 
         <div className="product-rating">
 
-          {product.rating_count > 0 ? (
-            <>
-              <span className="rating-stars">
-                {"★".repeat(
-                  Math.round(
-                    product.average_rating
-                  )
-                )}
-              </span>
+          <div className="rating-main">
 
-              <span className="rating-count">
-                ({product.rating_count})
-              </span>
-            </>
-          ) : (
-            <span className="no-rating">
-              No ratings yet
-            </span>
-          )}
+            {product.rating_count > 0 ? (
+              <>
+                <span className="rating-stars">
+                  {"★".repeat(
+                    Math.round(
+                      product.average_rating
+                    )
+                  )}
+                </span>
 
-          {/* REVIEWS */}
+                <span className="rating-count">
+                  ({product.rating_count})
+                </span>
+              </>
+            ) : (
+              <span className="no-rating">
+                No ratings yet
+              </span>
+            )}
+
+          </div>
 
           <button
             type="button"
             className="reviews-link"
             onClick={() =>
-              onReviewsClick(product.id)
+              onReviewsClick(
+                product.id
+              )
             }
           >
-            Reviews
+            Reviews →
           </button>
 
         </div>
 
-        {/* =========================
-    DELIVERY STATUS
-========================= */}
+        {/* DELIVERY */}
 
-{checkedPincode && (
-  <div
-    className={
-      deliveryStatus
-        ? "delivery-status deliverable"
-        : "delivery-status not-deliverable"
-    }
-  >
-    {deliveryStatus ? (
-      <>
-        <span>✓</span>
-        Deliverable to {checkedPincode}
-      </>
-    ) : (
-      <>
-        <span>✕</span>
-        Not deliverable to {checkedPincode}
-      </>
-    )}
-  </div>
-)}
+        {checkedPincode && (
+          <div
+            className={
+              deliveryStatus
+                ? "delivery-status deliverable"
+                : "delivery-status not-deliverable"
+            }
+          >
+            {deliveryStatus ? (
+              <>
+                <span>✓</span>
+                <span>
+                  Deliverable to{" "}
+                  {checkedPincode}
+                </span>
+              </>
+            ) : (
+              <>
+                <span>✕</span>
+                <span>
+                  Not deliverable to{" "}
+                  {checkedPincode}
+                </span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* DESCRIPTION */}
 
@@ -252,46 +260,45 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
           {product.description}
         </p>
 
-        {/* =========================
-            PRICE + STOCK + CART
-        ========================= */}
+        {/* BOTTOM */}
 
         <div className="product-bottom">
 
-          <div>
+          <div className="product-price-area">
 
-            <strong className="price">
-              ₹
-              {Number(
-                product.price
-              ).toFixed(2)}
-            </strong>
+            <div className="product-price-row">
 
-            <span className="price-unit">
-              /kg
-            </span>
+              <strong className="price">
+                ₹
+                {Number(
+                  product.price
+                ).toFixed(2)}
+              </strong>
 
-            <br />
+              <span className="price-unit">
+                /kg
+              </span>
+
+            </div>
 
             {product.stock > 0 ? (
               <span className="stock">
-                In Stock
+                ✓ In Stock
               </span>
             ) : (
               <span className="out-stock">
-                Out of Stock
+                ✕ Out of Stock
               </span>
             )}
 
           </div>
 
-          {/* =========================
-              CART
-          ========================= */}
+          {/* CART */}
 
           {quantity === 0 ? (
 
             <button
+              type="button"
               className="add-cart"
               disabled={
                 product.stock <= 0
@@ -299,9 +306,9 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
               onClick={
                 handleAddToCart
               }
-              aria-label="Add to cart"
             >
-              🛒
+              <span>🛒</span>
+              Add to Cart
             </button>
 
           ) : (
@@ -315,6 +322,7 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
                     product.id
                   )
                 }
+                aria-label="Decrease quantity"
               >
                 −
               </button>
@@ -334,6 +342,7 @@ function ProductCard({ product, onReviewsClick, deliveryStatus,  checkedPincode,
                     product.id
                   )
                 }
+                aria-label="Increase quantity"
               >
                 +
               </button>

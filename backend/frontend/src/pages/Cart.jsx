@@ -13,7 +13,19 @@ function Cart() {
 
   const [wishlistIds, setWishlistIds] = useState([]);
 
-  // Fetch wishlist when Cart page loads
+  const vegetables = [
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍏", "🍋", "🍊", "🥝",
+    "🍐", "🍓", "🍇", "🍉", "🍌",
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍋", "🍊", "🥝", "🍐",
+    "🍓", "🍇", "🍉", "🍌", "🥕",
+    "🥦", "🍅", "🥬", "🫑", "🥒",
+    "🌽", "🍆", "🧅", "🥔", "🍎"
+  ];
+
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
@@ -33,11 +45,9 @@ function Cart() {
     fetchWishlist();
   }, []);
 
-  // Add / Remove product from wishlist
   const handleWishlist = async (productId) => {
     try {
       if (wishlistIds.includes(productId)) {
-        // Remove from wishlist
         await api.delete(
           `wishlist/remove/${productId}/`
         );
@@ -48,7 +58,6 @@ function Cart() {
           )
         );
       } else {
-        // Add to wishlist
         await api.post(
           `wishlist/add/${productId}/`
         );
@@ -66,7 +75,6 @@ function Cart() {
     }
   };
 
-  // Calculate subtotal
   const subtotal = cart.reduce(
     (total, item) =>
       total +
@@ -75,19 +83,29 @@ function Cart() {
     0
   );
 
-  // Delivery charge
   const delivery =
     subtotal > 0 ? 40 : 0;
 
-  // Final total
   const total =
     subtotal + delivery;
 
-  // Empty cart
   if (cart.length === 0) {
     return (
       <main className="cart-page">
+
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          ))}
+        </div>
+
         <div className="empty-cart">
+
           <div className="empty-cart-icon">
             🛒
           </div>
@@ -105,7 +123,9 @@ function Cart() {
           >
             Start Shopping
           </Link>
+
         </div>
+
       </main>
     );
   }
@@ -113,9 +133,18 @@ function Cart() {
   return (
     <main className="cart-page">
 
-      <div className="cart-container">
+      <div className="floating-groceries">
+        {vegetables.map((vegetable, index) => (
+          <span
+            key={index}
+            className="floating-grocery"
+          >
+            {vegetable}
+          </span>
+        ))}
+      </div>
 
-        {/* HEADER */}
+      <div className="cart-container">
 
         <div className="cart-header">
 
@@ -150,8 +179,6 @@ function Cart() {
 
         <div className="cart-layout">
 
-          {/* CART ITEMS */}
-
           <section className="cart-items">
 
             {cart.map((item) => (
@@ -160,8 +187,6 @@ function Cart() {
                 className="cart-item"
                 key={item.id}
               >
-
-                {/* WISHLIST HEART */}
 
                 <button
                   type="button"
@@ -192,8 +217,6 @@ function Cart() {
                     : "♡"}
                 </button>
 
-                {/* IMAGE */}
-
                 <div className="cart-item-image">
 
                   {item.image ? (
@@ -213,8 +236,6 @@ function Cart() {
 
                 </div>
 
-                {/* DETAILS */}
-
                 <div className="cart-item-details">
 
                   <span className="cart-item-category">
@@ -233,8 +254,6 @@ function Cart() {
                   </p>
 
                 </div>
-
-                {/* QUANTITY + TOTAL */}
 
                 <div className="cart-item-actions">
 
@@ -268,8 +287,6 @@ function Cart() {
 
                   </div>
 
-                  {/* STOCK MESSAGE */}
-
                   {item.quantity >=
                   item.stock ? (
 
@@ -291,8 +308,6 @@ function Cart() {
 
                   )}
 
-                  {/* ITEM TOTAL */}
-
                   <strong className="cart-item-total">
                     ₹
                     {(
@@ -310,8 +325,6 @@ function Cart() {
             ))}
 
           </section>
-
-          {/* ORDER SUMMARY */}
 
           <aside className="cart-summary">
 
@@ -388,4 +401,3 @@ function Cart() {
 }
 
 export default Cart;
-

@@ -4,6 +4,19 @@ import api from "../services/api";
 import { useCart } from "../context/CartContext";
 import "./ProductDetails.css";
 
+const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎",
+];
+
 function ProductDetails() {
   const { id } = useParams();
 
@@ -22,7 +35,6 @@ function ProductDetails() {
   const [showReviews, setShowReviews] = useState(false);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
-  // Load product
   useEffect(() => {
     setLoading(true);
     setError("");
@@ -40,7 +52,6 @@ function ProductDetails() {
       });
   }, [id]);
 
-  // Load reviews
   useEffect(() => {
     setReviewsLoading(true);
 
@@ -58,22 +69,57 @@ function ProductDetails() {
       });
   }, [id]);
 
-  // Product loading
   if (loading) {
     return (
       <main className="product-details-page">
-        <div className="product-details-loading">
-          Loading product...
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+              style={{
+                left: `${(index * 17) % 96}%`,
+                top: `${(index * 23) % 94}%`,
+                animationDelay: `${-(index * 0.9)}s`,
+                animationDuration: `${32 + (index % 8) * 2}s`,
+              }}
+            >
+              {vegetable}
+            </span>
+          ))}
+        </div>
+
+        <div className="product-details-status-card">
+          <div className="loading-spinner"></div>
+          <p>Loading fresh product...</p>
         </div>
       </main>
     );
   }
 
-  // Product error
   if (error || !product) {
     return (
       <main className="product-details-page">
-        <div className="product-details-error">
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+              style={{
+                left: `${(index * 17) % 96}%`,
+                top: `${(index * 23) % 94}%`,
+                animationDelay: `${-(index * 0.9)}s`,
+                animationDuration: `${32 + (index % 8) * 2}s`,
+              }}
+            >
+              {vegetable}
+            </span>
+          ))}
+        </div>
+
+        <div className="product-details-status-card error-card">
+          <div className="status-icon">🥕</div>
+          <p className="status-eyebrow">PRODUCT UNAVAILABLE</p>
           <h2>Product not found</h2>
           <p>{error}</p>
 
@@ -88,20 +134,17 @@ function ProductDetails() {
     );
   }
 
-  // Find product in cart
   const cartItem = cartItems?.find(
     (item) => item.id === product.id
   );
 
   const quantity = cartItem ? cartItem.quantity : 0;
 
-  // Stock status
   const isOutOfStock = product.stock <= 0;
 
   const isLowStock =
     product.stock > 0 && product.stock <= 5;
 
-  // Add product to cart
   const handleAddToCart = () => {
     if (!isOutOfStock) {
       addToCart(product);
@@ -110,9 +153,26 @@ function ProductDetails() {
 
   return (
     <main className="product-details-page">
+
+      <div className="floating-groceries">
+        {vegetables.map((vegetable, index) => (
+          <span
+            key={index}
+            className="floating-grocery"
+            style={{
+              left: `${(index * 17) % 96}%`,
+              top: `${(index * 23) % 94}%`,
+              animationDelay: `${-(index * 0.9)}s`,
+              animationDuration: `${32 + (index % 8) * 2}s`,
+            }}
+          >
+            {vegetable}
+          </span>
+        ))}
+      </div>
+
       <div className="product-details-container">
 
-        {/* Back */}
         <Link
           to="/products"
           className="product-back-link"
@@ -122,10 +182,12 @@ function ProductDetails() {
 
         <div className="product-details-card">
 
-          {/* =========================
-              PRODUCT IMAGE
-          ========================= */}
           <div className="product-details-image-section">
+
+            <div className="image-badge">
+              FRESH PICK
+            </div>
+
             {product.image ? (
               <img
                 src={product.image}
@@ -137,25 +199,29 @@ function ProductDetails() {
                 🛒
               </div>
             )}
+
+            {isOutOfStock && (
+              <span className="details-stock-badge">
+                OUT OF STOCK
+              </span>
+            )}
+
           </div>
 
-          {/* =========================
-              PRODUCT INFORMATION
-          ========================= */}
           <div className="product-details-info">
 
-            {/* Category */}
+            <div className="details-top-label">
+              FRESH • LOCAL • QUALITY
+            </div>
+
             <span className="product-details-category">
               {product.category}
             </span>
 
-            {/* Product name */}
             <h1>{product.name}</h1>
 
-            {/* =========================
-                PRODUCT RATING
-            ========================= */}
             <div className="product-details-rating">
+
               {product.rating_count > 0 ? (
                 <>
                   <span className="details-rating-stars">
@@ -165,7 +231,7 @@ function ProductDetails() {
                   </span>
 
                   <span className="details-rating-value">
-                    {product.average_rating}
+                    {Number(product.average_rating).toFixed(1)}
                   </span>
 
                   <button
@@ -181,22 +247,25 @@ function ProductDetails() {
                   No ratings yet
                 </span>
               )}
+
             </div>
 
-            {/* Price */}
-            <div className="product-details-price">
-              ₹{Number(product.price).toFixed(2)}
+            <div className="product-details-price-row">
+              <div className="product-details-price">
+                ₹{Number(product.price).toFixed(2)}
+              </div>
+
+              <span className="details-price-unit">
+                / kg
+              </span>
             </div>
 
-            {/* Description */}
             <p className="product-details-description">
               {product.description}
             </p>
 
-            {/* =========================
-                STOCK
-            ========================= */}
             <div className="product-stock">
+
               {isOutOfStock ? (
                 <span className="out-stock">
                   ● Out of stock
@@ -210,158 +279,100 @@ function ProductDetails() {
                   ● In stock
                 </span>
               )}
+
             </div>
 
-            {/* =========================
-                CART CONTROLS
-            ========================= */}
-            {quantity > 0 ? (
-              <div className="details-cart-control">
+            <div className="details-purchase-section">
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    decreaseQuantity(product.id)
-                  }
-                >
-                  −
-                </button>
+              {quantity > 0 ? (
+                <div className="details-cart-control">
 
-                <span>{quantity}</span>
-
-                <button
-                  type="button"
-                  disabled={quantity >= product.stock}
-                  onClick={() => {
-                    if (quantity < product.stock) {
-                      increaseQuantity(product.id);
-                    }
-                  }}
-                >
-                  +
-                </button>
-
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="details-add-cart"
-                onClick={handleAddToCart}
-                disabled={isOutOfStock}
-              >
-                {isOutOfStock
-                  ? "Out of Stock"
-                  : "Add to Cart"}
-              </button>
-            )}
-
-            {/* =========================
-                REVIEWS MODAL
-            ========================= */}
-            {showReviews && (
-              <div className="reviews-modal-overlay">
-
-                <div className="reviews-modal">
-
-                  {/* Close button */}
                   <button
                     type="button"
-                    className="reviews-modal-close"
-                    onClick={() => setShowReviews(false)}
+                    onClick={() =>
+                      decreaseQuantity(product.id)
+                    }
                   >
-                    ×
+                    −
                   </button>
 
-                  <h2>Customer Reviews</h2>
+                  <span>{quantity}</span>
 
-                  {/* Loading */}
-                  {reviewsLoading ? (
-                    <p>Loading reviews...</p>
-                  ) : reviews.length === 0 ? (
-
-                    /* No reviews */
-                    <p className="no-reviews-message">
-                      No reviews yet.
-                    </p>
-
-                  ) : (
-
-                    /* Reviews list */
-                    <div className="reviews-list">
-
-                      {reviews.map((item) => (
-                        <div
-                          className="review-item"
-                          key={item.id}
-                        >
-
-                          <div className="review-header">
-
-                            <strong>
-                              {item.username}
-                            </strong>
-
-                            <span className="review-item-stars">
-                              {"★".repeat(
-                                Number(item.rating)
-                              )}
-                            </span>
-
-                          </div>
-
-                          <p className="review-text">
-                            {item.review}
-                          </p>
-
-                          <small className="review-date">
-                            {new Date(
-                              item.created_at
-                            ).toLocaleDateString()}
-                          </small>
-
-                        </div>
-                      ))}
-
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    disabled={quantity >= product.stock}
+                    onClick={() => {
+                      if (quantity < product.stock) {
+                        increaseQuantity(product.id);
+                      }
+                    }}
+                  >
+                    +
+                  </button>
 
                 </div>
-              </div>
-            )}
+              ) : (
+                <button
+                  type="button"
+                  className="details-add-cart"
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  <span>🛒</span>
 
-            {/* =========================
-                PRODUCT FEATURES
-            ========================= */}
+                  {isOutOfStock
+                    ? "Out of Stock"
+                    : "Add to Cart"}
+                </button>
+              )}
+
+            </div>
+
             <div className="product-details-features">
 
-              <div>
-                🚚
+              <div className="details-feature">
+
+                <div className="feature-icon">
+                  🚚
+                </div>
+
                 <span>
                   <strong>Fast Delivery</strong>
                   <small>
                     Delivered to your door
                   </small>
                 </span>
+
               </div>
 
-              <div>
-                ✓
+              <div className="details-feature">
+
+                <div className="feature-icon">
+                  ✓
+                </div>
+
                 <span>
                   <strong>Quality Guaranteed</strong>
                   <small>
                     Fresh and carefully selected
                   </small>
                 </span>
+
               </div>
 
-              <div>
-                🔒
+              <div className="details-feature">
+
+                <div className="feature-icon">
+                  🔒
+                </div>
+
                 <span>
                   <strong>Secure Shopping</strong>
                   <small>
                     Your information is protected
                   </small>
                 </span>
+
               </div>
 
             </div>
@@ -369,6 +380,99 @@ function ProductDetails() {
           </div>
         </div>
       </div>
+
+      {showReviews && (
+        <div
+          className="reviews-modal-overlay"
+          onClick={() => setShowReviews(false)}
+        >
+
+          <div
+            className="reviews-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <button
+              type="button"
+              className="reviews-modal-close"
+              onClick={() => setShowReviews(false)}
+            >
+              ×
+            </button>
+
+            <p className="reviews-modal-eyebrow">
+              CUSTOMER FEEDBACK
+            </p>
+
+            <h2>Customer Reviews</h2>
+
+            {reviewsLoading ? (
+              <div className="reviews-loading">
+                <div className="loading-spinner"></div>
+                <p>Loading reviews...</p>
+              </div>
+            ) : reviews.length === 0 ? (
+
+              <div className="no-reviews-message">
+                <span>💬</span>
+                <p>No reviews yet.</p>
+                <small>
+                  Be the first customer to review this product.
+                </small>
+              </div>
+
+            ) : (
+
+              <div className="reviews-list">
+
+                {reviews.map((item) => (
+                  <div
+                    className="review-item"
+                    key={item.id}
+                  >
+
+                    <div className="review-header">
+
+                      <div className="review-user">
+                        <div className="review-avatar">
+                          {item.username
+                            ?.charAt(0)
+                            .toUpperCase()}
+                        </div>
+
+                        <strong>
+                          {item.username}
+                        </strong>
+                      </div>
+
+                      <span className="review-item-stars">
+                        {"★".repeat(
+                          Number(item.rating)
+                        )}
+                      </span>
+
+                    </div>
+
+                    <p className="review-text">
+                      {item.review}
+                    </p>
+
+                    <small className="review-date">
+                      {new Date(
+                        item.created_at
+                      ).toLocaleDateString()}
+                    </small>
+
+                  </div>
+                ))}
+
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }

@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import "./Profile.css";
 
+const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎"
+];
+
 function Profile() {
   const [user, setUser] = useState(null);
 
@@ -19,10 +32,6 @@ function Profile() {
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-
-  // =========================
-  // FETCH PROFILE
-  // =========================
 
   useEffect(() => {
     fetchProfile();
@@ -54,10 +63,6 @@ function Profile() {
     }
   };
 
-  // =========================
-  // EDIT PROFILE
-  // =========================
-
   const handleEdit = () => {
     setFormData({
       username: user.username,
@@ -70,10 +75,6 @@ function Profile() {
     setEditing(true);
   };
 
-  // =========================
-  // HANDLE INPUT
-  // =========================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -84,10 +85,6 @@ function Profile() {
 
     setMessage("");
   };
-
-  // =========================
-  // CANCEL
-  // =========================
 
   const handleCancel = () => {
     setFormData({
@@ -100,10 +97,6 @@ function Profile() {
     setMessage("");
     setEditing(false);
   };
-
-  // =========================
-  // UPDATE PROFILE
-  // =========================
 
   const handleUpdateProfile = async () => {
     if (!formData.username.trim()) {
@@ -134,10 +127,8 @@ function Profile() {
         password: formData.password,
       });
 
-      // Update profile on screen
       setUser(response.data.user);
 
-      // Update localStorage
       const oldUser = JSON.parse(
         localStorage.getItem("user")
       );
@@ -151,7 +142,6 @@ function Profile() {
         })
       );
 
-      // Clear password fields
       setFormData({
         username: response.data.user.username,
         email: response.data.user.email,
@@ -176,252 +166,345 @@ function Profile() {
     }
   };
 
-  // =========================
-  // LOADING
-  // =========================
-
   if (loading) {
     return (
       <div className="profile-page">
-        <p className="profile-loading">
-          Loading profile...
-        </p>
+
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          ))}
+        </div>
+
+        <div className="profile-state">
+          <div className="profile-loading-icon">
+            👤
+          </div>
+
+          <p className="profile-loading">
+            Loading profile...
+          </p>
+        </div>
+
       </div>
     );
   }
-
-  // =========================
-  // ERROR
-  // =========================
 
   if (error) {
     return (
       <div className="profile-page">
-        <div className="profile-error">
-          {error}
+
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          ))}
         </div>
+
+        <div className="profile-state">
+
+          <div className="profile-error-icon">
+            ⚠️
+          </div>
+
+          <div className="profile-error">
+            {error}
+          </div>
+
+        </div>
+
       </div>
     );
   }
 
-  // =========================
-  // PROFILE
-  // =========================
-
   return (
     <div className="profile-page">
 
-      <div className="profile-card">
+      <div className="floating-groceries">
+        {vegetables.map((vegetable, index) => (
+          <span
+            key={index}
+            className="floating-grocery"
+          >
+            {vegetable}
+          </span>
+        ))}
+      </div>
 
-        {/* PROFILE HEADER */}
+      <div className="profile-content">
 
-        <div className="profile-header">
+        <div className="profile-card">
 
-          <div className="profile-avatar">
-            {user?.username
-              ?.charAt(0)
-              .toUpperCase()}
+          <div className="profile-header">
+
+            <div className="profile-avatar">
+              {user?.username
+                ?.charAt(0)
+                .toUpperCase()}
+            </div>
+
+            <div className="profile-header-text">
+              <p className="profile-label">
+                ACCOUNT SETTINGS
+              </p>
+
+              <h1>My Profile</h1>
+
+              <p>
+                Manage your account information
+              </p>
+            </div>
+
           </div>
 
-          <div>
-            <h1>My Profile</h1>
+          {!editing ? (
 
-            <p>
-              Manage your account information
-            </p>
-          </div>
+            <>
+
+              <div className="profile-details">
+
+                <div className="profile-field">
+
+                  <div className="profile-field-icon">
+                    👤
+                  </div>
+
+                  <div className="profile-field-content">
+
+                    <span className="profile-label">
+                      Username
+                    </span>
+
+                    <span className="profile-value">
+                      {user.username}
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="profile-field">
+
+                  <div className="profile-field-icon">
+                    ✉️
+                  </div>
+
+                  <div className="profile-field-content">
+
+                    <span className="profile-label">
+                      Email Address
+                    </span>
+
+                    <span className="profile-value">
+                      {user.email}
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="profile-field">
+
+                  <div className="profile-field-icon">
+                    🆔
+                  </div>
+
+                  <div className="profile-field-content">
+
+                    <span className="profile-label">
+                      User ID
+                    </span>
+
+                    <span className="profile-value">
+                      #{user.id}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <button
+                type="button"
+                className="edit-profile-button"
+                onClick={handleEdit}
+              >
+                <span>✏️</span>
+                Edit Profile
+              </button>
+
+              {message && (
+                <p className="profile-message success">
+                  ✓ {message}
+                </p>
+              )}
+
+            </>
+
+          ) : (
+
+            <div className="profile-edit-form">
+
+              <div className="profile-edit-heading">
+                <h2>Edit Profile</h2>
+
+                <p>
+                  Update your account information below.
+                </p>
+              </div>
+
+              <div className="profile-input-group">
+
+                <label htmlFor="username">
+                  Username
+                </label>
+
+                <div className="profile-input-wrapper">
+
+                  <span>👤</span>
+
+                  <input
+                    id="username"
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder="Enter username"
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="profile-input-group">
+
+                <label htmlFor="email">
+                  Email Address
+                </label>
+
+                <div className="profile-input-wrapper">
+
+                  <span>✉️</span>
+
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter email"
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="profile-input-group">
+
+                <label htmlFor="password">
+                  New Password
+                </label>
+
+                <div className="profile-input-wrapper">
+
+                  <span>🔒</span>
+
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Leave blank to keep current password"
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="profile-input-group">
+
+                <label htmlFor="confirmPassword">
+                  Confirm New Password
+                </label>
+
+                <div className="profile-input-wrapper">
+
+                  <span>🔐</span>
+
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirm new password"
+                  />
+
+                </div>
+
+              </div>
+
+              <div className="profile-password-note">
+                <span>🛡️</span>
+                <p>
+                  Leave the password fields blank if you don't
+                  want to change your current password.
+                </p>
+              </div>
+
+              <div className="profile-actions">
+
+                <button
+                  type="button"
+                  className="save-profile-button"
+                  onClick={handleUpdateProfile}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <>
+                      <span className="profile-spinner"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      ✓ Save Changes
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  className="cancel-profile-button"
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+
+              </div>
+
+              {message && (
+                <p className="profile-message error">
+                  ⚠️ {message}
+                </p>
+              )}
+
+            </div>
+
+          )}
 
         </div>
-
-
-        {/* =========================
-            VIEW MODE
-        ========================= */}
-
-        {!editing ? (
-
-          <>
-            <div className="profile-details">
-
-              <div className="profile-field">
-                <span className="profile-label">
-                  Username
-                </span>
-
-                <span className="profile-value">
-                  {user.username}
-                </span>
-              </div>
-
-
-              <div className="profile-field">
-                <span className="profile-label">
-                  Email
-                </span>
-
-                <span className="profile-value">
-                  {user.email}
-                </span>
-              </div>
-
-
-              <div className="profile-field">
-                <span className="profile-label">
-                  User ID
-                </span>
-
-                <span className="profile-value">
-                  #{user.id}
-                </span>
-              </div>
-
-            </div>
-
-
-            {/* EDIT BUTTON */}
-
-            <button
-              type="button"
-              className="edit-profile-button"
-              onClick={handleEdit}
-            >
-              ✏️ Edit Profile
-            </button>
-
-
-            {message && (
-              <p className="profile-message">
-                {message}
-              </p>
-            )}
-
-          </>
-
-        ) : (
-
-          /* =========================
-             EDIT MODE
-          ========================= */
-
-          <div className="profile-edit-form">
-
-            {/* USERNAME */}
-
-            <div className="profile-input-group">
-
-              <label htmlFor="username">
-                Username
-              </label>
-
-              <input
-                id="username"
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="Enter username"
-              />
-
-            </div>
-
-
-            {/* EMAIL */}
-
-            <div className="profile-input-group">
-
-              <label htmlFor="email">
-                Email
-              </label>
-
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter email"
-              />
-
-            </div>
-
-
-            {/* PASSWORD */}
-
-            <div className="profile-input-group">
-
-              <label htmlFor="password">
-                New Password
-              </label>
-
-              <input
-                id="password"
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Leave blank to keep current password"
-              />
-
-            </div>
-
-
-            {/* CONFIRM PASSWORD */}
-
-            <div className="profile-input-group">
-
-              <label htmlFor="confirmPassword">
-                Confirm New Password
-              </label>
-
-              <input
-                id="confirmPassword"
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm new password"
-              />
-
-            </div>
-
-
-            {/* BUTTONS */}
-
-            <div className="profile-actions">
-
-              <button
-                type="button"
-                className="save-profile-button"
-                onClick={handleUpdateProfile}
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving..."
-                  : "Save Changes"}
-              </button>
-
-
-              <button
-                type="button"
-                className="cancel-profile-button"
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-
-            </div>
-
-
-            {message && (
-              <p className="profile-message">
-                {message}
-              </p>
-            )}
-
-          </div>
-
-        )}
 
       </div>
 

@@ -4,6 +4,40 @@ import api from "../services/api";
 import InvoiceActions from "../components/InvoiceActions";
 import "./OrderDetails.css";
 
+const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎",
+];
+
+function FloatingGroceries() {
+  return (
+    <div className="floating-groceries">
+      {vegetables.map((vegetable, index) => (
+        <span
+          key={index}
+          className="floating-grocery"
+          style={{
+            left: `${(index * 17) % 96}%`,
+            top: `${(index * 23) % 94}%`,
+            animationDelay: `${-(index * 0.9)}s`,
+            animationDuration: `${32 + (index % 8) * 2}s`,
+          }}
+        >
+          {vegetable}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function OrderDetails() {
   const { id } = useParams();
 
@@ -32,7 +66,7 @@ function OrderDetails() {
     } catch (error) {
       setError(
         error.response?.data?.error ||
-        "Unable to load order."
+          "Unable to load order."
       );
     } finally {
       setLoading(false);
@@ -50,21 +84,14 @@ function OrderDetails() {
         `order-items/${orderItemId}/feedback/list/`
       );
 
-      console.log("FEEDBACK RESPONSE:", response.data);
-
       setFeedbacks((prev) => ({
         ...prev,
         [orderItemId]: response.data.feedbacks || [],
       }));
     } catch (error) {
-      console.log("FULL FEEDBACK ERROR:", error.response);
       console.log(
-        "FEEDBACK ERROR DATA:",
+        "Feedback error:",
         error.response?.data
-      );
-      console.log(
-        "FEEDBACK ERROR STATUS:",
-        error.response?.status
       );
     } finally {
       setFeedbackLoading((prev) => ({
@@ -80,7 +107,8 @@ function OrderDetails() {
     if (!text) {
       setFeedbackMessage((prev) => ({
         ...prev,
-        [orderItemId]: "Please enter your feedback.",
+        [orderItemId]:
+          "Please enter your feedback.",
       }));
       return;
     }
@@ -110,7 +138,8 @@ function OrderDetails() {
 
       setFeedbackMessage((prev) => ({
         ...prev,
-        [orderItemId]: response.data.message,
+        [orderItemId]:
+          response.data.message,
       }));
 
       await fetchFeedback(orderItemId);
@@ -132,8 +161,21 @@ function OrderDetails() {
   if (loading) {
     return (
       <main className="order-details-page">
-        <div className="order-details-loading">
-          Loading order...
+        <FloatingGroceries />
+
+        <div className="order-status-card">
+          <div className="order-loading-spinner"></div>
+
+          <p className="order-status-eyebrow">
+            MY ORDER
+          </p>
+
+          <h2>Loading your order...</h2>
+
+          <p>
+            Please wait while we fetch your order
+            details.
+          </p>
         </div>
       </main>
     );
@@ -142,12 +184,25 @@ function OrderDetails() {
   if (error) {
     return (
       <main className="order-details-page">
-        <div className="order-details-error">
-          ⚠️ {error}
+        <FloatingGroceries />
 
-          <br />
+        <div className="order-status-card error-card">
+          <div className="order-status-icon">
+            ⚠️
+          </div>
 
-          <Link to="/my-orders">
+          <p className="order-status-eyebrow">
+            ORDER UNAVAILABLE
+          </p>
+
+          <h2>Unable to load order</h2>
+
+          <p>{error}</p>
+
+          <Link
+            to="/my-orders"
+            className="back-orders-button"
+          >
             ← Back to My Orders
           </Link>
         </div>
@@ -157,14 +212,13 @@ function OrderDetails() {
 
   return (
     <main className="order-details-page">
+      <FloatingGroceries />
 
       <div className="order-details-container">
 
-        {/* HEADER */}
-
         <div className="order-details-header">
 
-          <div>
+          <div className="order-heading-content">
 
             <Link
               to="/my-orders"
@@ -182,6 +236,7 @@ function OrderDetails() {
             </h1>
 
             <p className="order-date">
+              Placed on{" "}
               {new Date(
                 order.created_at
               ).toLocaleDateString()}
@@ -196,65 +251,94 @@ function OrderDetails() {
                 .replace(" ", "-")
             }`}
           >
+            <span className="status-dot"></span>
             {order.status}
           </span>
 
         </div>
 
-        {/* PRODUCTS */}
-
         <section className="order-products">
 
-          <h2>Products</h2>
+          <div className="section-heading">
+
+            <div>
+              <p className="section-eyebrow">
+                YOUR PURCHASE
+              </p>
+
+              <h2>Products</h2>
+            </div>
+
+            <span className="items-count">
+              {order.items.length}{" "}
+              {order.items.length === 1
+                ? "item"
+                : "items"}
+            </span>
+
+          </div>
 
           <div className="order-items-list">
 
             {order.items.map((item) => (
-
               <article
                 className="order-item"
                 key={item.id}
               >
 
-                {/* IMAGE */}
+                <div className="order-item-main">
 
-                <div className="order-item-image">
+                  <div className="order-item-image">
 
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.product_name}
-                    />
-                  ) : (
-                    <span>📦</span>
-                  )}
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.product_name}
+                      />
+                    ) : (
+                      <span>📦</span>
+                    )}
+
+                  </div>
+
+                  <div className="order-item-info">
+
+                    <span className="order-item-label">
+                      PRODUCT
+                    </span>
+
+                    <h3>
+                      {item.product_name}
+                    </h3>
+
+                    <div className="order-item-meta">
+
+                      <span>
+                        Qty: {item.quantity}
+                      </span>
+
+                      <span>
+                        ₹
+                        {Number(
+                          item.price
+                        ).toFixed(2)}{" "}
+                        each
+                      </span>
+
+                    </div>
+
+                  </div>
 
                 </div>
 
-                {/* PRODUCT INFO */}
-
-                <div className="order-item-info">
-
-                  <h3>
-                    {item.product_name}
-                  </h3>
-
-                  <p>
-                    Quantity: {item.quantity}
-                  </p>
-
-                  <p>
-                    ₹{Number(
-                      item.price
-                    ).toFixed(2)} each
-                  </p>
-
-                </div>
-
-                {/* FEEDBACK */}
+                <strong className="order-item-total">
+                  ₹
+                  {Number(
+                    item.item_total
+                  ).toFixed(2)}
+                </strong>
 
                 {order.status === "Delivered" && (
-
                   <div className="order-item-feedback">
 
                     <button
@@ -264,54 +348,60 @@ function OrderDetails() {
                         fetchFeedback(item.id)
                       }
                     >
-                      💬 Feedback
+                      <span>💬</span>
+                      Feedback
                     </button>
 
                     {feedbackLoading[item.id] && (
-                      <p>
+                      <div className="feedback-loading">
+                        <div className="small-spinner"></div>
                         Loading feedback...
-                      </p>
+                      </div>
                     )}
 
                     {feedbacks[item.id] && (
-
                       <div className="feedback-history">
 
-                        {feedbacks[item.id].length === 0 ? (
-
+                        {feedbacks[item.id].length ===
+                        0 ? (
                           <p className="no-feedback">
                             No feedback submitted yet.
                           </p>
-
                         ) : (
-
                           feedbacks[item.id].map(
                             (feedback) => (
-
                               <div
                                 className="feedback-card"
                                 key={feedback.id}
                               >
 
                                 <p className="feedback-label">
-                                  Your Feedback
+                                  YOUR FEEDBACK
                                 </p>
 
                                 <p className="feedback-text">
-                                  {feedback.feedback}
+                                  {
+                                    feedback.feedback
+                                  }
                                 </p>
 
-                                <p className="feedback-status">
+                                <span
+                                  className={`feedback-status ${feedback.status
+                                    ?.toLowerCase()
+                                    .replace(
+                                      " ",
+                                      "-"
+                                    )}`}
+                                >
                                   Status:{" "}
                                   {feedback.status}
-                                </p>
+                                </span>
 
                                 {feedback.admin_reply ? (
-
                                   <div className="admin-reply">
 
                                     <p className="admin-reply-label">
-                                      Admin Reply
+                                      ADMIN REPLY
                                     </p>
 
                                     <p>
@@ -330,64 +420,81 @@ function OrderDetails() {
                                     )}
 
                                   </div>
-
                                 ) : (
-
                                   <p className="no-admin-reply">
                                     No reply yet.
                                   </p>
-
                                 )}
 
                               </div>
-
                             )
                           )
-
                         )}
-
-                        {/* NEW FEEDBACK */}
 
                         <div className="new-feedback">
 
+                          <p className="new-feedback-label">
+                            SHARE YOUR EXPERIENCE
+                          </p>
+
                           <textarea
                             value={
-                              feedbackText[item.id] ||
-                              ""
+                              feedbackText[
+                                item.id
+                              ] || ""
                             }
                             onChange={(e) =>
-                              setFeedbackText((prev) => ({
-                                ...prev,
-                                [item.id]:
-                                  e.target.value,
-                              }))
+                              setFeedbackText(
+                                (prev) => ({
+                                  ...prev,
+                                  [item.id]:
+                                    e.target.value,
+                                })
+                              )
                             }
-                            placeholder="Write your feedback..."
+                            placeholder="Tell us about your experience with this product..."
                             maxLength={2000}
                           />
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleSubmitFeedback(
-                                item.id
-                              )
-                            }
-                            disabled={
-                              feedbackSubmitting[
+                          <div className="feedback-submit-row">
+
+                            <span>
+                              {
+                                (
+                                  feedbackText[
+                                    item.id
+                                  ] || ""
+                                ).length
+                              }
+                              /2000
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleSubmitFeedback(
+                                  item.id
+                                )
+                              }
+                              disabled={
+                                feedbackSubmitting[
+                                  item.id
+                                ]
+                              }
+                            >
+                              {feedbackSubmitting[
                                 item.id
                               ]
-                            }
-                          >
-                            {feedbackSubmitting[
-                              item.id
-                            ]
-                              ? "Submitting..."
-                              : "Submit Feedback"}
-                          </button>
+                                ? "Submitting..."
+                                : "Submit Feedback"}
+                            </button>
 
-                          {feedbackMessage[item.id] && (
-                            <p>
+                          </div>
+
+                          {feedbackMessage[
+                            item.id
+                          ] && (
+                            <p className="feedback-message">
                               {
                                 feedbackMessage[
                                   item.id
@@ -399,95 +506,89 @@ function OrderDetails() {
                         </div>
 
                       </div>
-
                     )}
 
                   </div>
-
                 )}
 
-                {/* ITEM TOTAL */}
-
-                <strong className="order-item-total">
-                  ₹{Number(
-                    item.item_total
-                  ).toFixed(2)}
-                </strong>
-
               </article>
-
             ))}
 
           </div>
 
         </section>
 
-        {/* ORDER SUMMARY */}
-
         <section className="order-summary">
 
-          <h2>Order Summary</h2>
+          <div className="summary-heading">
 
-          <div className="order-summary-row">
+            <div>
+              <p className="section-eyebrow">
+                PAYMENT BREAKDOWN
+              </p>
 
-            <span>
-              Subtotal
+              <h2>Order Summary</h2>
+            </div>
+
+            <span className="summary-icon">
+              🧾
             </span>
-
-            <strong>
-              ₹{Number(
-                order.subtotal
-              ).toFixed(2)}
-            </strong>
 
           </div>
 
-          {Number(order.discount) > 0 && (
+          <div className="order-summary-row">
+            <span>Subtotal</span>
 
-            <div className="order-summary-row">
+            <strong>
+              ₹
+              {Number(
+                order.subtotal
+              ).toFixed(2)}
+            </strong>
+          </div>
+
+          {Number(order.discount) > 0 && (
+            <div className="order-summary-row discount-row">
 
               <span>
                 Discount
-
                 {order.coupon_code && (
                   <> ({order.coupon_code})</>
                 )}
               </span>
 
               <strong>
-                -₹{Number(
+                -₹
+                {Number(
                   order.discount
                 ).toFixed(2)}
               </strong>
 
             </div>
-
           )}
 
           <div className="order-summary-row">
 
-            <span>
-              Delivery
-            </span>
+            <span>Delivery</span>
 
             <strong>
-              ₹{Number(
+              ₹
+              {Number(
                 order.delivery_charge
               ).toFixed(2)}
             </strong>
 
           </div>
 
-          <div className="order-summary-divider" />
+          <div className="order-summary-divider"></div>
 
           <div className="order-summary-total">
 
-            <span>
-              Total
-            </span>
+            <span>Total</span>
 
             <strong>
-              ₹{Number(
+              ₹
+              {Number(
                 order.total_amount
               ).toFixed(2)}
             </strong>
@@ -495,8 +596,6 @@ function OrderDetails() {
           </div>
 
         </section>
-
-        {/* ACTIONS */}
 
         <div className="order-details-actions">
 
@@ -506,20 +605,19 @@ function OrderDetails() {
             to="/products"
             className="continue-shopping-button"
           >
-            Continue Shopping
+            🛍️ Continue Shopping
           </Link>
 
           <Link
             to="/my-orders"
             className="back-orders-button"
           >
-            My Orders
+            ← My Orders
           </Link>
 
         </div>
 
       </div>
-
     </main>
   );
 }

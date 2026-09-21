@@ -24,6 +24,19 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
+  const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎"
+];
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -149,6 +162,20 @@ function Register() {
 
   return (
     <main className="register-page">
+
+       <div className="floating-groceries">
+    {vegetables.map((vegetable, index) => (
+      <span
+        key={index}
+        className="floating-grocery"
+      >
+        {vegetable}
+      </span>
+    ))}
+  </div>
+
+
+
 
       <div className="register-card">
 

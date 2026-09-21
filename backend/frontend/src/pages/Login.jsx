@@ -15,6 +15,19 @@ function Login() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const vegetables = [
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍏", "🍋", "🍊", "🥝",
+  "🍐", "🍓", "🍇", "🍉", "🍌",
+  "🥕", "🥦", "🍅", "🥬", "🫑",
+  "🥒", "🌽", "🍆", "🧅", "🥔",
+  "🍎", "🍋", "🍊", "🥝", "🍐",
+  "🍓", "🍇", "🍉", "🍌", "🥕",
+  "🥦", "🍅", "🥬", "🫑", "🥒",
+  "🌽", "🍆", "🧅", "🥔", "🍎"
+];
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -78,6 +91,19 @@ function Login() {
 
   return (
     <main className="login-page">
+
+
+    <div className="floating-groceries">
+      {vegetables.map((vegetable, index) => (
+        <span
+          key={index}
+          className="floating-grocery"
+        >
+          {vegetable}
+        </span>
+      ))}
+    </div>
+    
       <div className="login-card">
 
         <div className="login-header">

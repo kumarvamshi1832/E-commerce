@@ -11,9 +11,18 @@ function Wishlist() {
   const { addToCart, buyNow, cart } = useCart();
   const navigate = useNavigate();
 
-  // =========================
-  // GET WISHLIST
-  // =========================
+  const vegetables = [
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍏", "🍋", "🍊", "🥝",
+    "🍐", "🍓", "🍇", "🍉", "🍌",
+    "🥕", "🥦", "🍅", "🥬", "🫑",
+    "🥒", "🌽", "🍆", "🧅", "🥔",
+    "🍎", "🍋", "🍊", "🥝", "🍐",
+    "🍓", "🍇", "🍉", "🍌", "🥕",
+    "🥦", "🍅", "🥬", "🫑", "🥒",
+    "🌽", "🍆", "🧅", "🥔", "🍎"
+  ];
 
   const fetchWishlist = async () => {
     try {
@@ -22,7 +31,6 @@ function Wishlist() {
       const response = await api.get("wishlist/");
 
       setWishlist(response.data);
-
     } catch (error) {
       console.error("Wishlist error:", error);
     } finally {
@@ -34,23 +42,17 @@ function Wishlist() {
     fetchWishlist();
   }, []);
 
-  // =========================
-  // REMOVE FROM WISHLIST
-  // =========================
-
   const removeFromWishlist = async (productId) => {
     try {
       await api.delete(
         `wishlist/remove/${productId}/`
       );
 
-      // Remove immediately from UI
       setWishlist((currentWishlist) =>
         currentWishlist.filter(
           (item) => item.id !== productId
         )
       );
-
     } catch (error) {
       console.error(
         "Remove wishlist error:",
@@ -59,52 +61,80 @@ function Wishlist() {
     }
   };
 
-  // =========================
-  // ADD TO CART
-  // =========================
-
   const handleAddToCart = (product) => {
     addToCart(product);
   };
 
-  // =========================
-  // BUY NOW
-  // =========================
-
   const handleBuyNow = (product) => {
-  buyNow(product);
-  navigate("/checkout");
-};
-  // =========================
-  // LOADING
-  // =========================
+    buyNow(product);
+    navigate("/checkout");
+  };
 
   if (loading) {
     return (
       <div className="wishlist-page">
-        <h2>Loading wishlist...</h2>
+
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          ))}
+        </div>
+
+        <div className="wishlist-loading">
+          <div className="wishlist-loading-icon">
+            ❤️
+          </div>
+
+          <h2>
+            Loading wishlist...
+          </h2>
+
+          <p>
+            Getting your favourite products ready
+          </p>
+        </div>
+
       </div>
     );
   }
-
-  // =========================
-  // EMPTY WISHLIST
-  // =========================
 
   if (wishlist.length === 0) {
     return (
       <div className="wishlist-page">
 
-        <h1>❤️ Wishlist</h1>
+        <div className="floating-groceries">
+          {vegetables.map((vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          ))}
+        </div>
 
         <div className="wishlist-empty">
 
-          <h2>
+          <div className="wishlist-empty-icon">
+            ❤️
+          </div>
+
+          <p className="wishlist-eyebrow">
+            YOUR FAVOURITES
+          </p>
+
+          <h1>
             Your wishlist is empty
-          </h2>
+          </h1>
 
           <p>
-            Add some products you love!
+            Add some products you love and
+            keep them here for later.
           </p>
 
           <button
@@ -121,33 +151,62 @@ function Wishlist() {
     );
   }
 
-  // =========================
-  // WISHLIST UI
-  // =========================
-
   return (
     <div className="wishlist-page">
 
+      <div className="floating-groceries">
+        {vegetables.map((vegetable, index) => (
+          <span
+            key={index}
+            className="floating-grocery"
+          >
+            {vegetable}
+          </span>
+        ))}
+      </div>
+
       <div className="wishlist-container">
 
-        <h1>
-          ❤️ Wishlist
-        </h1>
+        <div className="wishlist-header">
 
-        <p className="wishlist-count">
-          {wishlist.length} item
-          {wishlist.length !== 1
-            ? "s"
-            : ""}{" "}
-          in your wishlist
-        </p>
+          <div>
+
+            <p className="wishlist-eyebrow">
+              YOUR FAVOURITES
+            </p>
+
+            <h1>
+              ❤️ Wishlist
+            </h1>
+
+            <p className="wishlist-count">
+              {wishlist.length} item
+              {wishlist.length !== 1
+                ? "s"
+                : ""}{" "}
+              saved for later
+            </p>
+
+          </div>
+
+          <button
+            className="wishlist-shop-button"
+            onClick={() =>
+              navigate("/products")
+            }
+          >
+            Continue Shopping →
+          </button>
+
+        </div>
 
         <div className="wishlist-grid">
 
           {wishlist.map((product) => {
 
             const cartItem = cart.find(
-              (item) => item.id === product.id
+              (item) =>
+                item.id === product.id
             );
 
             return (
@@ -156,9 +215,11 @@ function Wishlist() {
                 key={product.id}
               >
 
-                {/* IMAGE */}
-
                 <div className="wishlist-image">
+
+                  <div className="wishlist-heart-badge">
+                    ❤️
+                  </div>
 
                   {product.image ? (
 
@@ -177,9 +238,11 @@ function Wishlist() {
 
                 </div>
 
-                {/* DETAILS */}
-
                 <div className="wishlist-details">
+
+                  <div className="wishlist-product-category">
+                    FRESH PICK
+                  </div>
 
                   <h2>
                     {product.name}
@@ -192,23 +255,19 @@ function Wishlist() {
                     ).toFixed(2)}
                   </p>
 
-                  <p>
+                  <p className="wishlist-description">
                     {product.description}
                   </p>
 
                   <p className="wishlist-stock">
 
                     {product.stock > 0
-                      ? `In stock: ${product.stock}`
-                      : "Out of stock"}
+                      ? `✓ In stock: ${product.stock}`
+                      : "✕ Out of stock"}
 
                   </p>
 
-                  {/* BUTTONS */}
-
                   <div className="wishlist-actions">
-
-                    {/* ADD TO CART */}
 
                     <button
                       onClick={() =>
@@ -226,8 +285,6 @@ function Wishlist() {
                         : "Add to Cart"}
                     </button>
 
-                    {/* REMOVE */}
-
                     <button
                       onClick={() =>
                         removeFromWishlist(
@@ -238,8 +295,6 @@ function Wishlist() {
                     >
                       Remove
                     </button>
-
-                    {/* BUY NOW */}
 
                     <button
                       onClick={() =>
@@ -261,7 +316,6 @@ function Wishlist() {
 
               </div>
             );
-
           })}
 
         </div>

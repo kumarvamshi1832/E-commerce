@@ -20,10 +20,6 @@ function SupportTicketDetail() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    // =========================
-    // FETCH TICKET
-    // =========================
-
     const fetchTicket = async () => {
         try {
             setLoading(true);
@@ -50,15 +46,12 @@ function SupportTicketDetail() {
         fetchTicket();
     }, [ticketId]);
 
-    // =========================
-    // SEND REPLY
-    // =========================
-
     const handleReply = async (e) => {
         e.preventDefault();
 
         if (!reply.trim()) {
             setError("Please enter a reply.");
+            setSuccess("");
             return;
         }
 
@@ -75,12 +68,9 @@ function SupportTicketDetail() {
             );
 
             setSuccess("Reply sent successfully.");
-
             setReply("");
 
-            setStatus(
-                response.data.ticket_status
-            );
+            setStatus(response.data.ticket_status);
 
             await fetchTicket();
         } catch (error) {
@@ -92,10 +82,6 @@ function SupportTicketDetail() {
             setReplyLoading(false);
         }
     };
-
-    // =========================
-    // UPDATE STATUS
-    // =========================
 
     const handleStatusChange = async (e) => {
         const newStatus = e.target.value;
@@ -133,41 +119,59 @@ function SupportTicketDetail() {
         }
     };
 
-    // =========================
-    // LOADING
-    // =========================
-
     if (loading) {
         return (
             <div className="support-ticket-detail">
-                <p className="ticket-loading">
-                    Loading ticket...
-                </p>
+                <div className="ticket-page-state">
+                    <div className="ticket-state-icon">
+                        🎫
+                    </div>
+
+                    <h2>Loading ticket...</h2>
+
+                    <p>
+                        Please wait while we load the support
+                        conversation.
+                    </p>
+                </div>
             </div>
         );
     }
 
-    // =========================
-    // ERROR
-    // =========================
-
     if (error && !ticket) {
         return (
             <div className="support-ticket-detail">
+                <div className="ticket-page-top">
+                    <button
+                        type="button"
+                        className="back-ticket-button"
+                        onClick={() =>
+                            navigate("/support-dashboard")
+                        }
+                    >
+                        ← Back to Dashboard
+                    </button>
+                </div>
 
-                <button
-                    className="back-ticket-button"
-                    onClick={() =>
-                        navigate("/support-dashboard")
-                    }
-                >
-                    ← Back to Dashboard
-                </button>
+                <div className="ticket-page-state ticket-error-state">
+                    <div className="ticket-state-icon">
+                        ⚠️
+                    </div>
 
-                <p className="ticket-error">
-                    {error}
-                </p>
+                    <h2>Unable to load ticket</h2>
 
+                    <p>{error}</p>
+
+                    <button
+                        type="button"
+                        className="state-back-button"
+                        onClick={() =>
+                            navigate("/support-dashboard")
+                        }
+                    >
+                        Back to Dashboard
+                    </button>
+                </div>
             </div>
         );
     }
@@ -175,263 +179,426 @@ function SupportTicketDetail() {
     return (
         <div className="support-ticket-detail">
 
-            {/* =========================
-                BACK BUTTON
-            ========================= */}
+            <div className="ticket-detail-container">
 
-            <button
-                className="back-ticket-button"
-                onClick={() =>
-                    navigate("/support-dashboard")
-                }
-            >
-                ← Back to Dashboard
-            </button>
+                {/* =========================
+                    TOP
+                ========================= */}
 
-            {/* =========================
-                HEADER
-            ========================= */}
+                <div className="ticket-page-top">
 
-            <div className="ticket-detail-header">
+                    <button
+                        type="button"
+                        className="back-ticket-button"
+                        onClick={() =>
+                            navigate("/support-dashboard")
+                        }
+                    >
+                        ← Back to Dashboard
+                    </button>
 
-                <div>
-                    <span className="detail-ticket-id">
-                        Ticket #{ticket.id}
+                    <span className="ticket-page-label">
+                        SUPPORT MANAGEMENT
                     </span>
-
-                    <h1>
-                        {ticket.subject}
-                    </h1>
-                </div>
-
-                <span
-                    className={
-                        `detail-ticket-status status-${ticket.status
-                            .toLowerCase()
-                            .replace(/\s+/g, "-")}`
-                    }
-                >
-                    {ticket.status}
-                </span>
-
-            </div>
-
-            {/* =========================
-                MESSAGES
-            ========================= */}
-
-            <div className="ticket-detail-content">
-
-                <div className="ticket-conversation">
-
-                    <h2>
-                        Conversation
-                    </h2>
-
-                    <div className="message-list">
-
-                        {messages.length === 0 ? (
-
-                            <p className="no-messages">
-                                No messages yet.
-                            </p>
-
-                        ) : (
-
-                            messages.map((message) => (
-
-                                <div
-                                    key={message.id}
-                                    className={
-                                        message.sender === "Admin"
-                                            ? "message admin-message"
-                                            : "message customer-message"
-                                    }
-                                >
-
-                                    <div className="message-header">
-
-                                        <strong>
-                                            {message.sender === "Admin"
-                                                ? "Support"
-                                                : ticket.customer_username}
-                                        </strong>
-
-                                        <span>
-                                            {new Date(
-                                                message.created_at
-                                            ).toLocaleString()}
-                                        </span>
-
-                                    </div>
-
-                                    <p>
-                                        {message.message}
-                                    </p>
-
-                                </div>
-
-                            ))
-
-                        )}
-
-                    </div>
 
                 </div>
 
                 {/* =========================
-                    TICKET INFORMATION
+                    HEADER
                 ========================= */}
 
-                <div className="ticket-information">
+                <div className="ticket-detail-header">
 
-                    <h2>
-                        Ticket Information
-                    </h2>
+                    <div className="ticket-header-left">
 
-                    <div className="information-item">
-                        <span>Customer</span>
-                        <strong>
-                            {ticket.customer_username}
-                        </strong>
+                        <div className="ticket-header-icon">
+                            💬
+                        </div>
+
+                        <div>
+                            <span className="detail-ticket-id">
+                                TICKET #{ticket.id}
+                            </span>
+
+                            <h1>
+                                {ticket.subject}
+                            </h1>
+
+                            <p>
+                                Manage customer conversation
+                                and ticket status
+                            </p>
+                        </div>
+
                     </div>
 
-                    <div className="information-item">
-                        <span>Email</span>
-                        <strong>
-                            {ticket.customer_email}
-                        </strong>
-                    </div>
+                    <span
+                        className={
+                            `detail-ticket-status status-${ticket.status
+                                .toLowerCase()
+                                .replace(/\s+/g, "-")}`
+                        }
+                    >
+                        <span className="status-dot"></span>
+                        {ticket.status}
+                    </span>
 
-                    <div className="information-item">
-                        <span>Category</span>
-                        <strong>
-                            {ticket.category}
-                        </strong>
-                    </div>
+                </div>
 
-                    <div className="information-item">
-                        <span>Order</span>
-                        <strong>
-                            {ticket.order_id
-                                ? `#${ticket.order_id}`
-                                : "No order"}
-                        </strong>
-                    </div>
+                {/* =========================
+                    MAIN CONTENT
+                ========================= */}
 
-                    <div className="information-item">
-                        <span>Created</span>
-                        <strong>
-                            {new Date(
-                                ticket.created_at
-                            ).toLocaleString()}
-                        </strong>
+                <div className="ticket-detail-content">
+
+                    {/* =========================
+                        CONVERSATION
+                    ========================= */}
+
+                    <div className="ticket-conversation">
+
+                        <div className="section-heading">
+
+                            <div className="section-heading-icon">
+                                💬
+                            </div>
+
+                            <div>
+                                <h2>
+                                    Conversation
+                                </h2>
+
+                                <p>
+                                    Customer and support
+                                    communication
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div className="message-list">
+
+                            {messages.length === 0 ? (
+
+                                <div className="no-messages">
+
+                                    <div className="no-messages-icon">
+                                        💬
+                                    </div>
+
+                                    <h3>
+                                        No messages yet
+                                    </h3>
+
+                                    <p>
+                                        There are no messages in
+                                        this ticket yet.
+                                    </p>
+
+                                </div>
+
+                            ) : (
+
+                                messages.map((message) => (
+
+                                    <div
+                                        key={message.id}
+                                        className={
+                                            message.sender === "Admin"
+                                                ? "message admin-message"
+                                                : "message customer-message"
+                                        }
+                                    >
+
+                                        <div className="message-avatar">
+                                            {message.sender === "Admin"
+                                                ? "🛡️"
+                                                : "👤"}
+                                        </div>
+
+                                        <div className="message-body">
+
+                                            <div className="message-header">
+
+                                                <div>
+                                                    <strong>
+                                                        {message.sender === "Admin"
+                                                            ? "Support Team"
+                                                            : ticket.customer_username}
+                                                    </strong>
+
+                                                    <span
+                                                        className={
+                                                            message.sender === "Admin"
+                                                                ? "sender-role admin-role"
+                                                                : "sender-role customer-role"
+                                                        }
+                                                    >
+                                                        {message.sender === "Admin"
+                                                            ? "Support"
+                                                            : "Customer"}
+                                                    </span>
+                                                </div>
+
+                                                <span>
+                                                    {new Date(
+                                                        message.created_at
+                                                    ).toLocaleString()}
+                                                </span>
+
+                                            </div>
+
+                                            <div className="message-bubble">
+                                                {message.message}
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                ))
+
+                            )}
+
+                        </div>
+
                     </div>
 
                     {/* =========================
-                        STATUS
+                        INFORMATION
                     ========================= */}
 
-                    <div className="status-control">
+                    <aside className="ticket-information">
 
-                        <label>
-                            Update Status
-                        </label>
+                        <div className="information-header">
 
-                        <select
-                            value={status}
-                            onChange={handleStatusChange}
-                            disabled={statusLoading}
-                        >
-                            <option value="Open">
-                                Open
-                            </option>
+                            <div className="information-header-icon">
+                                📋
+                            </div>
 
-                            <option value="In Progress">
-                                In Progress
-                            </option>
+                            <div>
+                                <h2>
+                                    Ticket Information
+                                </h2>
 
-                            <option value="Resolved">
-                                Resolved
-                            </option>
+                                <p>
+                                    Customer and ticket details
+                                </p>
+                            </div>
 
-                            <option value="Closed">
-                                Closed
-                            </option>
-                        </select>
+                        </div>
+
+                        <div className="information-list">
+
+                            <div className="information-item">
+                                <span>Customer</span>
+
+                                <strong>
+                                    {ticket.customer_username}
+                                </strong>
+                            </div>
+
+                            <div className="information-item">
+                                <span>Email</span>
+
+                                <strong className="email-value">
+                                    {ticket.customer_email}
+                                </strong>
+                            </div>
+
+                            <div className="information-item">
+                                <span>Category</span>
+
+                                <strong>
+                                    {ticket.category}
+                                </strong>
+                            </div>
+
+                            <div className="information-item">
+                                <span>Order</span>
+
+                                <strong>
+                                    {ticket.order_id
+                                        ? `#${ticket.order_id}`
+                                        : "No order"}
+                                </strong>
+                            </div>
+
+                            <div className="information-item">
+                                <span>Created</span>
+
+                                <strong>
+                                    {new Date(
+                                        ticket.created_at
+                                    ).toLocaleString()}
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        {/* STATUS */}
+
+                        <div className="status-control">
+
+                            <label htmlFor="ticket-status">
+                                Update Status
+                            </label>
+
+                            <select
+                                id="ticket-status"
+                                value={status}
+                                onChange={handleStatusChange}
+                                disabled={statusLoading}
+                            >
+                                <option value="Open">
+                                    Open
+                                </option>
+
+                                <option value="In Progress">
+                                    In Progress
+                                </option>
+
+                                <option value="Resolved">
+                                    Resolved
+                                </option>
+
+                                <option value="Closed">
+                                    Closed
+                                </option>
+                            </select>
+
+                            {statusLoading && (
+                                <span className="status-saving">
+                                    Updating status...
+                                </span>
+                            )}
+
+                        </div>
+
+                    </aside>
+
+                </div>
+
+                {/* =========================
+                    REPLY
+                ========================= */}
+
+                {ticket.status !== "Closed" && (
+
+                    <div className="ticket-reply-section">
+
+                        <div className="reply-section-header">
+
+                            <div className="reply-title">
+
+                                <div className="reply-icon">
+                                    ✍️
+                                </div>
+
+                                <div>
+                                    <h2>
+                                        Reply to Customer
+                                    </h2>
+
+                                    <p>
+                                        Send a message directly
+                                        to the customer
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        {error && (
+                            <div className="ticket-alert ticket-alert-error">
+                                <span>⚠️</span>
+                                {error}
+                            </div>
+                        )}
+
+                        {success && (
+                            <div className="ticket-alert ticket-alert-success">
+                                <span>✓</span>
+                                {success}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleReply}>
+
+                            <textarea
+                                value={reply}
+                                onChange={(e) => {
+                                    setReply(e.target.value);
+                                    setError("");
+                                    setSuccess("");
+                                }}
+                                placeholder="Type your reply to the customer..."
+                                rows="5"
+                                maxLength="5000"
+                                disabled={replyLoading}
+                            />
+
+                            <div className="reply-footer">
+
+                                <span className="reply-character-count">
+                                    {reply.length}/5000
+                                </span>
+
+                                <button
+                                    type="submit"
+                                    className="send-reply-button"
+                                    disabled={replyLoading}
+                                >
+                                    {replyLoading ? (
+                                        <>
+                                            <span className="reply-spinner"></span>
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Send Reply
+                                            <span>→</span>
+                                        </>
+                                    )}
+                                </button>
+
+                            </div>
+
+                        </form>
 
                     </div>
 
-                </div>
+                )}
+
+                {/* =========================
+                    CLOSED
+                ========================= */}
+
+                {ticket.status === "Closed" && (
+
+                    <div className="closed-ticket-message">
+
+                        <div className="closed-ticket-icon">
+                            🔒
+                        </div>
+
+                        <div>
+                            <strong>
+                                This ticket is closed.
+                            </strong>
+
+                            <p>
+                                No further replies can be sent
+                                to this customer.
+                            </p>
+                        </div>
+
+                    </div>
+
+                )}
 
             </div>
-
-            {/* =========================
-                REPLY SECTION
-            ========================= */}
-
-            {ticket.status !== "Closed" && (
-
-                <div className="ticket-reply-section">
-
-                    <h2>
-                        Reply to Customer
-                    </h2>
-
-                    {error && (
-                        <p className="ticket-error">
-                            {error}
-                        </p>
-                    )}
-
-                    {success && (
-                        <p className="ticket-success">
-                            {success}
-                        </p>
-                    )}
-
-                    <form onSubmit={handleReply}>
-
-                        <textarea
-                            value={reply}
-                            onChange={(e) =>
-                                setReply(e.target.value)
-                            }
-                            placeholder="Type your reply to the customer..."
-                            rows="5"
-                        />
-
-                        <button
-                            type="submit"
-                            disabled={replyLoading}
-                        >
-                            {replyLoading
-                                ? "Sending..."
-                                : "Send Reply"}
-                        </button>
-
-                    </form>
-
-                </div>
-
-            )}
-
-            {ticket.status === "Closed" && (
-
-                <div className="closed-ticket-message">
-
-                    <strong>
-                        This ticket is closed.
-                    </strong>
-
-                    <p>
-                        No further replies can be sent.
-                    </p>
-
-                </div>
-
-            )}
-
         </div>
     );
 }
