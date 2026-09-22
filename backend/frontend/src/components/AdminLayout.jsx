@@ -14,6 +14,7 @@ function AdminLayout() {
     { name: "Reviews", path: "/admin/reviews", icon: "⭐" },
     { name: "Support", path: "/admin/support", icon: "🎧" },
     { name: "Notifications", path: "/admin/notifications", icon: "🔔" },
+    { name: "Referrals", path: "/admin/referrals", icon: "🎁" },
     // { name: "Settings", path: "/admin/settings", icon: "⚙️" },
   ];
 

@@ -58,6 +58,10 @@ from .views import (
     admin_dashboard,
     address_list,
     address_detail,
+    get_wallet,
+    get_wallet_transactions,
+    get_referral_details,
+    admin_referrals,
     )
 
 from .views import (
@@ -394,5 +398,10 @@ path(
 
 path("addresses/", address_list),
 path("addresses/<int:address_id>/", address_detail),
+
+path("wallet/", get_wallet),
+path("wallet/transactions/", get_wallet_transactions),
+path("referral/", get_referral_details),
+path("admin/referrals/", admin_referrals),
 
 ]

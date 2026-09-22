@@ -44,6 +44,18 @@ export const deleteAddress = (addressId) => {
   return api.delete(`addresses/${addressId}/`);
 };
 
+export const registerUser = (data) => {
+  return api.post("register/", data);
+};
+
+export const verifyRegistrationOTP = (data) => {
+  return api.post("verify-registration-otp/", data);
+};
+
+export const resendRegistrationOTP = (data) => {
+  return api.post("resend-registration-otp/", data);
+};
+
 export const getWishlist = () => {
   return api.get("wishlist/");
 };
@@ -55,5 +67,13 @@ export const addToWishlist = (productId) => {
 export const removeFromWishlist = (productId) => {
   return api.delete(`wishlist/remove/${productId}/`);
 };
+
+export const getWallet = () => api.get("wallet/");
+
+export const getWalletTransactions = () =>
+  api.get("wallet/transactions/");
+
+export const getReferralDetails = () =>
+  api.get("referral/");
 
 export default api;

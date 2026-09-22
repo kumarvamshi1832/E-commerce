@@ -43,7 +43,11 @@ import AdminNotifications from "./pages/AdminNotifications";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminDashboard from "./pages/AdminDashboard";
 
+import Wallet from "./pages/Wallet";
+
 import Addresses from "./pages/Addresses";
+import ReferEarn from "./pages/ReferEarn";
+import AdminReferrals from "./pages/AdminReferrals";
 
 function AppContent() {
   const location = useLocation();
@@ -73,6 +77,8 @@ function AppContent() {
           path="*"
           element={<Navigate to="/login" replace />}
         />
+
+        
       </Routes>
     );
   }
@@ -150,6 +156,11 @@ function AppContent() {
           <Route
             path="notifications"
             element={<AdminNotifications />}
+          />
+
+          <Route
+            path="referrals"
+            element={<AdminReferrals/>}
           />
 
           <Route
@@ -259,6 +270,13 @@ function AppContent() {
           path="/profile"
           element={<Profile />}
         />
+
+                <Route path="/wallet" element={<Wallet />} />
+
+<Route
+  path="/refer-earn"
+  element={<ReferEarn />}
+/>
 
         <Route
           path="/support"

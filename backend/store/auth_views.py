@@ -10,6 +10,7 @@ import random
 import os
 import requests
 from rest_framework.authtoken.models import Token
+from .models import UserProfile, Referral
 
 
 
@@ -52,6 +53,11 @@ def register_user(request):
             ""
         )
 
+        referral_code = data.get(
+            "referral_code",
+            ""
+        ).strip().upper()
+
         if (
             not username
             or not email
@@ -69,7 +75,51 @@ def register_user(request):
                 status=400
             )
 
-        # Check username
+        # =================================================
+        # VALIDATE REFERRAL CODE
+        # =================================================
+
+        referrer = None
+
+        if referral_code:
+
+            try:
+                referrer_profile = UserProfile.objects.select_related(
+                    "user"
+                ).get(
+                    referral_code=referral_code
+                )
+
+            except UserProfile.DoesNotExist:
+
+                return JsonResponse(
+                    {"error": "Invalid referral code."},
+                    status=400
+                )
+
+            referrer = referrer_profile.user
+
+            if not referrer.is_active:
+
+                return JsonResponse(
+                    {"error": "This referral code is not active."},
+                    status=400
+                )
+
+            if referrer.username.lower() == username.lower():
+
+                return JsonResponse(
+                    {
+                        "error": (
+                            "You cannot use your own referral code."
+                        )
+                    },
+                    status=400
+                )
+
+        # =================================================
+        # CHECK USERNAME
+        # =================================================
 
         existing_username = User.objects.filter(
             username__iexact=username
@@ -77,19 +127,28 @@ def register_user(request):
 
         if existing_username:
 
-            # Allow retry if previous registration
-            # was never verified
-
             if not existing_username.is_active:
+
+                cache.delete(
+                    f"registration_otp_{existing_username.id}"
+                )
+
+                cache.delete(
+                    f"registration_referrer_{existing_username.id}"
+                )
+
                 existing_username.delete()
 
             else:
+
                 return JsonResponse(
                     {"error": "Username already exists."},
                     status=400
                 )
 
-        # Check email
+        # =================================================
+        # CHECK EMAIL
+        # =================================================
 
         existing_email = User.objects.filter(
             email__iexact=email
@@ -98,9 +157,19 @@ def register_user(request):
         if existing_email:
 
             if not existing_email.is_active:
+
+                cache.delete(
+                    f"registration_otp_{existing_email.id}"
+                )
+
+                cache.delete(
+                    f"registration_referrer_{existing_email.id}"
+                )
+
                 existing_email.delete()
 
             else:
+
                 return JsonResponse(
                     {
                         "error": (
@@ -111,7 +180,9 @@ def register_user(request):
                     status=400
                 )
 
-        # Create inactive user
+        # =================================================
+        # CREATE INACTIVE USER
+        # =================================================
 
         user = User.objects.create_user(
             username=username,
@@ -119,16 +190,26 @@ def register_user(request):
             password=password
         )
 
-        # User cannot login until OTP is verified
-
         user.is_active = False
         user.save()
 
-        # Generate OTP
+        # =================================================
+        # STORE REFERRER TEMPORARILY
+        # =================================================
+
+        if referrer:
+
+            cache.set(
+                f"registration_referrer_{user.id}",
+                referrer.id,
+                OTP_EXPIRY
+            )
+
+        # =================================================
+        # GENERATE OTP
+        # =================================================
 
         otp = generate_otp()
-
-        # Store hashed OTP in cache
 
         cache.set(
             f"registration_otp_{user.id}",
@@ -272,9 +353,11 @@ MyStore Team
             status=500
         )
 
+    
 
 @csrf_exempt
 def verify_registration_otp(request):
+
     if request.method != "POST":
         return JsonResponse(
             {"error": "Only POST requests are allowed."},
@@ -282,95 +365,31 @@ def verify_registration_otp(request):
         )
 
     try:
+
         data = json.loads(request.body)
 
         user_id = data.get("user_id")
-        otp = data.get("otp", "").strip()
+
+        otp = data.get(
+            "otp",
+            ""
+        ).strip()
 
         if not user_id or not otp:
             return JsonResponse(
-                {"error": "User ID and OTP are required."},
+                {
+                    "error": (
+                        "User ID and OTP are required."
+                    )
+                },
                 status=400
             )
 
         if not otp.isdigit() or len(otp) != 6:
             return JsonResponse(
-                {"error": "OTP must be 6 digits."},
-                status=400
-            )
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return JsonResponse(
-                {"error": "Registration session not found."},
-                status=404
-            )
-
-        stored_otp = cache.get(
-            f"registration_otp_{user.id}"
-        )
-
-        if not stored_otp:
-            return JsonResponse(
                 {
-                    "error": "OTP has expired. Please request a new OTP."
+                    "error": "OTP must be 6 digits."
                 },
-                status=400
-            )
-
-        if not check_password(otp, stored_otp):
-            return JsonResponse(
-                {"error": "Invalid OTP."},
-                status=400
-            )
-
-        # OTP correct
-        user.is_active = True
-        user.save()
-
-        # Delete OTP after successful verification
-        cache.delete(
-            f"registration_otp_{user.id}"
-        )
-
-        return JsonResponse(
-            {
-                "message": "Email verified successfully. Registration completed!"
-            }
-        )
-
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "Invalid JSON data."},
-            status=400
-        )
-
-    except Exception as e:
-        return JsonResponse(
-            {"error": str(e)},
-            status=500
-        )
-
-
-@csrf_exempt
-def resend_registration_otp(request):
-
-    if request.method != "POST":
-        return JsonResponse(
-            {"error": "Only POST requests are allowed."},
-            status=405
-        )
-
-    try:
-
-        data = json.loads(request.body)
-
-        user_id = data.get("user_id")
-
-        if not user_id:
-            return JsonResponse(
-                {"error": "User ID is required."},
                 status=400
             )
 
@@ -382,6 +401,156 @@ def resend_registration_otp(request):
 
         except User.DoesNotExist:
 
+            return JsonResponse(
+                {
+                    "error": (
+                        "Registration session not found."
+                    )
+                },
+                status=404
+            )
+
+        stored_otp = cache.get(
+            f"registration_otp_{user.id}"
+        )
+
+        if not stored_otp:
+
+            return JsonResponse(
+                {
+                    "error": (
+                        "OTP has expired. "
+                        "Please request a new OTP."
+                    )
+                },
+                status=400
+            )
+
+        if not check_password(
+            otp,
+            stored_otp
+        ):
+
+            return JsonResponse(
+                {
+                    "error": "Invalid OTP."
+                },
+                status=400
+            )
+
+        # =================================================
+        # OTP CORRECT
+        # =================================================
+
+        user.is_active = True
+        user.save()
+
+        # =================================================
+        # CREATE REFERRAL
+        # =================================================
+
+        referrer_id = cache.get(
+            f"registration_referrer_{user.id}"
+        )
+
+        if referrer_id:
+
+            try:
+
+                referrer = User.objects.get(
+                    id=referrer_id,
+                    is_active=True
+                )
+
+                referral_code = UserProfile.objects.get(
+                    user=referrer
+                ).referral_code
+
+                Referral.objects.get_or_create(
+                    referred_user=user,
+                    defaults={
+                        "referrer": referrer,
+                        "referral_code": referral_code,
+                        "status": "Pending",
+                        "first_bonus_credited": False,
+                    }
+                )
+
+            except User.DoesNotExist:
+
+                pass
+
+            except UserProfile.DoesNotExist:
+
+                pass
+
+        # =================================================
+        # DELETE REGISTRATION CACHE
+        # =================================================
+
+        cache.delete(
+            f"registration_otp_{user.id}"
+        )
+
+        cache.delete(
+            f"registration_referrer_{user.id}"
+        )
+
+        return JsonResponse(
+            {
+                "message": (
+                    "Email verified successfully. "
+                    "Registration completed!"
+                )
+            }
+        )
+
+    except json.JSONDecodeError:
+
+        return JsonResponse(
+            {
+                "error": "Invalid JSON data."
+            },
+            status=400
+        )
+
+    except Exception as e:
+
+        return JsonResponse(
+            {
+                "error": str(e)
+            },
+            status=500
+        )
+
+    
+
+@csrf_exempt
+def resend_registration_otp(request):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Only POST requests are allowed."},
+            status=405
+        )
+
+    try:
+        data = json.loads(request.body)
+
+        user_id = data.get("user_id")
+
+        if not user_id:
+            return JsonResponse(
+                {"error": "User ID is required."},
+                status=400
+            )
+
+        try:
+            user = User.objects.get(
+                id=user_id
+            )
+
+        except User.DoesNotExist:
             return JsonResponse(
                 {
                     "error": (
@@ -403,20 +572,33 @@ def resend_registration_otp(request):
                 status=400
             )
 
+        # Generate new OTP
         otp = generate_otp()
 
+        # Store hashed OTP in cache
         cache.set(
             f"registration_otp_{user.id}",
             make_password(otp),
             OTP_EXPIRY
         )
 
+        # Preserve referral ID if it exists
+        referrer_id = cache.get(
+            f"registration_referrer_{user.id}"
+        )
+
+        if referrer_id:
+            cache.set(
+                f"registration_referrer_{user.id}",
+                referrer_id,
+                OTP_EXPIRY
+            )
+
         # =================================================
         # SEND NEW OTP USING BREVO API
         # =================================================
 
         try:
-
             print(
                 "STARTING BREVO RESEND OTP",
                 flush=True
@@ -448,32 +630,26 @@ MyStore Team
 
             response = requests.post(
                 "https://api.brevo.com/v3/smtp/email",
-
                 headers={
                     "accept": "application/json",
                     "api-key": brevo_api_key,
                     "content-type": "application/json",
                 },
-
                 json={
                     "sender": {
                         "name": "MyStore",
                         "email": "kumarvamshi1832@gmail.com",
                     },
-
                     "to": [
                         {
                             "email": user.email,
                         }
                     ],
-
                     "subject": (
                         "Your MyStore Verification OTP"
                     ),
-
                     "textContent": otp_message,
                 },
-
                 timeout=10,
             )
 
@@ -497,7 +673,6 @@ MyStore Team
             )
 
         except Exception as email_error:
-
             print(
                 "BREVO RESEND OTP ERROR:",
                 repr(email_error),
@@ -521,7 +696,6 @@ MyStore Team
         )
 
     except json.JSONDecodeError:
-
         return JsonResponse(
             {
                 "error": "Invalid JSON data."
@@ -530,13 +704,13 @@ MyStore Team
         )
 
     except Exception as e:
-
         return JsonResponse(
             {
                 "error": str(e)
             },
             status=500
         )
+
 
 @csrf_exempt
 def login_user(request):

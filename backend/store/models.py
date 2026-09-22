@@ -473,3 +473,138 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.full_name} - {self.city}"
+
+
+class Wallet(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="wallet"
+    )
+    balance = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - ₹{self.balance}"
+
+
+class WalletTransaction(models.Model):
+    TRANSACTION_TYPES = [
+        ("Credit", "Credit"),
+        ("Debit", "Debit"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="wallet_transactions"
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+    transaction_type = models.CharField(
+        max_length=10,
+        choices=TRANSACTION_TYPES
+    )
+    description = models.CharField(max_length=255)
+
+    order = models.ForeignKey(
+        "Order",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="wallet_transactions"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.transaction_type} - ₹{self.amount}"
+
+
+class Referral(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Successful", "Successful"),
+    ]
+
+    referrer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="referrals_made"
+    )
+
+    referred_user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="referred_by"
+    )
+
+    referral_code = models.CharField(max_length=50)
+
+    first_order = models.ForeignKey(
+        "Order",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="referral_first_order"
+    )
+
+    first_bonus_credited = models.BooleanField(default=False)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Pending"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.referrer.username} → {self.referred_user.username}"
+
+import random
+import string
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+
+    referral_code = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+            while True:
+                code = (
+                    self.user.username[:6].upper()
+                    + "".join(
+                        random.choices(
+                            string.digits,
+                            k=4
+                        )
+                    )
+                )
+
+                if not UserProfile.objects.filter(
+                    referral_code=code
+                ).exists():
+                    self.referral_code = code
+                    break
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.user.username

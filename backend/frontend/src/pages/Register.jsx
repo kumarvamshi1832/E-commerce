@@ -1,30 +1,13 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  registerUser,
+  verifyRegistrationOTP,
+  resendRegistrationOTP,
+} from "../services/api";
 import "./Register.css";
 
-function Register() {
-  const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirm_password: "",
-  });
-
-  const [otp, setOtp] = useState("");
-  const [userId, setUserId] = useState(null);
-
-  const [otpStep, setOtpStep] = useState(false);
-
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-
-  const vegetables = [
+const vegetables = [
   "🥕", "🥦", "🍅", "🥬", "🫑",
   "🥒", "🌽", "🍆", "🧅", "🥔",
   "🍎", "🍏", "🍋", "🍊", "🥝",
@@ -37,20 +20,59 @@ function Register() {
   "🌽", "🍆", "🧅", "🥔", "🍎"
 ];
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+function Register() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirm_password: "",
+    referral_code: "",
+  });
+
+  
+
+  const [userId, setUserId] = useState(null);
+  const [otp, setOtp] = useState("");
+
+  const [showOTP, setShowOTP] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const referralCode = searchParams.get("ref");
+
+    if (referralCode) {
+      setFormData((previousData) => ({
+        ...previousData,
+        referral_code: referralCode.toUpperCase(),
+      }));
+    }
+  }, [searchParams]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
 
     setError("");
+    setMessage("");
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async (event) => {
+    event.preventDefault();
 
+    setLoading(true);
     setError("");
-    setSuccess("");
+    setMessage("");
 
     if (
       !formData.username ||
@@ -58,76 +80,72 @@ function Register() {
       !formData.password ||
       !formData.confirm_password
     ) {
-      setError("Please fill in all fields.");
+      setError("Please fill in all required fields.");
+      setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirm_password) {
       setError("Passwords do not match.");
+      setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
-
-      const response = await api.post(
-        "register/",
-        formData
-      );
+      const response = await registerUser(formData);
 
       setUserId(response.data.user_id);
+      setShowOTP(true);
 
-      setSuccess(
-        "OTP sent successfully. Please check your email."
+      setMessage(
+        response.data.message ||
+          "Registration successful. Please verify your email with the OTP."
       );
-
-      setOtpStep(true);
-
     } catch (error) {
+      console.log("Registration error:", error);
+
       setError(
         error.response?.data?.error ||
-        "Registration failed. Please try again."
+          "Registration failed. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
+  const handleVerifyOTP = async (event) => {
+    event.preventDefault();
 
     setError("");
-    setSuccess("");
+    setMessage("");
 
     if (!otp) {
       setError("Please enter the OTP.");
       return;
     }
 
-    if (otp.length !== 6) {
-      setError("OTP must be 6 digits.");
-      return;
-    }
+    setLoading(true);
 
     try {
-      setLoading(true);
+      const response = await verifyRegistrationOTP({
+        user_id: userId,
+        otp: otp,
+      });
 
-      const response = await api.post(
-        "verify-registration-otp/",
-        {
-          user_id: userId,
-          otp: otp,
-        }
+      setMessage(
+        response.data.message ||
+          "Email verified successfully. You can now login."
       );
 
-      setSuccess(response.data.message);
-
-      
-
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (error) {
+      console.log("OTP verification error:", error);
+
       setError(
         error.response?.data?.error ||
-        "OTP verification failed."
+          "Invalid OTP. Please try again."
       );
     } finally {
       setLoading(false);
@@ -136,210 +154,268 @@ function Register() {
 
   const handleResendOTP = async () => {
     setError("");
-    setSuccess("");
+    setMessage("");
+
+    if (!userId) {
+      setError("Unable to resend OTP. Please register again.");
+      return;
+    }
+
+    setResending(true);
 
     try {
-      setResendLoading(true);
+      const response = await resendRegistrationOTP({
+        user_id: userId,
+      });
 
-      const response = await api.post(
-        "resend-registration-otp/",
-        {
-          user_id: userId,
-        }
+      setMessage(
+        response.data.message ||
+          "A new OTP has been sent to your email."
       );
-
-      setSuccess(response.data.message);
-
     } catch (error) {
+      console.log("Resend OTP error:", error);
+
       setError(
         error.response?.data?.error ||
-        "Unable to resend OTP."
+          "Unable to resend OTP. Please try again."
       );
     } finally {
-      setResendLoading(false);
+      setResending(false);
     }
   };
 
   return (
-    <main className="register-page">
-
-       <div className="floating-groceries">
-    {vegetables.map((vegetable, index) => (
-      <span
-        key={index}
-        className="floating-grocery"
-      >
-        {vegetable}
-      </span>
-    ))}
-  </div>
+    <div className="register-page">
 
 
+    <div className="floating-groceries">
+      {vegetables.map((vegetable, index) => (
+        <span
+          key={index}
+          className="floating-grocery"
+        >
+          {vegetable}
+        </span>
+      ))}
+    </div>
+    
+      <div className="register-container">
 
+        {!showOTP ? (
+          <>
+            <div className="register-header">
+              <p className="register-label">MY-STORE</p>
 
-      <div className="register-card">
+              <h1>Create Account</h1>
 
-        <div className="register-header">
-
-          <p className="register-label">
-            {otpStep
-              ? "EMAIL VERIFICATION"
-              : "CREATE YOUR ACCOUNT"}
-          </p>
-
-          <h1>
-            {otpStep
-              ? "Verify your email"
-              : "Join us"}
-          </h1>
-
-          <p>
-            {otpStep
-              ? `Enter the OTP sent to ${formData.email}`
-              : "Create an account and start shopping."}
-          </p>
-
-        </div>
-
-        {error && (
-          <div className="register-message error-message">
-            ⚠️ {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="register-message success-message">
-            ✅ {success}
-          </div>
-        )}
-
-        {!otpStep ? (
-
-          <form onSubmit={handleRegister}>
-
-            <div className="form-group">
-              <label>Username</label>
-
-              <input
-                type="text"
-                name="username"
-                placeholder="Enter your username"
-                value={formData.username}
-                onChange={handleChange}
-              />
+              <p>
+                Create your account and start shopping with us.
+              </p>
             </div>
 
-            <div className="form-group">
-              <label>Email</label>
-
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Password</label>
-
-              <input
-                type="password"
-                name="password"
-                placeholder="Create a password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Confirm Password</label>
-
-              <input
-                type="password"
-                name="confirm_password"
-                placeholder="Confirm your password"
-                value={formData.confirm_password}
-                onChange={handleChange}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="register-button"
-              disabled={loading}
+            <form
+              className="register-form"
+              onSubmit={handleRegister}
             >
-              {loading
-                ? "Sending OTP..."
-                : "Create Account"}
-            </button>
 
-          </form>
+              <div className="form-group">
+                <label>Username</label>
 
+                <input
+                  type="text"
+                  name="username"
+                  placeholder="Enter username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  autoComplete="username"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Email</label>
+
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter email address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Password</label>
+
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Enter password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Confirm Password</label>
+
+                <input
+                  type="password"
+                  name="confirm_password"
+                  placeholder="Confirm password"
+                  value={formData.confirm_password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>
+                  Referral Code (optional)
+                  <span className="optional-label">
+                    
+                  </span>
+                </label>
+
+                <input
+                  type="text"
+                  name="referral_code"
+                  placeholder="Enter referral code"
+                  value={formData.referral_code}
+                  onChange={handleChange}
+                  autoComplete="off"
+                />
+
+                {formData.referral_code && (
+                  <small className="referral-detected">
+                    Referral code applied
+                  </small>
+                )}
+              </div>
+
+              {error && (
+                <div className="register-error">
+                  {error}
+                </div>
+              )}
+
+              {message && (
+                <div className="register-message">
+                  {message}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="register-submit"
+                disabled={loading}
+              >
+                {loading
+                  ? "Creating Account..."
+                  : "Create Account"}
+              </button>
+
+              <div className="register-login-link">
+                Already have an account?
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                >
+                  Login
+                </button>
+              </div>
+
+            </form>
+          </>
         ) : (
+          <>
+            <div className="register-header">
+              <p className="register-label">MY-STORE</p>
 
-          <form onSubmit={handleVerifyOTP}>
+              <h1>Verify Your Email</h1>
 
-            <div className="form-group">
-
-              <label>Verification OTP</label>
-
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength="6"
-                placeholder="Enter 6 digit OTP"
-                value={otp}
-                onChange={(e) => {
-                  const value = e.target.value
-                    .replace(/\D/g, "");
-
-                  setOtp(value);
-                  setError("");
-                }}
-              />
-
+              <p>
+                Enter the OTP sent to your email address.
+              </p>
             </div>
 
-            <button
-              type="submit"
-              className="register-button"
-              disabled={loading}
+            <form
+              className="register-form"
+              onSubmit={handleVerifyOTP}
             >
-              {loading
-                ? "Verifying..."
-                : "Verify Email"}
-            </button>
 
-            <button
-              type="button"
-              className="resend-button"
-              onClick={handleResendOTP}
-              disabled={resendLoading}
-            >
-              {resendLoading
-                ? "Sending..."
-                : "Resend OTP"}
-            </button>
+              <div className="form-group">
+                <label>OTP</label>
 
-          </form>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(event) => {
+                    setOtp(event.target.value);
+                    setError("");
+                    setMessage("");
+                  }}
+                  placeholder="Enter 6-digit OTP"
+                  maxLength="6"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+              </div>
 
+              {error && (
+                <div className="register-error">
+                  {error}
+                </div>
+              )}
+
+              {message && (
+                <div className="register-message">
+                  {message}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="register-submit"
+                disabled={loading}
+              >
+                {loading
+                  ? "Verifying..."
+                  : "Verify Email"}
+              </button>
+
+              <button
+                type="button"
+                className="resend-otp-button"
+                onClick={handleResendOTP}
+                disabled={resending}
+              >
+                {resending
+                  ? "Sending..."
+                  : "Resend OTP"}
+              </button>
+
+              <button
+                type="button"
+                className="back-register-button"
+                onClick={() => {
+                  setShowOTP(false);
+                  setOtp("");
+                  setError("");
+                  setMessage("");
+                }}
+              >
+                Back to Registration
+              </button>
+
+            </form>
+          </>
         )}
-
-        <div className="login-link">
-
-          Already have an account?{" "}
-
-          <Link to="/login">
-            Login
-          </Link>
-
-        </div>
 
       </div>
-
-    </main>
+    </div>
   );
 }
 

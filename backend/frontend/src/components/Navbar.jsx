@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { FaShoppingCart } from "react-icons/fa";
+import { FaWallet } from "react-icons/fa";
 import {
   getNotifications,
   markNotificationRead,
@@ -331,6 +332,26 @@ function Navbar() {
                   >
                     👤 My Profile
                   </button>
+
+                  <button
+  type="button"
+  onClick={() => {
+    setShowUserMenu(false);
+    navigate("/wallet");
+  }}
+>
+  💰 My Wallet
+</button>
+
+<button
+  type="button"
+  onClick={() => {
+    setShowUserMenu(false);
+    navigate("/refer-earn");
+  }}
+>
+  🎁 Refer & Earn
+</button>
 
                   <button
                     type="button"

@@ -10,7 +10,9 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import (Product, Order, OrderItem, Coupon,
                      EmailOTP,Wishlist,ProductFeedback,
                      SupportTicket,SupportMessage,Notification,ProductReview,
-                     DeliveryPincode, Address,)
+                     DeliveryPincode, Address,Wallet,WalletTransaction,Referral,UserProfile,)
+from django.db import transaction
+from decimal import Decimal
 import random
 import os
 import requests
@@ -510,8 +512,77 @@ def admin_update_order_status(request, order_id):
                 status=400
             )
 
-        order.status = new_status
-        order.save()
+        old_status = order.status
+
+        with transaction.atomic():
+
+            order.status = new_status
+            order.save()
+
+            if old_status != "Delivered" and new_status == "Delivered":
+
+                try:
+                    referral = Referral.objects.get(
+                        referred_user=order.user
+                    )
+                except Referral.DoesNotExist:
+                    referral = None
+
+                if referral:
+
+                    if (
+                        not referral.first_bonus_credited
+                        and order.total_amount >= Decimal("200")
+                    ):
+                        wallet, created = Wallet.objects.get_or_create(
+                            user=referral.referrer
+                        )
+
+                        wallet.balance += Decimal("100")
+                        wallet.save()
+
+                        WalletTransaction.objects.create(
+                            user=referral.referrer,
+                            amount=Decimal("100"),
+                            transaction_type="Credit",
+                            description=(
+                                f"Referral bonus for referring "
+                                f"{order.user.username}"
+                            ),
+                            order=order
+                        )
+
+                        referral.first_order = order
+                        referral.first_bonus_credited = True
+                        referral.status = "Successful"
+                        referral.save()
+
+                    elif (
+                        referral.first_bonus_credited
+                        and referral.status == "Successful"
+                    ):
+                        commission = (
+                            order.total_amount * Decimal("0.10")
+                        )
+
+                        if commission > 0:
+                            wallet, created = Wallet.objects.get_or_create(
+                                user=referral.referrer
+                            )
+
+                            wallet.balance += commission
+                            wallet.save()
+
+                            WalletTransaction.objects.create(
+                                user=referral.referrer,
+                                amount=commission,
+                                transaction_type="Credit",
+                                description=(
+                                    f"10% referral commission from "
+                                    f"{order.user.username}"
+                                ),
+                                order=order
+                            )
 
         return JsonResponse({
             "message": "Order status updated successfully.",
@@ -524,7 +595,7 @@ def admin_update_order_status(request, order_id):
             {"error": "Invalid JSON data."},
             status=400
         )
-
+    
 @csrf_exempt
 @admin_required
 def admin_customer_list(request):
@@ -1361,6 +1432,87 @@ def admin_toggle_coupon_status(request, coupon_id):
         "message": "Coupon status updated successfully.",
         "id": coupon.id,
         "active": coupon.active,
+    })
+
+@csrf_exempt
+@admin_required
+def admin_referrals(request):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET requests are allowed."},
+            status=405
+        )
+
+    referrals = Referral.objects.select_related(
+        "referrer",
+        "referred_user",
+        "first_order"
+    ).order_by("-created_at")
+
+    referral_data = []
+
+    total_referrals = referrals.count()
+    successful_referrals = referrals.filter(
+        status="Successful"
+    ).count()
+    pending_referrals = referrals.filter(
+        status="Pending"
+    ).count()
+
+    total_earnings = WalletTransaction.objects.filter(
+        transaction_type="Credit",
+        description__icontains="Referral"
+    ).aggregate(
+        total=Sum("amount")
+    )["total"] or 0
+
+    for referral in referrals:
+
+        referral_transactions = WalletTransaction.objects.filter(
+            user=referral.referrer,
+            transaction_type="Credit",
+            description__icontains="Referral",
+            created_at__gte=referral.created_at
+        )
+
+        referral_earnings = referral_transactions.aggregate(
+            total=Sum("amount")
+        )["total"] or 0
+
+        first_order_amount = None
+
+        if referral.first_order:
+            first_order_amount = str(
+                referral.first_order.total_amount
+            )
+
+        referral_data.append({
+            "id": referral.id,
+            "referrer_id": referral.referrer.id,
+            "referrer_username": referral.referrer.username,
+            "referred_user_id": referral.referred_user.id,
+            "referred_username": referral.referred_user.username,
+            "referred_email": referral.referred_user.email,
+            "referral_code": referral.referral_code,
+            "status": referral.status,
+            "first_order_id": (
+                referral.first_order.id
+                if referral.first_order
+                else None
+            ),
+            "first_order_amount": first_order_amount,
+            "first_bonus_credited": referral.first_bonus_credited,
+            "referral_earnings": str(referral_earnings),
+            "created_at": referral.created_at.isoformat()
+        })
+
+    return JsonResponse({
+        "total_referrals": total_referrals,
+        "successful_referrals": successful_referrals,
+        "pending_referrals": pending_referrals,
+        "total_earnings": str(total_earnings),
+        "referrals": referral_data
     })
 
 
@@ -4172,3 +4324,146 @@ def check_delivery(request):
         "products": delivery_data
     })
 
+@csrf_exempt
+@token_auth_required
+def get_wallet(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET requests are allowed."},
+            status=405
+        )
+
+    wallet, created = Wallet.objects.get_or_create(
+        user=request.user
+    )
+
+    transactions = WalletTransaction.objects.filter(
+        user=request.user
+    )
+
+    total_credits = transactions.filter(
+        transaction_type="Credit"
+    ).aggregate(
+        total=Sum("amount")
+    )["total"] or 0
+
+    total_debits = transactions.filter(
+        transaction_type="Debit"
+    ).aggregate(
+        total=Sum("amount")
+    )["total"] or 0
+
+    return JsonResponse({
+        "balance": str(wallet.balance),
+        "total_credits": str(total_credits),
+        "total_debits": str(total_debits)
+    })
+
+
+@csrf_exempt
+@token_auth_required
+def get_wallet_transactions(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET requests are allowed."},
+            status=405
+        )
+
+    transactions = WalletTransaction.objects.filter(
+        user=request.user
+    ).order_by("-created_at")
+
+    transaction_data = []
+
+    for transaction_item in transactions:
+        transaction_data.append({
+            "id": transaction_item.id,
+            "amount": str(transaction_item.amount),
+            "transaction_type": transaction_item.transaction_type,
+            "description": transaction_item.description,
+            "order_id": transaction_item.order.id
+            if transaction_item.order
+            else None,
+            "created_at": transaction_item.created_at.isoformat()
+        })
+
+    return JsonResponse({
+        "transactions": transaction_data
+    })
+
+@csrf_exempt
+@token_auth_required
+def get_referral_details(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "Only GET requests are allowed."},
+            status=405
+        )
+
+    profile, created = UserProfile.objects.get_or_create(
+        user=request.user
+    )
+
+    referrals = Referral.objects.filter(
+        referrer=request.user
+    ).select_related("referred_user", "first_order")
+
+    total_referrals = referrals.count()
+
+    successful_referrals = referrals.filter(
+        status="Successful"
+    ).count()
+
+    total_earnings = WalletTransaction.objects.filter(
+        user=request.user,
+        transaction_type="Credit",
+        description__icontains="Referral"
+    ).aggregate(
+        total=Sum("amount")
+    )["total"] or 0
+
+    referral_history = []
+
+    for referral in referrals.order_by("-created_at"):
+
+        referral_history.append({
+            "id": referral.id,
+            "username": referral.referred_user.username,
+            "status": referral.status,
+            "first_order_id": (
+                referral.first_order.id
+                if referral.first_order
+                else None
+            ),
+            "first_bonus_credited": referral.first_bonus_credited,
+            "created_at": referral.created_at.isoformat()
+        })
+
+    return JsonResponse({
+        "referral_code": profile.referral_code,
+        "total_referrals": total_referrals,
+        "successful_referrals": successful_referrals,
+        "total_earnings": str(total_earnings),
+        "referral_history": referral_history
+    })  
