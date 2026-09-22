@@ -29,8 +29,9 @@ import SupportDashboard from "./pages/SupportDashboard";
 import SupportTicketDetail from "./pages/SupportTicketDetail";
 
 import { CartProvider } from "./context/CartContext";
-import ChatBot from "./components/ChatBot";
+import { WishlistProvider } from "./context/WishlistContext";
 
+import ChatBot from "./components/ChatBot";
 import AdminLayout from "./components/AdminLayout";
 import AdminProducts from "./pages/AdminProducts";
 import AdminOrders from "./pages/AdminOrders";
@@ -317,10 +318,12 @@ function AppContent() {
 
 function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+     <CartProvider>
+      <WishlistProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </WishlistProvider>
     </CartProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import api from "../services/api";
 import "./Wishlist.css";
 
@@ -9,6 +10,11 @@ function Wishlist() {
   const [loading, setLoading] = useState(true);
 
   const { addToCart, buyNow, cart } = useCart();
+
+  const {
+    decreaseWishlistCount,
+  } = useWishlist();
+
   const navigate = useNavigate();
 
   const vegetables = [
@@ -28,11 +34,16 @@ function Wishlist() {
     try {
       setLoading(true);
 
-      const response = await api.get("wishlist/");
+      const response = await api.get(
+        "wishlist/"
+      );
 
       setWishlist(response.data);
     } catch (error) {
-      console.error("Wishlist error:", error);
+      console.error(
+        "Wishlist error:",
+        error
+      );
     } finally {
       setLoading(false);
     }
@@ -42,7 +53,9 @@ function Wishlist() {
     fetchWishlist();
   }, []);
 
-  const removeFromWishlist = async (productId) => {
+  const removeFromWishlist = async (
+    productId
+  ) => {
     try {
       await api.delete(
         `wishlist/remove/${productId}/`
@@ -53,6 +66,8 @@ function Wishlist() {
           (item) => item.id !== productId
         )
       );
+
+      decreaseWishlistCount();
     } catch (error) {
       console.error(
         "Remove wishlist error:",
@@ -75,17 +90,20 @@ function Wishlist() {
       <div className="wishlist-page">
 
         <div className="floating-groceries">
-          {vegetables.map((vegetable, index) => (
-            <span
-              key={index}
-              className="floating-grocery"
-            >
-              {vegetable}
-            </span>
-          ))}
+          {vegetables.map(
+            (vegetable, index) => (
+              <span
+                key={index}
+                className="floating-grocery"
+              >
+                {vegetable}
+              </span>
+            )
+          )}
         </div>
 
         <div className="wishlist-loading">
+
           <div className="wishlist-loading-icon">
             ❤️
           </div>
@@ -97,6 +115,7 @@ function Wishlist() {
           <p>
             Getting your favourite products ready
           </p>
+
         </div>
 
       </div>
@@ -108,14 +127,16 @@ function Wishlist() {
       <div className="wishlist-page">
 
         <div className="floating-groceries">
-          {vegetables.map((vegetable, index) => (
-            <span
-              key={index}
-              className="floating-grocery"
-            >
-              {vegetable}
-            </span>
-          ))}
+          {vegetables.map(
+            (vegetable, index) => (
+              <span
+                key={index}
+                className="floating-grocery"
+              >
+                {vegetable}
+              </span>
+            )
+          )}
         </div>
 
         <div className="wishlist-empty">
@@ -155,14 +176,16 @@ function Wishlist() {
     <div className="wishlist-page">
 
       <div className="floating-groceries">
-        {vegetables.map((vegetable, index) => (
-          <span
-            key={index}
-            className="floating-grocery"
-          >
-            {vegetable}
-          </span>
-        ))}
+        {vegetables.map(
+          (vegetable, index) => (
+            <span
+              key={index}
+              className="floating-grocery"
+            >
+              {vegetable}
+            </span>
+          )
+        )}
       </div>
 
       <div className="wishlist-container">

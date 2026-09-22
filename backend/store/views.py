@@ -3621,6 +3621,36 @@ def mark_notification_read(request, notification_id):
         "unread_count": unread_count
     })
 
+
+@csrf_exempt
+@token_auth_required
+def mark_all_notifications_read(request):
+
+    if not request.user.is_authenticated:
+        return JsonResponse(
+            {"error": "Please login"},
+            status=401
+        )
+
+    if request.method != "PATCH":
+        return JsonResponse(
+            {"error": "Only PATCH requests are allowed."},
+            status=405
+        )
+
+    Notification.objects.filter(
+        user=request.user,
+        is_read=False
+    ).update(
+        is_read=True
+    )
+
+    return JsonResponse({
+        "message": "All notifications marked as read",
+        "unread_count": 0
+    })
+
+    
 @csrf_exempt
 @token_auth_required
 def add_product_review(request, product_id, order_item_id):

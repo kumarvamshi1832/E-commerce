@@ -1,53 +1,35 @@
 .product-card {
   position: relative;
-
   display: flex;
-
   flex-direction: column;
-
   overflow: hidden;
-
   min-width: 0;
-
   background: rgba(255, 255, 255, 0.96);
-
-  border: 1px solid #eadde1;
-
+  border: 2px solid #e7cdd8;
   border-radius: 22px;
-
-  box-shadow:
-    0 10px 28px rgba(92, 13, 48, 0.07);
-
+  box-shadow: 0 10px 28px rgba(92, 13, 48, 0.09);
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease,
     border-color 0.3s ease;
-
   backdrop-filter: blur(8px);
 }
 
 .product-card:hover {
   transform: translateY(-7px);
-
-  border-color: #e1c5d0;
-
-  box-shadow:
-    0 20px 42px rgba(92, 13, 48, 0.13);
+  border-color: #7d123f;
+  box-shadow: 0 20px 42px rgba(92, 13, 48, 0.18);
 }
 
-/* =========================================================
-   IMAGE
-========================================================= */
+/* =========================
+   PRODUCT IMAGE
+========================= */
 
 .product-image-wrapper {
   position: relative;
-
   width: 100%;
-
   height: 250px;
-
-  overflow: hidden;
-
+  overflow: visible;
   background:
     radial-gradient(
       circle at center,
@@ -55,78 +37,136 @@
       #fff7f0 52%,
       #f8e8ee 100%
     );
-
-  border-bottom: 1px solid #f0e2e7;
+  border-bottom: 3px solid #7d123f;
 }
 
 .product-image-link {
   width: 100%;
-
   height: 100%;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
+  overflow: hidden;
 }
 
 .product-image {
   width: 100%;
-
   height: 100%;
-
-  object-fit: contain;
-
-  padding: 22px;
-
-  transition:
-    transform 0.45s ease;
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+  transition: transform 0.45s ease;
 }
 
 .product-card:hover .product-image {
   transform: scale(1.07);
 }
 
-/* =========================================================
-   WISHLIST
-========================================================= */
+.no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7d123f;
+  font-size: 3rem;
+  background:
+    radial-gradient(
+      circle at center,
+      #ffffff 0%,
+      #fff7f0 52%,
+      #f8e8ee 100%
+    );
+}
 
-.product-wishlist {
+/* =========================
+   TOP ACTIONS
+========================= */
+
+.product-top-actions {
   position: absolute;
-
   top: 14px;
-
   right: 14px;
+  z-index: 20;
 
-  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+/* =========================
+   SHARE BUTTON
+========================= */
+
+.product-share {
   width: 40px;
-
   height: 40px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border: 1px solid #efd5de;
-
   border-radius: 50%;
 
-  background: rgba(255, 255, 255, 0.95);
-
+  background: rgba(255, 255, 255, 0.96);
   color: #7d123f;
 
-  font-size: 1.35rem;
-
+  font-size: 1.25rem;
+  font-weight: 900;
   line-height: 1;
 
   cursor: pointer;
 
-  box-shadow:
-    0 6px 16px rgba(92, 13, 48, 0.08);
+  box-shadow: 0 6px 16px rgba(92, 13, 48, 0.15);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.product-share:hover {
+  transform: scale(1.08);
+  background: #f8e6ed;
+  color: #5c0d30;
+  box-shadow: 0 8px 20px rgba(92, 13, 48, 0.2);
+}
+
+.product-share:active {
+  transform: scale(0.95);
+}
+
+.product-share svg {
+  width: 21px;
+  height: 21px;
+}
+
+/* =========================
+   WISHLIST BUTTON
+========================= */
+
+.product-wishlist {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #efd5de;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.95);
+  color: #7d123f;
+
+  font-size: 1.35rem;
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: 0 6px 16px rgba(92, 13, 48, 0.15);
 
   transition:
     transform 0.2s ease,
@@ -136,126 +176,353 @@
 
 .product-wishlist:hover {
   transform: scale(1.08);
-
   background: #f8e6ed;
 }
 
 .product-wishlist.wishlisted {
   background: #f8e1ea;
-
   color: #7d123f;
 }
 
-/* =========================================================
-   OUT OF STOCK BADGE
-========================================================= */
+/* =========================
+   SHARE MENU
+========================= */
+
+.product-share-menu {
+  position: absolute;
+  top: 62px;
+  right: 14px;
+
+  z-index: 100;
+
+  width: 245px;
+  padding: 15px;
+
+  background: rgba(255, 255, 255, 0.98);
+
+  border: 1px solid #ead5dd;
+  border-radius: 16px;
+
+  box-shadow:
+    0 18px 40px rgba(92, 13, 48, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+
+  backdrop-filter: blur(14px);
+
+  animation: shareMenuOpen 0.18s ease;
+}
+
+@keyframes shareMenuOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* =========================
+   SHARE MENU HEADER
+========================= */
+
+.share-menu-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+
+  border-bottom: 1px solid #f0e2e7;
+}
+
+.share-menu-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.share-menu-header strong {
+  color: #321d27;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.share-menu-header span {
+  color: #806c75;
+  font-size: 0.6rem;
+  line-height: 1.4;
+}
+
+/* =========================
+   SHARE CLOSE BUTTON
+========================= */
+
+.share-close-button {
+  width: 27px;
+  height: 27px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #806c75;
+
+  font-size: 0.8rem;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.share-close-button:hover {
+  background: #f7e5ec;
+  color: #7d123f;
+  transform: scale(1.05);
+}
+
+.share-close-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* =========================
+   SHARE OPTIONS GRID
+========================= */
+
+.share-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* =========================
+   SHARE OPTION
+========================= */
+
+.share-option {
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 9px;
+
+  border: 1px solid #eee0e5;
+  border-radius: 10px;
+
+  background: #fffaf8;
+  color: #321d27;
+
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.2s ease;
+}
+
+.share-option:hover {
+  transform: translateY(-2px);
+  background: #f8e9ee;
+  border-color: #dfc2ce;
+
+  box-shadow: 0 5px 12px rgba(92, 13, 48, 0.08);
+}
+
+.share-option:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* =========================
+   SHARE OPTION ICON
+========================= */
+
+.share-option-icon {
+  width: 27px;
+  height: 27px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  font-size: 0.95rem;
+
+  box-shadow:
+    0 2px 6px rgba(92, 13, 48, 0.08);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.share-option:hover .share-option-icon {
+  transform: scale(1.08);
+}
+
+.share-option-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* =========================
+   ICON COLORS
+========================= */
+
+.copy-share .share-option-icon {
+  color: #7d123f;
+}
+
+.whatsapp-icon {
+  color: #25d366;
+}
+
+.facebook-icon {
+  color: #1877f2;
+}
+
+.instagram-icon {
+  color: #e1306c;
+}
+
+.telegram-icon {
+  color: #229ed9;
+}
+
+.email-icon {
+  color: #c2410c;
+}
+
+.native-icon {
+  color: #7d123f;
+}
+
+/* =========================
+   SHARE OPTION HOVER COLORS
+========================= */
+
+.copy-share:hover {
+  color: #7d123f;
+}
+
+.whatsapp-share:hover {
+  color: #16823a;
+}
+
+.facebook-share:hover {
+  color: #1877f2;
+}
+
+.instagram-share:hover {
+  color: #e1306c;
+}
+
+.telegram-share:hover {
+  color: #229ed9;
+}
+
+.email-share:hover {
+  color: #c2410c;
+}
+
+.native-share:hover {
+  color: #5c0d30;
+}
+
+/* =========================
+   OUT OF STOCK
+========================= */
 
 .out-stock-badge {
   position: absolute;
-
   left: 14px;
-
   bottom: 14px;
 
-  padding: 6px 9px;
+  z-index: 10;
 
-  border-radius: 999px;
+  padding: 7px 10px;
 
-  background: #f9e8e8;
+  background: rgba(92, 13, 48, 0.92);
+  color: #ffffff;
 
-  color: #a45165;
+  border-radius: 8px;
 
-  font-size: 0.55rem;
-
+  font-size: 0.62rem;
   font-weight: 900;
+  letter-spacing: 0.04em;
 
-  letter-spacing: 0.06em;
+  box-shadow: 0 5px 14px rgba(92, 13, 48, 0.2);
 }
 
-/* =========================================================
-   NO IMAGE
-========================================================= */
-
-.no-image {
-  width: 100%;
-
-  height: 100%;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  color: #806c75;
-
-  font-size: 3rem;
-}
-
-/* =========================================================
-   DETAILS
-========================================================= */
+/* =========================
+   PRODUCT DETAILS
+========================= */
 
 .product-details {
   display: flex;
-
   flex-direction: column;
 
-  flex: 1;
-
   padding: 20px;
+  gap: 9px;
+
+  min-width: 0;
 }
 
 .product-category {
-  width: fit-content;
+  margin: 0;
 
-  margin: 0 0 8px;
+  color: #a05b78;
 
-  padding: 4px 9px;
-
-  border-radius: 999px;
-
-  background: #f7e5ec;
-
-  color: #7d123f;
-
-  font-size: 0.55rem;
-
-  font-weight: 900;
-
-  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  font-weight: 800;
 
   text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-/* =========================================================
-   TITLE
-========================================================= */
-
 .product-title-link {
-  color: inherit;
-
   text-decoration: none;
+  color: inherit;
 }
 
 .product-title-link h3 {
-  display: -webkit-box;
-
-  overflow: hidden;
-
-  margin: 0 0 10px;
+  margin: 0;
 
   color: #321d27;
 
   font-size: 1.05rem;
-
-  font-weight: 850;
+  font-weight: 900;
 
   line-height: 1.35;
-
-  -webkit-line-clamp: 2;
-
-  -webkit-box-orient: vertical;
 
   transition: color 0.2s ease;
 }
@@ -264,280 +531,205 @@
   color: #7d123f;
 }
 
-/* =========================================================
-   RATING
-========================================================= */
+/* =========================
+   PRODUCT RATING
+========================= */
 
 .product-rating {
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
 
-  gap: 8px;
+  gap: 10px;
 
-  min-height: 25px;
-
-  margin-bottom: 9px;
+  min-height: 28px;
 }
 
 .rating-main {
   display: flex;
-
   align-items: center;
-
-  gap: 5px;
-
-  min-width: 0;
+  gap: 6px;
 }
 
 .rating-stars {
-  color: #d18a27;
+  color: #f59e0b;
 
-  font-size: 0.7rem;
-
+  font-size: 0.82rem;
   letter-spacing: 1px;
-
-  white-space: nowrap;
 }
 
 .rating-count {
   color: #806c75;
-
-  font-size: 0.62rem;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
 .no-rating {
-  color: #9a858e;
+  color: #9a8990;
 
-  font-size: 0.63rem;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
 .reviews-link {
-  padding: 0;
+  padding: 4px 0;
 
   border: none;
-
   background: transparent;
 
   color: #7d123f;
 
-  font-size: 0.62rem;
-
-  font-weight: 850;
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 800;
 
   cursor: pointer;
 
   white-space: nowrap;
 
   transition:
-    color 0.2s ease;
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .reviews-link:hover {
   color: #5c0d30;
-
-  text-decoration: underline;
+  transform: translateX(2px);
 }
 
-/* =========================================================
+/* =========================
    DELIVERY STATUS
-========================================================= */
+========================= */
 
 .delivery-status {
   display: flex;
-
   align-items: center;
+  gap: 7px;
 
-  gap: 6px;
+  width: fit-content;
 
-  margin-bottom: 10px;
+  padding: 6px 9px;
 
-  padding: 7px 9px;
+  border-radius: 7px;
 
-  border-radius: 8px;
-
-  font-size: 0.6rem;
-
-  font-weight: 750;
-
-  line-height: 1.35;
-}
-
-.delivery-status span:first-child {
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  width: 16px;
-
-  height: 16px;
-
-  flex-shrink: 0;
-
-  border-radius: 50%;
-
-  font-size: 0.58rem;
-
-  font-weight: 900;
+  font-size: 0.62rem;
+  font-weight: 800;
 }
 
 .delivery-status.deliverable {
-  background: #edf4e4;
-
-  color: #52752f;
-}
-
-.delivery-status.deliverable
-  span:first-child {
-  background: #dcebd0;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
 }
 
 .delivery-status.not-deliverable {
-  background: #fae9eb;
-
-  color: #a45165;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
 }
 
-.delivery-status.not-deliverable
-  span:first-child {
-  background: #f3d5dc;
-}
-
-/* =========================================================
+/* =========================
    DESCRIPTION
-========================================================= */
+========================= */
 
 .product-description {
-  display: -webkit-box;
+  margin: 0;
 
-  overflow: hidden;
-
-  margin: 0 0 18px;
-
-  color: #806c75;
+  color: #75656d;
 
   font-size: 0.7rem;
+  line-height: 1.55;
 
-  line-height: 1.6;
-
+  display: -webkit-box;
   -webkit-line-clamp: 2;
-
   -webkit-box-orient: vertical;
+
+  overflow: hidden;
 }
 
-/* =========================================================
-   BOTTOM
-========================================================= */
+/* =========================
+   PRODUCT BOTTOM
+========================= */
 
 .product-bottom {
   display: flex;
-
   align-items: flex-end;
-
   justify-content: space-between;
 
   gap: 12px;
 
-  margin-top: auto;
-
-  padding-top: 15px;
-
-  border-top: 1px solid #f0e4e7;
+  margin-top: 6px;
 }
 
 .product-price-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
   min-width: 0;
 }
 
 .product-price-row {
   display: flex;
-
   align-items: baseline;
-
   gap: 3px;
 }
 
 .price {
-  color: #7d123f;
+  color: #5c0d30;
 
-  font-size: 1.18rem;
-
-  font-weight: 950;
-
-  line-height: 1;
+  font-size: 1.15rem;
+  font-weight: 900;
 }
 
 .price-unit {
-  color: #806c75;
+  color: #8a737d;
 
   font-size: 0.62rem;
-
-  font-weight: 650;
+  font-weight: 700;
 }
 
 .stock {
-  display: inline-block;
+  color: #15803d;
 
-  margin-top: 7px;
-
-  color: #648c3a;
-
-  font-size: 0.61rem;
-
-  font-weight: 850;
+  font-size: 0.62rem;
+  font-weight: 800;
 }
 
 .out-stock {
-  display: inline-block;
+  color: #be123c;
 
-  margin-top: 7px;
-
-  color: #a45165;
-
-  font-size: 0.61rem;
-
-  font-weight: 850;
+  font-size: 0.62rem;
+  font-weight: 800;
 }
 
-/* =========================================================
+/* =========================
    ADD TO CART
-========================================================= */
+========================= */
 
 .add-cart {
-  min-width: 112px;
-
-  height: 41px;
+  min-width: 118px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 6px;
 
-  padding: 0 13px;
+  padding: 10px 13px;
 
   border: none;
-
   border-radius: 10px;
 
   background: #7d123f;
+  color: #ffffff;
 
-  color: white;
-
-  font-size: 0.66rem;
-
-  font-weight: 900;
+  font-family: inherit;
+  font-size: 0.67rem;
+  font-weight: 800;
 
   cursor: pointer;
 
-  box-shadow:
-    0 6px 14px rgba(125, 18, 63, 0.15);
+  box-shadow: 0 7px 15px rgba(125, 18, 63, 0.2);
 
   transition:
     transform 0.2s ease,
@@ -546,165 +738,245 @@
 }
 
 .add-cart:hover:not(:disabled) {
-  background: #5c0d30;
-
   transform: translateY(-2px);
 
-  box-shadow:
-    0 9px 19px rgba(125, 18, 63, 0.22);
+  background: #5c0d30;
+
+  box-shadow: 0 10px 20px rgba(125, 18, 63, 0.28);
+}
+
+.add-cart:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .add-cart:disabled {
-  opacity: 0.45;
-
+  background: #c8b9bf;
   cursor: not-allowed;
-
   box-shadow: none;
 }
 
-/* =========================================================
+/* =========================
    QUANTITY CONTROL
-========================================================= */
+========================= */
 
 .quantity-control {
+  min-width: 118px;
+
   display: flex;
-
   align-items: center;
-
-  height: 41px;
+  justify-content: space-between;
 
   overflow: hidden;
 
-  border: 1px solid #dfc9d2;
-
+  border: 1px solid #dfc5d0;
   border-radius: 10px;
 
-  background: #fff8f5;
+  background: #fff8fa;
 }
 
 .quantity-control button {
-  width: 35px;
+  width: 36px;
+  height: 36px;
 
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   border: none;
-
   background: transparent;
 
   color: #7d123f;
 
+  font-family: inherit;
   font-size: 1rem;
-
   font-weight: 900;
 
   cursor: pointer;
 
   transition:
-    background 0.2s ease;
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .quantity-control button:hover:not(:disabled) {
-  background: #f7e4ec;
+  background: #f6e5eb;
 }
 
 .quantity-control button:disabled {
-  color: #c7b7bd;
-
+  color: #c8b9bf;
   cursor: not-allowed;
 }
 
 .quantity-control span {
-  min-width: 31px;
+  min-width: 28px;
 
   text-align: center;
 
   color: #321d27;
 
-  font-size: 0.75rem;
-
+  font-size: 0.72rem;
   font-weight: 900;
 }
 
-/* =========================================================
+/* =========================
    TABLET
-========================================================= */
+========================= */
 
-@media (max-width: 1050px) {
-
-  .product-image-wrapper {
-    height: 235px;
-  }
-
-}
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 700px) {
-
-  .product-card {
-    border-radius: 19px;
-  }
-
+@media (max-width: 900px) {
   .product-image-wrapper {
     height: 235px;
   }
 
   .product-details {
-    padding: 18px;
+    padding: 17px;
+  }
+
+  .product-title-link h3 {
+    font-size: 0.98rem;
   }
 
   .product-bottom {
     align-items: center;
   }
 
+  .add-cart,
+  .quantity-control {
+    min-width: 108px;
+  }
 }
 
-/* =========================================================
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 700px) {
+  .product-card {
+    border-radius: 18px;
+  }
+
+  .product-image-wrapper {
+    height: 235px;
+  }
+
+  .product-top-actions {
+    top: 11px;
+    right: 11px;
+    gap: 7px;
+  }
+
+  .product-share,
+  .product-wishlist {
+    width: 37px;
+    height: 37px;
+  }
+
+  .product-share svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .product-share-menu {
+    top: 58px;
+    right: 10px;
+    width: 225px;
+  }
+
+  .product-details {
+    padding: 16px;
+  }
+
+  .product-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-price-area {
+    width: 100%;
+  }
+
+  .add-cart,
+  .quantity-control {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* =========================
    SMALL MOBILE
-========================================================= */
+========================= */
 
 @media (max-width: 420px) {
-
   .product-image-wrapper {
     height: 220px;
   }
 
-  .product-bottom {
-    gap: 8px;
+  .product-top-actions {
+    top: 9px;
+    right: 9px;
   }
 
-  .add-cart {
-    min-width: 105px;
-
-    padding: 0 10px;
-
-    font-size: 0.62rem;
+  .product-share,
+  .product-wishlist {
+    width: 35px;
+    height: 35px;
   }
 
-  .quantity-control button {
-    width: 32px;
+  .product-share-menu {
+    top: 54px;
+    right: 8px;
+    width: 210px;
+    padding: 12px;
   }
 
-  .quantity-control span {
-    min-width: 27px;
+  .share-options {
+    gap: 6px;
   }
 
+  .share-option {
+    min-height: 40px;
+    padding: 6px 7px;
+    font-size: 0.57rem;
+  }
+
+  .share-option-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .share-option-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .product-details {
+    padding: 14px;
+  }
+
+  .product-title-link h3 {
+    font-size: 0.92rem;
+  }
+
+  .price {
+    font-size: 1.05rem;
+  }
 }
 
-/* =========================================================
+/* =========================
    REDUCED MOTION
-========================================================= */
+========================= */
 
 @media (prefers-reduced-motion: reduce) {
-
   .product-card,
   .product-image,
+  .product-share,
   .product-wishlist,
   .add-cart,
-  .quantity-control button {
+  .quantity-control button,
+  .product-share-menu,
+  .share-option,
+  .share-option-icon,
+  .reviews-link {
     transition: none;
+    animation: none;
   }
-
 }

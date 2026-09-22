@@ -66,6 +66,7 @@ from .views import (
     remove_from_wishlist,
     get_notifications,
     mark_notification_read,
+    mark_all_notifications_read,
 )
 
 
@@ -207,6 +208,10 @@ path("notifications/", get_notifications),
 path(
     "notifications/<int:notification_id>/read/",
     mark_notification_read
+),
+path(
+    "notifications/read-all/",
+    mark_all_notifications_read
 ),
 
 path(

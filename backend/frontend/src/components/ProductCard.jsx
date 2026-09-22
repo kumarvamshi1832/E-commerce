@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import "./ProductCard.css";
+
+import {
+  FaWhatsapp,
+  FaFacebookF,
+  FaInstagram,
+  FaTelegramPlane,
+  FaEnvelope,
+  FaLink,
+} from "react-icons/fa";
+
+import {
+  IoShareSocialOutline,
+  IoClose,
+} from "react-icons/io5";
 
 function ProductCard({
   product,
@@ -17,7 +32,18 @@ function ProductCard({
     decreaseQuantity,
   } = useCart();
 
+  const {
+    increaseWishlistCount,
+    decreaseWishlistCount,
+  } = useWishlist();
+
   const [isWishlisted, setIsWishlisted] =
+    useState(false);
+
+  const [showShare, setShowShare] =
+    useState(false);
+
+  const [copied, setCopied] =
     useState(false);
 
   const cartItem = cart.find(
@@ -97,12 +123,14 @@ function ProductCard({
         );
 
         setIsWishlisted(false);
+        decreaseWishlistCount();
       } else {
         await api.post(
           `wishlist/add/${product.id}/`
         );
 
         setIsWishlisted(true);
+        increaseWishlistCount();
       }
     } catch (error) {
       console.error(
@@ -118,10 +146,158 @@ function ProductCard({
     }
   };
 
+const getProductUrl = () => {
+  return `${window.location.origin}/product/${product.id}`;
+};
+
+const getShareText = () => {
+  return `🛒 Check out ${product.name} on MY-STORE`;
+};
+
+const handleCopyLink = async () => {
+  const productUrl = getProductUrl();
+
+  try {
+    await navigator.clipboard.writeText(productUrl);
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  } catch (error) {
+    console.error("Copy link error:", error);
+
+    const textArea = document.createElement("textarea");
+    textArea.value = productUrl;
+
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    document.execCommand("copy");
+
+    document.body.removeChild(textArea);
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  }
+};
+
+
+const handleWhatsAppShare = () => {
+  const productUrl = getProductUrl();
+
+  const whatsappUrl =
+    `https://wa.me/?text=${encodeURIComponent(productUrl)}`;
+
+  window.open(
+    whatsappUrl,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
+
+
+const handleFacebookShare = () => {
+  const productUrl = getProductUrl();
+
+  const facebookUrl =
+    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
+
+  window.open(
+    facebookUrl,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
+
+
+const handleInstagramShare = async () => {
+  const productUrl = getProductUrl();
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: product.name,
+        text: getShareText(),
+        url: productUrl,
+      });
+
+      setShowShare(false);
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Instagram share error:", error);
+      }
+    }
+
+    return;
+  }
+
+  await handleCopyLink();
+};
+
+
+const handleTelegramShare = () => {
+  const productUrl = getProductUrl();
+
+  const telegramUrl =
+    `https://t.me/share/url?url=${encodeURIComponent(productUrl)}`;
+
+  window.open(
+    telegramUrl,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
+
+
+const handleEmailShare = () => {
+  const productUrl = getProductUrl();
+
+  const subject =
+    `Check out ${product.name} on MY-STORE`;
+
+  const body =
+    `${getShareText()}\n\n${productUrl}`;
+
+  window.location.href =
+    `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+
+const handleNativeShare = async () => {
+  const productUrl = getProductUrl();
+
+  if (!navigator.share) {
+    await handleCopyLink();
+    return;
+  }
+
+  try {
+    await navigator.share({
+      title: product.name,
+      text: getShareText(),
+      url: productUrl,
+    });
+
+    setShowShare(false);
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.error("Native share error:", error);
+    }
+  }
+};
+
+
+const handleShareButton = () => {
+  setShowShare((previousValue) => !previousValue);
+};
+
   return (
     <article className="product-card">
-
-      {/* IMAGE */}
 
       <div className="product-image-wrapper">
 
@@ -142,22 +318,183 @@ function ProductCard({
           )}
         </Link>
 
-        <button
-          type="button"
-          className={`product-wishlist ${
-            isWishlisted
-              ? "wishlisted"
-              : ""
-          }`}
-          onClick={handleWishlist}
-          aria-label={
-            isWishlisted
-              ? "Remove from wishlist"
-              : "Add to wishlist"
-          }
-        >
-          {isWishlisted ? "♥" : "♡"}
-        </button>
+        <div className="product-top-actions">
+
+          <button
+            type="button"
+            className="product-share"
+            onClick={handleShareButton}
+            aria-label="Share product"
+            title="Share product"
+          >
+            <IoShareSocialOutline />
+          </button>
+
+          <button
+            type="button"
+            className={`product-wishlist ${
+              isWishlisted
+                ? "wishlisted"
+                : ""
+            }`}
+            onClick={handleWishlist}
+            aria-label={
+              isWishlisted
+                ? "Remove from wishlist"
+                : "Add to wishlist"
+            }
+            title={
+              isWishlisted
+                ? "Remove from wishlist"
+                : "Add to wishlist"
+            }
+          >
+            {isWishlisted
+              ? "♥"
+              : "♡"}
+          </button>
+
+        </div>
+
+        {showShare && (
+          <div
+            className="product-share-menu"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+
+            <div className="share-menu-header">
+
+              <div>
+                <strong>
+                  Share Product
+                </strong>
+
+                <span>
+                  Share this product with others
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="share-close-button"
+                onClick={() =>
+                  setShowShare(false)
+                }
+                aria-label="Close share menu"
+              >
+                <IoClose />
+              </button>
+
+            </div>
+
+            <div className="share-options">
+
+              <button
+                type="button"
+                className="share-option copy-share"
+                onClick={handleCopyLink}
+              >
+                <span className="share-option-icon">
+                  <FaLink />
+                </span>
+
+                <span>
+                  {copied
+                    ? "Link Copied"
+                    : "Copy Link"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="share-option whatsapp-share"
+                onClick={handleWhatsAppShare}
+              >
+                <span className="share-option-icon whatsapp-icon">
+                  <FaWhatsapp />
+                </span>
+
+                <span>
+                  WhatsApp
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="share-option facebook-share"
+                onClick={handleFacebookShare}
+              >
+                <span className="share-option-icon facebook-icon">
+                  <FaFacebookF />
+                </span>
+
+                <span>
+                  Facebook
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="share-option instagram-share"
+                onClick={handleInstagramShare}
+              >
+                <span className="share-option-icon instagram-icon">
+                  <FaInstagram />
+                </span>
+
+                <span>
+                  Instagram
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="share-option telegram-share"
+                onClick={handleTelegramShare}
+              >
+                <span className="share-option-icon telegram-icon">
+                  <FaTelegramPlane />
+                </span>
+
+                <span>
+                  Telegram
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="share-option email-share"
+                onClick={handleEmailShare}
+              >
+                <span className="share-option-icon email-icon">
+                  <FaEnvelope />
+                </span>
+
+                <span>
+                  Email
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className="share-option native-share"
+                onClick={handleNativeShare}
+              >
+                <span className="share-option-icon native-icon">
+                  <IoShareSocialOutline />
+                </span>
+
+                <span>
+                  More
+                </span>
+              </button>
+
+            </div>
+
+          </div>
+        )}
 
         {product.stock <= 0 && (
           <span className="out-stock-badge">
@@ -166,8 +503,6 @@ function ProductCard({
         )}
 
       </div>
-
-      {/* DETAILS */}
 
       <div className="product-details">
 
@@ -181,8 +516,6 @@ function ProductCard({
         >
           <h3>{product.name}</h3>
         </Link>
-
-        {/* RATING */}
 
         <div className="product-rating">
 
@@ -224,8 +557,6 @@ function ProductCard({
 
         </div>
 
-        {/* DELIVERY */}
-
         {checkedPincode && (
           <div
             className={
@@ -237,6 +568,7 @@ function ProductCard({
             {deliveryStatus ? (
               <>
                 <span>✓</span>
+
                 <span>
                   Deliverable to{" "}
                   {checkedPincode}
@@ -245,6 +577,7 @@ function ProductCard({
             ) : (
               <>
                 <span>✕</span>
+
                 <span>
                   Not deliverable to{" "}
                   {checkedPincode}
@@ -254,13 +587,9 @@ function ProductCard({
           </div>
         )}
 
-        {/* DESCRIPTION */}
-
         <p className="product-description">
           {product.description}
         </p>
-
-        {/* BOTTOM */}
 
         <div className="product-bottom">
 
@@ -293,8 +622,6 @@ function ProductCard({
 
           </div>
 
-          {/* CART */}
-
           {quantity === 0 ? (
 
             <button
@@ -303,11 +630,10 @@ function ProductCard({
               disabled={
                 product.stock <= 0
               }
-              onClick={
-                handleAddToCart
-              }
+              onClick={handleAddToCart}
             >
               <span>🛒</span>
+
               Add to Cart
             </button>
 
