@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import api, { getAddresses } from "../services/api";
+import api, { getAddresses, getWallet } from "../services/api";
 import BalloonEffect from "../components/BalloonEffect";
 import "./Checkout.css";
 
@@ -19,6 +19,9 @@ function Checkout() {
   const [showAddressSelection, setShowAddressSelection] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState("");
@@ -52,7 +55,21 @@ const vegetables = [
 
   useEffect(() => {
     loadAddresses();
+    loadWallet();
   }, []);
+
+  const loadWallet = async () => {
+  try {
+    const response = await getWallet();
+
+    setWalletBalance(
+      Number(response.data?.balance || 0)
+    );
+  } catch (error) {
+    console.error("Wallet loading error:", error);
+    setWalletBalance(0);
+  }
+};
 
   const loadAddresses = async () => {
     try {
@@ -221,10 +238,19 @@ const vegetables = [
         : 140
       : 0;
 
-  const discountAmount = (subtotal * discountPercent) / 100;
+  const discountAmount =
+  (subtotal * discountPercent) / 100;
 
-  const total = subtotal + delivery - discountAmount;
+const orderTotal =
+  subtotal + delivery - discountAmount;
 
+const walletDeduction = useWallet
+  ? Math.min(walletBalance, orderTotal)
+  : 0;
+
+const payableAmount =
+  orderTotal - walletDeduction;
+  
   const unavailableItems = cart.filter(
     (item) => deliveryStatus[item.id] === false
   );
@@ -292,11 +318,12 @@ const vegetables = [
       }));
 
       const response = await api.post("orders/", {
-        items: orderItems,
-        coupon_code: appliedCoupon,
-        pincode: pin,
-        address_id: selectedAddress.id,
-      });
+  items: orderItems,
+  coupon_code: appliedCoupon,
+  pincode: pin,
+  address_id: selectedAddress.id,
+  use_wallet: useWallet,
+});
 
       console.log("Order created:", response.data);
 
@@ -1009,18 +1036,98 @@ const vegetables = [
                 </>
               )}
 
-              <div className="checkout-divider" />
+              <div className="checkout-wallet-section">
 
-              <div className="checkout-total">
+  <div className="checkout-wallet-header">
 
-                <span>Total</span>
+    <div>
+      <p className="option-eyebrow">
+        MY WALLET
+      </p>
 
-                <strong>
-                  ₹{total.toFixed(2)}
-                </strong>
+      <h3>Use Wallet Balance</h3>
+    </div>
 
-              </div>
+    <span className="checkout-wallet-balance">
+      ₹{walletBalance.toFixed(2)}
+    </span>
 
+  </div>
+
+  {walletBalance > 0 ? (
+    <label className="checkout-wallet-checkbox">
+
+      <input
+        type="checkbox"
+        checked={useWallet}
+        onChange={(e) =>
+          setUseWallet(e.target.checked)
+        }
+      />
+
+      <span>
+        Use wallet balance for this order
+      </span>
+
+    </label>
+  ) : (
+    <p className="checkout-wallet-empty">
+      Your wallet balance is ₹0.00
+    </p>
+  )}
+
+</div>
+
+<div className="checkout-divider" />
+
+<div className="checkout-row">
+
+  <span>Order Total</span>
+
+  <strong>
+    ₹{orderTotal.toFixed(2)}
+  </strong>
+
+</div>
+
+{walletDeduction > 0 && (
+  <div className="checkout-row wallet-deduction-row">
+
+    <span>Wallet Used</span>
+
+    <strong>
+      -₹{walletDeduction.toFixed(2)}
+    </strong>
+
+  </div>
+)}
+
+<div className="checkout-total">
+
+  <span>
+    {payableAmount === 0
+      ? "Amount to Pay"
+      : "Amount to Pay"}
+  </span>
+
+  <strong>
+    ₹{payableAmount.toFixed(2)}
+  </strong>
+
+</div>
+
+{walletDeduction > 0 && (
+  <div className="wallet-success-message">
+
+    <span>💰</span>
+
+    <span>
+      ₹{walletDeduction.toFixed(2)} will be
+      deducted from your wallet.
+    </span>
+
+  </div>
+)}
               {hasUndeliverableItems && (
                 <div className="checkout-delivery-warning">
 
@@ -1050,7 +1157,7 @@ const vegetables = [
                   ? "Checking Delivery..."
                   : hasUndeliverableItems
                   ? "Delivery Unavailable"
-                  : "Place Order"}
+                  :  "Place Order"}
               </button>
 
               <Link

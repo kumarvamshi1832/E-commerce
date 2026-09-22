@@ -1282,3 +1282,75 @@
     transition: none;
   }
 }
+
+.checkout-wallet-section {
+  margin: 18px 0;
+  padding: 16px;
+  background: #fff8f1;
+  border: 1px solid #eadde1;
+  border-radius: 14px;
+}
+
+.checkout-wallet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.checkout-wallet-header h3 {
+  margin: 4px 0 0;
+  color: #321d27;
+  font-size: 16px;
+}
+
+.checkout-wallet-balance {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #edf4e4;
+  color: #4f722c;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.checkout-wallet-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  cursor: pointer;
+  color: #321d27;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.checkout-wallet-checkbox input {
+  width: 17px;
+  height: 17px;
+  accent-color: #7d123f;
+  cursor: pointer;
+}
+
+.checkout-wallet-empty {
+  margin: 12px 0 0;
+  color: #806c75;
+  font-size: 13px;
+}
+
+.wallet-deduction-row {
+  color: #4f722c;
+}
+
+.wallet-success-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #edf4e4;
+  border: 1px solid #d7e7c6;
+  border-radius: 10px;
+  color: #4f722c;
+  font-size: 13px;
+  font-weight: 600;
+}

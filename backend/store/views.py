@@ -1656,6 +1656,14 @@ def create_order(request):
             )
 
         # =================================================
+        # WALLET OPTION
+        # =================================================
+
+        use_wallet = bool(
+            data.get("use_wallet", False)
+        )
+
+        # =================================================
         # GET COUPON
         # =================================================
 
@@ -1687,7 +1695,7 @@ def create_order(request):
         # CHECK STOCK + CALCULATE SUBTOTAL
         # =================================================
 
-        total_amount = 0
+        total_amount = Decimal("0")
 
         order_items_data = []
 
@@ -1863,9 +1871,9 @@ def create_order(request):
         # =================================================
 
         if pincode.startswith("500"):
-            delivery = 40
+            delivery = Decimal("40")
         else:
-            delivery = 140
+            delivery = Decimal("140")
 
         # =================================================
         # CALCULATE DISCOUNT
@@ -1873,12 +1881,12 @@ def create_order(request):
 
         discount_amount = (
             total_amount *
-            discount_percent /
-            100
+            Decimal(discount_percent) /
+            Decimal("100")
         )
 
         # =================================================
-        # FINAL TOTAL
+        # FINAL ORDER TOTAL
         # =================================================
 
         final_total = (
@@ -1888,63 +1896,139 @@ def create_order(request):
         )
 
         # =================================================
-        # CREATE ORDER
+        # WALLET AMOUNT
         # =================================================
 
-        order = Order.objects.create(
-            user=user,
+        wallet_used = Decimal("0")
 
-            subtotal=total_amount,
-            discount=discount_amount,
-            delivery_charge=delivery,
-            coupon_code=coupon_code if coupon_code else None,
-            total_amount=final_total,
-
-            address_full_name=address.full_name,
-            address_phone=address.phone,
-            address_line1=address.address_line1,
-            address_line2=address.address_line2,
-            address_city=address.city,
-            address_state=address.state,
-            address_pincode=address.pincode,
-            address_landmark=address.landmark,
-            address_type=address.address_type
-        )
+        amount_to_pay = final_total
 
         # =================================================
-        # ORDER NOTIFICATION
+        # CREATE ORDER + WALLET + STOCK ATOMICALLY
         # =================================================
 
-        Notification.objects.create(
-            user=user,
-            message=(
-                f"🎉 Your order #{order.id} "
-                f"has been placed successfully."
-            ),
-            notification_type="order"
-        )
+        with transaction.atomic():
 
-        # =================================================
-        # CREATE ORDER ITEMS
-        # REDUCE STOCK
-        # =================================================
+            # =================================================
+            # LOCK WALLET
+            # =================================================
 
-        for item in order_items_data:
+            wallet = None
 
-            product = item["product"]
+            if use_wallet:
 
-            quantity = item["quantity"]
+                try:
 
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                quantity=quantity,
-                price=item["price"]
+                    wallet = Wallet.objects.select_for_update().get(
+                        user=user
+                    )
+
+                except Wallet.DoesNotExist:
+
+                    wallet = Wallet.objects.create(
+                        user=user,
+                        balance=Decimal("0")
+                    )
+
+                # =================================================
+                # CALCULATE WALLET DEDUCTION
+                # =================================================
+
+                wallet_used = min(
+                    wallet.balance,
+                    final_total
+                )
+
+                amount_to_pay = (
+                    final_total -
+                    wallet_used
+                )
+
+                # =================================================
+                # DEDUCT WALLET
+                # =================================================
+
+                if wallet_used > 0:
+
+                    wallet.balance -= wallet_used
+
+                    wallet.save()
+
+            # =================================================
+            # CREATE ORDER
+            # =================================================
+
+            order = Order.objects.create(
+                user=user,
+
+                subtotal=total_amount,
+                discount=discount_amount,
+                delivery_charge=delivery,
+                coupon_code=coupon_code if coupon_code else None,
+
+                total_amount=final_total,
+
+                address_full_name=address.full_name,
+                address_phone=address.phone,
+                address_line1=address.address_line1,
+                address_line2=address.address_line2,
+                address_city=address.city,
+                address_state=address.state,
+                address_pincode=address.pincode,
+                address_landmark=address.landmark,
+                address_type=address.address_type
             )
 
-            product.stock -= quantity
+            # =================================================
+            # WALLET TRANSACTION
+            # =================================================
 
-            product.save()
+            if wallet_used > 0:
+
+                WalletTransaction.objects.create(
+                    user=user,
+                    amount=wallet_used,
+                    transaction_type="Debit",
+                    description=(
+                        f"Wallet used for Order #{order.id}"
+                    ),
+                    order=order
+                )
+
+            # =================================================
+            # ORDER NOTIFICATION
+            # =================================================
+
+            Notification.objects.create(
+                user=user,
+                message=(
+                    f"🎉 Your order #{order.id} "
+                    f"has been placed successfully."
+                ),
+                notification_type="order"
+            )
+
+            # =================================================
+            # CREATE ORDER ITEMS
+            # REDUCE STOCK
+            # =================================================
+
+            for item in order_items_data:
+
+                product = item["product"]
+
+                quantity = item["quantity"]
+
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=quantity,
+                    price=item["price"]
+                )
+
+                product.stock -= quantity
+
+                product.save()
 
         # =================================================
         # EMAIL ITEMS
@@ -2052,6 +2136,21 @@ by applying coupon code {coupon_code}.
 """
 
         # =================================================
+        # WALLET DETAILS
+        # =================================================
+
+        if wallet_used > 0:
+
+            email_body += f"""
+----------------------------------------
+             WALLET PAYMENT
+----------------------------------------
+
+Wallet Used    : -₹{wallet_used:.2f}
+Amount To Pay  : ₹{amount_to_pay:.2f}
+"""
+
+        # =================================================
         # FINAL PRICE
         # =================================================
 
@@ -2068,7 +2167,9 @@ After Discount : ₹{total_amount - discount_amount:.2f}
 Delivery       : +₹{delivery:.2f}
 
 ----------------------------------------
-FINAL TOTAL    : ₹{final_total:.2f}
+ORDER TOTAL    : ₹{final_total:.2f}
+WALLET USED    : -₹{wallet_used:.2f}
+AMOUNT TO PAY  : ₹{amount_to_pay:.2f}
 ----------------------------------------
 
 🎉 Your order has been confirmed!
@@ -2198,6 +2299,20 @@ Your MyStore Team
                     order.total_amount
                 ),
 
+                "wallet_used": float(
+                    wallet_used
+                ),
+
+                "amount_to_pay": float(
+                    amount_to_pay
+                ),
+
+                "wallet_balance": float(
+                    Wallet.objects.get(
+                        user=user
+                    ).balance
+                ),
+
                 "status": order.status,
 
                 "address": {
@@ -2255,6 +2370,7 @@ Your MyStore Team
             status=400
         )
 
+    
 # =========================================================
 # MY ORDERS
 # =========================================================
